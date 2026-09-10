@@ -38,7 +38,21 @@ async function initDatabase(): Promise<Database> {
         aadCredentials: new DefaultAzureCredential(),
       });
 
-  const { database } = await client.databases.createIfNotExists({ id: cosmos.database });
+  /*
+   * Throughput se nastavuje na databázi, ne na kontejnerech.
+   *
+   * Na účtu s předplacenou kapacitou (provisioned) dostane každý kontejner bez
+   * vlastního nastavení minimálně 400 RU/s – devět kontejnerů by si tedy
+   * řeklo o 3600 RU/s. Sdílená kapacita na úrovni databáze je rozdělí mezi
+   * sebe a vejdou se do jedné rezervace (limit je 25 kontejnerů na databázi).
+   *
+   * Účet v režimu serverless naopak žádný throughput nepřijímá – tam se
+   * `COSMOS_THROUGHPUT` nechá prázdný a parametr se vůbec neposílá.
+   */
+  const { database } = await client.databases.createIfNotExists({
+    id: cosmos.database,
+    ...(cosmos.throughput ? { throughput: cosmos.throughput } : {}),
+  });
 
   await Promise.all(
     CONTAINER_DEFINITIONS.map((definition) =>

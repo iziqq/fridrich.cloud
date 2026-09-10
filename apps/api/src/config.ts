@@ -30,6 +30,14 @@ export interface AppConfig {
     endpoint: string;
     key?: string;
     database: string;
+    /**
+     * Sdílená kapacita databáze v RU/s.
+     *
+     * Vyplňte na účtu s předplacenou kapacitou (provisioned), ať si kontejnery
+     * kapacitu dělí místo toho, aby každý chtěl vlastní. Na serverless účtu
+     * nechte prázdné – ten throughput odmítá.
+     */
+    throughput?: number;
   };
   /** Původy, ze kterých smí chodit požadavky s cookie. */
   allowedOrigins: string[];
@@ -55,7 +63,7 @@ export function getConfig(): AppConfig {
   const config: AppConfig = {
     cosmos: {
       endpoint: required('COSMOS_ENDPOINT'),
-      database: optional('COSMOS_DATABASE', 'fridrich-cloud'),
+      database: optional('COSMOS_DATABASE', 'izi-db'),
     },
     allowedOrigins: optional(
       'ALLOWED_ORIGINS',
@@ -76,6 +84,9 @@ export function getConfig(): AppConfig {
   // na managed identity, aby v nastavení neležel tajný klíč.
   const cosmosKey = process.env['COSMOS_KEY'];
   if (cosmosKey) config.cosmos.key = cosmosKey;
+
+  const throughput = Number(process.env['COSMOS_THROUGHPUT']);
+  if (Number.isInteger(throughput) && throughput > 0) config.cosmos.throughput = throughput;
 
   const cookieDomain = process.env['COOKIE_DOMAIN'];
   if (cookieDomain) config.cookieDomain = cookieDomain;

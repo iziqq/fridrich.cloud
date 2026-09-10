@@ -291,8 +291,8 @@ po drátě.
 
 ## 7. Ukládání dat
 
-Azure Cosmos DB (NoSQL API) v režimu **serverless**, jedna databáze
-`fridrich-cloud`, kontejnery po bounded contextech:
+Azure Cosmos DB (NoSQL API), účet `lf-page-db`, databáze **`izi-db`**,
+kontejnery po bounded contextech:
 
 | Kontejner | Partition key | Modul |
 |---|---|---|
@@ -311,6 +311,31 @@ Kontejnery i databáze vznikají samy při prvním startu (`createIfNotExists`),
 takže nasazení nepotřebuje ruční přípravu schématu. Dočasné záznamy
 (tokeny, sessions, počítadla limitů) mají nastavené **TTL** – Cosmos DB je
 maže sám, není potřeba úklidová úloha.
+
+### Kapacita (RU/s)
+
+Účet **není serverless**, ale s předplacenou kapacitou, a má nastavený strop
+**400 RU/s na celý účet**. To má dva důsledky, o které se dá snadno zaříznout:
+
+1. **Kapacita se drží na databázi, ne na kontejnerech.** Kontejner bez
+   vlastního nastavení dostane minimálně 400 RU/s sám pro sebe – devět
+   kontejnerů by si řeklo o 3600 RU/s a vytvoření by skončilo chybou.
+   Databáze se sdílenou kapacitou je rozdělí mezi sebe (limit 25 kontejnerů).
+   Řídí to `COSMOS_THROUGHPUT`; na serverless účtu se nechá **prázdné**,
+   protože ten throughput odmítá.
+2. **Nová databáze se do stropu nevejde.** Proto produkty nemají vlastní
+   databázi, ale sdílí `izi-db`, která už 400 RU/s alokovaných má.
+
+> ⚠️ **Vývoj i produkce jedou proti stejné databázi.** Vědomé rozhodnutí –
+> testovací účty a data z lokálního vývoje končí tam, co ostrá data.
+> Až provoz poroste, oddělit prostředí znamená zvýšit strop účtu
+> (*Azure Portal → účet → Settings → Cost Management → Limit total account
+> throughput*) a založit druhou databázi.
+
+> ℹ️ V `izi-db` zůstávají kontejnery `Seats`, `Users` a `AuthSessions`
+> z předchozí aplikace. Pozor na `Users` vs. náš `users` – Cosmos DB rozlišuje
+> velikost písmen, takže vedle sebe žijí dva různé kontejnery. Až staré
+> struktury půjdou pryč, tahle past zmizí s nimi.
 
 Partition key se volí podle dominantního dotazu daného agregátu – u hostů a
 položek je to vždy „vše pro jednu svatbu", proto `/weddingId`.
