@@ -1,0 +1,172 @@
+/*
+ * Téma IziWeddy.
+ *
+ * Ze sdíleného balíčku bereme jen strukturu (rozestupy, pohyb, reset) –
+ * cyberpunkové barvy portálu by na svatebním plánovači působily nepatřičně.
+ * Paleta je proto vlastní: teplá, světlá, klidná.
+ */
+@import '@fontsource/cormorant-garamond/latin-600.css';
+@import '@fontsource/cormorant-garamond/latin-ext-600.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-ext-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-ext-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-ext-600.css';
+
+@import '@fridrich/design/primitives.css';
+@import '@fridrich/design/base.css';
+
+:root {
+  /* --- Paleta --- */
+  --rose-50: #fff7f8;
+  --rose-100: #ffeef1;
+  --rose-200: #fcd9e0;
+  --rose-400: #e79cae;
+  --rose-500: #d1738c;
+  --rose-600: #b4536f;
+  --rose-700: #8e3b55;
+
+  --sand-50: #fdfbf7;
+  --sand-100: #f7f1e8;
+  --sand-200: #ece3d5;
+
+  --ink-900: #2b2430;
+  --ink-700: #4a4152;
+  --ink-500: #7a7186;
+
+  --sage-500: #5d8f72;
+  --amber-500: #c08a2e;
+  --clay-500: #c05a4a;
+
+  /* --- Sémantické názvy, na které se odkazuje sdílený reset --- */
+  --color-bg: var(--sand-50);
+  --color-surface: #ffffff;
+  --color-border: var(--sand-200);
+  --color-text: var(--ink-900);
+  --color-muted: var(--ink-500);
+  --color-accent: var(--rose-600);
+  --color-accent-soft: var(--rose-500);
+  --color-danger: var(--clay-500);
+  --color-success: var(--sage-500);
+  --color-on-accent: #ffffff;
+
+  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: var(--font-body);
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow-sm: 0 1px 2px rgb(43 36 48 / 0.06), 0 1px 3px rgb(43 36 48 / 0.04);
+  --shadow-md: 0 4px 12px rgb(43 36 48 / 0.08);
+  --shadow-lg: 0 -8px 32px rgb(43 36 48 / 0.12);
+
+  /* Výška spodní navigace – obsah se o ni nesmí opřít. */
+  --bottom-nav: 4.25rem;
+
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-bg);
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Mono třídu ze sdíleného resetu tu používáme na drobné popisky. */
+.mono {
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* --- Sdílené prvky --- */
+
+.card {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target);
+  padding: 0.7rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--rose-700);
+  color: var(--color-on-accent);
+}
+
+.btn-secondary {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--rose-400);
+  color: var(--color-accent);
+}
+
+.btn-ghost {
+  color: var(--color-muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--sand-100);
+  color: var(--color-text);
+}
+
+.btn-danger {
+  background: var(--clay-500);
+  color: #ffffff;
+}
+
+/* Obsah stránky uvnitř plánování – nad spodní navigací. */
+.page {
+  padding-block: var(--space-2) calc(var(--bottom-nav) + var(--space-6));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

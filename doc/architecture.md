@@ -81,8 +81,7 @@ fridrich.cloud/
 │       └── local.settings.json   # NEcommitovat
 │
 ├── packages/
-│   ├── design/                   # design tokeny + sdílené styly (cyberpunk téma)
-│   ├── ui/                       # sdílené Vue komponenty (tlačítka, pole, panely)
+│   ├── design/                   # struktura (primitives) + cyberpunkové téma portálu
 │   ├── shared/                   # obecné typy a utility (API kontrakt, validace)
 │   ├── weddy-shared/             # doménové typy IziWeddy sdílené s frontendem
 │   └── budgy-shared/             # doménové typy IziBudgy (TODO)
@@ -101,7 +100,7 @@ fridrich.cloud/
 | Business logika (jakákoli) | `apps/api/src/domain` + `application` |
 | Práce s Cosmos DB | `apps/api/src/infrastructure/cosmos` |
 | Typy, které vidí frontend i backend | `packages/*-shared` |
-| Komponenta použitá ve dvou a více aplikacích | `packages/ui` |
+| Komponenta použitá ve dvou a více aplikacích | zatím nikde – vznikne `packages/ui`, až se první komponenta opravdu bude sdílet |
 | Barvy, fonty, mřížka, efekty | `packages/design` |
 
 ---
@@ -279,8 +278,7 @@ a délkové limity na všechna pole.
 
 | Balíček | Obsah | Kdo používá |
 |---|---|---|
-| `@fridrich/design` | CSS proměnné, fonty, mřížka, efekty (glitch, scanlines) | portal, iziweddy, izibudgy |
-| `@fridrich/ui` | Vue komponenty – tlačítka, formulářová pole, panely, dialogy | portal, iziweddy, izibudgy |
+| `@fridrich/design` | Struktura (`primitives.css` – rozestupy, pohyb, reset) a cyberpunkové téma portálu. Produkty berou jen strukturu a dodávají vlastní paletu. | portal, iziweddy, izibudgy |
 | `@fridrich/shared` | Kontrakt API (typy odpovědí a chyb), validační pomocníci, typ `User` | všechny + api |
 | `@fridrich/weddy-shared` | Typy a výčty svatebního plánovače | iziweddy + api |
 | `@fridrich/budgy-shared` | Typy rozpočtu domácnosti | izibudgy + api |

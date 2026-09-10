@@ -1,0 +1,44 @@
+/*
+ * Cyberpunkové téma – vzhled portálu www.fridrich.cloud.
+ *
+ * Palety `--cp-*` používá portál napřímo tam, kde jde o konkrétní efekt
+ * (neon, glitch). Sémantické názvy pod nimi jsou to, na co se odkazuje
+ * sdílený reset – díky nim může IziWeddy dodat vlastní barvy a reset
+ * zůstane beze změny.
+ */
+
+:root {
+  --cp-black: #050506;
+  --cp-panel: #0e0e11;
+  --cp-panel-hi: #16161b;
+  --cp-line: #1f1f25;
+  --cp-yellow: #fcee0a;
+  --cp-cyan: #00f0ff;
+  --cp-magenta: #ff003c;
+  --cp-green: #39ff7a;
+  --cp-text: #e8e8ea;
+  --cp-muted: #8a8a93;
+
+  --font-display: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  /* Sémantické názvy, na které se odkazuje sdílený reset. */
+  --color-bg: var(--cp-black);
+  --color-surface: var(--cp-panel);
+  --color-border: var(--cp-line);
+  --color-text: var(--cp-text);
+  --color-muted: var(--cp-muted);
+  --color-accent: var(--cp-yellow);
+  --color-accent-soft: var(--cp-cyan);
+  --color-danger: var(--cp-magenta);
+  --color-success: var(--cp-green);
+  --color-on-accent: var(--cp-black);
+
+  /* Zkosení rohů místo zaoblení – tvarový podpis stylu. */
+  --bevel: 14px;
+  --bevel-sm: 8px;
+  --radius: 0;
+
+  color-scheme: dark;
+}

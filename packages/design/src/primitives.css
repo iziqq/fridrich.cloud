@@ -1,0 +1,39 @@
+/*
+ * Strukturální tokeny – rozestupy, pohyb, rozvržení, typografická škála.
+ *
+ * Záměrně bez barev a bez konkrétních písem. Barvy a fonty dodává téma:
+ * portál má cyberpunkové (`theme-cyberpunk.css`), IziWeddy vlastní. Sdílené
+ * zůstává to, co má být napříč produkty stejné – odsazení, rytmus, tempo
+ * animací a dotykové cíle.
+ */
+
+:root {
+  /* --- Typografická škála (mobil → desktop) --- */
+  --text-h1: clamp(2.5rem, 1.2rem + 6.5vw, 5rem);
+  --text-h2: clamp(1.75rem, 1.1rem + 3.2vw, 3rem);
+  --text-h3: clamp(1.25rem, 1.05rem + 1vw, 1.75rem);
+  --text-body: clamp(1rem, 0.98rem + 0.15vw, 1.0625rem);
+  --text-label: 0.75rem;
+
+  /* --- Rozestupy (násobky 8px) --- */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-6: 3rem;
+  --space-8: 4rem;
+  --section-gap: clamp(6rem, 4rem + 10vw, 10rem);
+
+  /* --- Rozvržení --- */
+  --content-max: 1200px;
+  --gutter: clamp(1rem, 0.5rem + 2vw, 1.5rem);
+
+  /* --- Pohyb --- */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 240ms;
+  --dur-slow: 320ms;
+
+  /* Dotykové cíle mají mít nejméně 44 × 44 px. */
+  --touch-target: 2.75rem;
+}

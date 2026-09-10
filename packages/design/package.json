@@ -6,10 +6,11 @@
   "description": "Design tokeny a sdílené styly – cyberpunkové téma fridrich.cloud",
   "exports": {
     ".": "./src/index.css",
-    "./tokens.css": "./src/tokens.css",
-    "./fonts.css": "./src/fonts.css",
+    "./primitives.css": "./src/primitives.css",
     "./base.css": "./src/base.css",
-    "./effects.css": "./src/effects.css"
+    "./fonts.css": "./src/fonts.css",
+    "./effects.css": "./src/effects.css",
+    "./theme-cyberpunk.css": "./src/theme-cyberpunk.css"
   },
   "files": [
     "src"

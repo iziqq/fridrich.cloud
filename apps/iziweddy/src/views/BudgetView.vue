@@ -1,0 +1,237 @@
+<script setup lang="ts">
+import { PLANNING_CATEGORIES, PLANNING_CATEGORY_LABELS, formatCurrency } from '@fridrich/weddy-shared';
+import { computed, onMounted, watch } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
+import ErrorBlock from '@/components/ErrorBlock.vue';
+import LoadingBlock from '@/components/LoadingBlock.vue';
+import { usePlanningStore } from '@/stores/planning';
+
+const route = useRoute();
+const store = usePlanningStore();
+
+const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
+
+onMounted(() => store.load(weddingId.value));
+watch(weddingId, (id) => store.load(id));
+
+/*
+ * Rozpočet se nikam neukládá – počítá se ze stejných položek, které
+ * uživatel právě upravoval (doc/iziweddy.md, kap. 5.5). Proto se po
+ * návratu ze sekce nemusí nic načítat znovu.
+ */
+const budget = computed(() => store.budget);
+
+/** Sekce bez jediné položky by v rozpisu jen zabíraly místo. */
+const usedCategories = computed(() =>
+  PLANNING_CATEGORIES.filter((category) => {
+    const row = budget.value.byCategory[category];
+    return row.total > 0 || row.itemsWithoutPrice > 0;
+  }),
+);
+
+/** Podíl pro pruh – u nulového rozpočtu nemá smysl nic kreslit. */
+function share(amount: number): string {
+  if (budget.value.total <= 0) return '0%';
+  return `${Math.round((amount / budget.value.total) * 100)}%`;
+}
+</script>
+
+<template>
+  <div>
+    <LoadingBlock v-if="store.loading && store.items.length === 0" />
+    <ErrorBlock v-else-if="store.error" :message="store.error" />
+
+    <template v-else>
+      <section class="total card">
+        <p class="label">Celkem</p>
+        <p class="amount">{{ formatCurrency(budget.total) }}</p>
+
+        <div class="bar" role="img" :aria-label="`Schváleno ${share(budget.accepted)} z celkové částky`">
+          <span class="fill accepted" :style="{ width: share(budget.accepted) }"></span>
+          <span class="fill draft" :style="{ width: share(budget.draft) }"></span>
+        </div>
+
+        <dl class="split">
+          <div>
+            <dt><span class="dot accepted"></span> Schváleno</dt>
+            <dd>{{ formatCurrency(budget.accepted) }}</dd>
+          </div>
+          <div>
+            <dt><span class="dot draft"></span> Návrhy</dt>
+            <dd>{{ formatCurrency(budget.draft) }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <p v-if="budget.itemsWithoutPrice > 0" class="notice">
+        {{ budget.itemsWithoutPrice }}
+        {{ budget.itemsWithoutPrice === 1 ? 'položka nemá' : 'položek nemá' }}
+        vyplněnou cenu, takže součet nemusí být úplný.
+      </p>
+
+      <h2>Rozpis podle sekcí</h2>
+
+      <p v-if="usedCategories.length === 0" class="empty">
+        Zatím tu není žádná položka s cenou.
+        <RouterLink :to="`/weddings/${weddingId}/planning`">Přejít na plánování</RouterLink>
+      </p>
+
+      <ul v-else class="rows">
+        <li v-for="category in usedCategories" :key="category" class="row card">
+          <RouterLink :to="`/weddings/${weddingId}/planning/${category}`" class="link">
+            <span class="name">{{ PLANNING_CATEGORY_LABELS[category] }}</span>
+            <span class="values">
+              <span class="sum">{{ formatCurrency(budget.byCategory[category].total) }}</span>
+              <span class="detail">
+                <template v-if="budget.byCategory[category].accepted > 0">
+                  schváleno {{ formatCurrency(budget.byCategory[category].accepted) }}
+                </template>
+                <template v-if="budget.byCategory[category].itemsWithoutPrice > 0">
+                  · {{ budget.byCategory[category].itemsWithoutPrice }} bez ceny
+                </template>
+              </span>
+            </span>
+          </RouterLink>
+        </li>
+      </ul>
+    </template>
+  </div>
+</template>
+
+<style scoped>
+.total {
+  text-align: center;
+}
+
+.total .label {
+  margin-inline: auto;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.amount {
+  margin-inline: auto;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.5rem + 3vw, 3rem);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.bar {
+  display: flex;
+  overflow: hidden;
+  height: 0.5rem;
+  margin-top: var(--space-2);
+  border-radius: 999px;
+  background: var(--sand-100);
+}
+
+.fill.accepted {
+  background: var(--sage-500);
+}
+
+.fill.draft {
+  background: var(--rose-400);
+}
+
+.split {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.split dt {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+}
+
+.dot.accepted {
+  background: var(--sage-500);
+}
+
+.dot.draft {
+  background: var(--rose-400);
+}
+
+.split dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.notice {
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: #fdf6e3;
+  color: #8a6416;
+  font-size: 0.875rem;
+}
+
+h2 {
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-1);
+  font-size: 1.25rem;
+}
+
+.empty {
+  color: var(--color-muted);
+}
+
+.rows {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.row {
+  padding: 0;
+}
+
+.link {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-2);
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--color-accent);
+}
+
+.name {
+  font-weight: 600;
+}
+
+.values {
+  text-align: right;
+}
+
+.sum {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.detail {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+</style>
