@@ -1,6 +1,6 @@
 import { CosmosClient, type Container, type Database } from '@azure/cosmos';
 import { DefaultAzureCredential } from '@azure/identity';
-import { CONTAINERS, getConfig, type ContainerName } from '../../config.js';
+import { CONTAINERS, getCosmosConfig, type ContainerName } from '../../config.js';
 
 /**
  * Definice kontejnerů.
@@ -29,7 +29,7 @@ const CONTAINER_DEFINITIONS: {
 let databasePromise: Promise<Database> | undefined;
 
 async function initDatabase(): Promise<Database> {
-  const { cosmos } = getConfig();
+  const cosmos = getCosmosConfig();
 
   const client = cosmos.key
     ? new CosmosClient({ endpoint: cosmos.endpoint, key: cosmos.key })

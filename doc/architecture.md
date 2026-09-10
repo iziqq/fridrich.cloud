@@ -256,6 +256,9 @@ plus veřejný `POST /api/contact` pro formulář z portálu.
   `.fridrich.cloud`, aby platila i na subdoménách produktů.
 - Odpověď na `/login` i `/forgot-password` **nesmí prozradit**, zda e-mail existuje.
 - Rate limiting na `/register`, `/login` a `/forgot-password`.
+- Adresa klienta se bere z `x-azure-clientip` (platforma ji přepisuje), jinak
+  z **poslední** položky `x-forwarded-for`. První položku si posílá klient sám –
+  kdyby se použila, stačilo by ji obměňovat a limity by přestaly platit.
 - Ověřovací a resetovací tokeny: jednorázové, s expirací (24 h / 1 h).
 - Session cookie nese **neuhodnutelný náhodný identifikátor session**, ne data
   o uživateli. Session se dá kdykoli zneplatnit na serveru (odhlášení na všech
@@ -375,10 +378,18 @@ položek je to vždy „vše pro jednu svatbu", proto `/weddingId`.
 ### Nastavení API
 
 Zkopírujte `apps/api/local.settings.json.example` na `local.settings.json`
-a doplňte klíč k emulátoru Cosmos DB. Bez `ACS_CONNECTION_STRING` se e-maily
-mimo produkci **vypisují do konzole** – ověřovací odkaz se dá zkopírovat
-z logu, není potřeba nastavovat poštovní službu. V produkci chybějící
-připojovací řetězec vyhodí chybu, aby se odkazy netiše ztrácely v logu.
+a doplňte klíč k databázi. Bez `ACS_CONNECTION_STRING` se e-maily mimo
+produkci **vypisují do konzole** – ověřovací odkaz se dá zkopírovat z výpisu
+`func start`, není potřeba nastavovat poštovní službu. V produkci chybějící
+připojovací řetězec vyhodí chybu, aby se odkazy netiše neztrácely v logu.
+
+> ⚠️ **Při vývoji snadno narazíte na rate limit.** Lokálně nestojí před API
+> žádná proxy, takže hlavičky s adresou klienta chybí a všechny požadavky
+> spadnou do jednoho koše pod klíčem `unknown`. Platí tedy 5 registrací za
+> hodinu a 20 přihlášení za 15 minut **dohromady**, ne na uživatele.
+> Odpověď `429` proto při zkoušení obvykle neznamená chybu v kódu.
+> Řešení: počkat, smazat obsah kontejneru `rateLimits`, nebo požadavkům
+> posílat hlavičku `x-forwarded-for` s různou adresou.
 
 Frontendy mají ve `vite.config.ts` proxy `/api` → `http://localhost:7071`, takže
 při vývoji nevzniká cross-origin požadavek.

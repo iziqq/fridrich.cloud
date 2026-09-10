@@ -25,20 +25,28 @@ export const CONTAINERS = {
 
 export type ContainerName = (typeof CONTAINERS)[keyof typeof CONTAINERS];
 
+/**
+ * Nastavení databáze je oddělené od zbytku schválně.
+ *
+ * Načítá se až ve chvíli, kdy se opravdu připojujeme – jinak by chybějící
+ * `COSMOS_ENDPOINT` shodil i kód, který s databází nemá nic společného
+ * (sestavení cookie, hlavičky CORS).
+ */
+export interface CosmosConfig {
+  endpoint: string;
+  key?: string;
+  database: string;
+  /**
+   * Sdílená kapacita databáze v RU/s.
+   *
+   * Vyplňte na účtu s předplacenou kapacitou (provisioned), ať si kontejnery
+   * kapacitu dělí místo toho, aby každý chtěl vlastní. Na serverless účtu
+   * nechte prázdné – ten throughput odmítá.
+   */
+  throughput?: number;
+}
+
 export interface AppConfig {
-  cosmos: {
-    endpoint: string;
-    key?: string;
-    database: string;
-    /**
-     * Sdílená kapacita databáze v RU/s.
-     *
-     * Vyplňte na účtu s předplacenou kapacitou (provisioned), ať si kontejnery
-     * kapacitu dělí místo toho, aby každý chtěl vlastní. Na serverless účtu
-     * nechte prázdné – ten throughput odmítá.
-     */
-    throughput?: number;
-  };
   /** Původy, ze kterých smí chodit požadavky s cookie. */
   allowedOrigins: string[];
   /** Základ odkazů v e-mailech. */
@@ -54,6 +62,27 @@ export interface AppConfig {
 }
 
 let cached: AppConfig | undefined;
+let cachedCosmos: CosmosConfig | undefined;
+
+export function getCosmosConfig(): CosmosConfig {
+  if (cachedCosmos) return cachedCosmos;
+
+  const config: CosmosConfig = {
+    endpoint: required('COSMOS_ENDPOINT'),
+    database: optional('COSMOS_DATABASE', 'izi-db'),
+  };
+
+  // Klíč jen tam, kde je (emulátor, lokální vývoj) – v Azure jedeme
+  // na managed identity, aby v nastavení neležel tajný klíč.
+  const key = process.env['COSMOS_KEY'];
+  if (key) config.key = key;
+
+  const throughput = Number(process.env['COSMOS_THROUGHPUT']);
+  if (Number.isInteger(throughput) && throughput > 0) config.throughput = throughput;
+
+  cachedCosmos = config;
+  return config;
+}
 
 export function getConfig(): AppConfig {
   if (cached) return cached;
@@ -61,10 +90,6 @@ export function getConfig(): AppConfig {
   const isProduction = optional('NODE_ENV', 'development') === 'production';
 
   const config: AppConfig = {
-    cosmos: {
-      endpoint: required('COSMOS_ENDPOINT'),
-      database: optional('COSMOS_DATABASE', 'izi-db'),
-    },
     allowedOrigins: optional(
       'ALLOWED_ORIGINS',
       'http://localhost:5173,http://localhost:5174,http://localhost:5175',
@@ -79,14 +104,6 @@ export function getConfig(): AppConfig {
       inbox: optional('CONTACT_INBOX', 'liborfridrich@gmail.com'),
     },
   };
-
-  // Klíč jen tam, kde je (emulátor, lokální vývoj) – v Azure jedeme
-  // na managed identity, aby v nastavení neležel tajný klíč.
-  const cosmosKey = process.env['COSMOS_KEY'];
-  if (cosmosKey) config.cosmos.key = cosmosKey;
-
-  const throughput = Number(process.env['COSMOS_THROUGHPUT']);
-  if (Number.isInteger(throughput) && throughput > 0) config.cosmos.throughput = throughput;
 
   const cookieDomain = process.env['COOKIE_DOMAIN'];
   if (cookieDomain) config.cookieDomain = cookieDomain;

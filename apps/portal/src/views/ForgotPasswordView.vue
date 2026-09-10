@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
 import AuthField from '@/components/AuthField.vue';
 import CyberButton from '@/components/CyberButton.vue';
 import { ApiError, useAuthStore } from '@/stores/auth';
 
 const auth = useAuthStore();
-const router = useRouter();
-const route = useRoute();
 
 const email = ref('');
-const password = ref('');
+const done = ref('');
 const error = ref('');
 const busy = ref(false);
 
@@ -20,14 +18,10 @@ async function submit(): Promise<void> {
   busy.value = true;
 
   try {
-    await auth.login({ email: email.value.trim(), password: password.value });
-
-    // Po přihlášení zpět tam, odkud uživatel přišel.
-    const target = typeof route.query['redirect'] === 'string' ? route.query['redirect'] : '/ucet';
-    await router.replace(target);
+    done.value = await auth.forgotPassword({ email: email.value.trim() });
   } catch (cause) {
     error.value =
-      cause instanceof ApiError ? cause.message : 'Přihlášení selhalo. Zkuste to prosím znovu.';
+      cause instanceof ApiError ? cause.message : 'Nepodařilo se odeslat. Zkuste to prosím znovu.';
   } finally {
     busy.value = false;
   }
@@ -35,26 +29,27 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <AuthCard label="// Přihlášení" title="Přihlásit se">
-    <form novalidate @submit.prevent="submit">
+  <AuthCard label="// Obnova hesla" title="Zapomenuté heslo">
+    <!-- Odpověď je stejná i pro neznámou adresu – neprozradí, kdo je registrovaný. -->
+    <p v-if="done" class="mono ok">&gt; {{ done }}</p>
+
+    <form v-else novalidate @submit.prevent="submit">
+      <p class="lead">
+        Zadejte e-mail, kterým se přihlašujete. Pošleme na něj odkaz pro nastavení
+        nového hesla.
+      </p>
+
       <AuthField v-model="email" label="E-mail" type="email" autocomplete="email" />
-      <AuthField
-        v-model="password"
-        label="Heslo"
-        type="password"
-        autocomplete="current-password"
-      />
 
       <p v-if="error" class="error mono" role="alert">&gt; {{ error }}</p>
 
       <CyberButton type="submit" :disabled="busy">
-        {{ busy ? 'Přihlašuji…' : 'Přihlásit se' }}
+        {{ busy ? 'Odesílám…' : 'Odeslat odkaz' }}
       </CyberButton>
     </form>
 
     <template #footer>
-      <p><RouterLink to="/zapomenute-heslo">Zapomenuté heslo</RouterLink></p>
-      <p>Ještě nemáte účet? <RouterLink to="/registrace">Zaregistrujte se</RouterLink></p>
+      <p><RouterLink to="/prihlaseni">Zpět na přihlášení</RouterLink></p>
     </template>
   </AuthCard>
 </template>
@@ -66,7 +61,15 @@ form {
   gap: var(--space-2);
 }
 
+.lead {
+  color: var(--cp-muted);
+}
+
 .error {
   color: var(--cp-magenta);
+}
+
+.ok {
+  color: var(--cp-green);
 }
 </style>

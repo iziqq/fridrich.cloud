@@ -3,8 +3,11 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { navItems, site } from '@/content/site';
 import { useActiveSection } from '@/composables/useActiveSection';
+import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
+const auth = useAuthStore();
+
 const menuOpen = ref(false);
 const hidden = ref(false);
 
@@ -20,7 +23,13 @@ function onScroll(): void {
   lastScroll = current;
 }
 
-onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }));
+onMounted(() => {
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Stav přihlášení se zjišťuje dotazem na API – session drží httpOnly cookie,
+  // kterou JavaScript nepřečte.
+  void auth.load();
+});
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll);
   document.body.style.removeProperty('overflow');
@@ -66,7 +75,10 @@ function target(hash: string): string {
 
       <span class="divider" aria-hidden="true"></span>
 
-      <RouterLink to="/prihlaseni" class="login">Přihlásit se</RouterLink>
+      <RouterLink v-if="auth.isAuthenticated" to="/ucet" class="login account">
+        {{ auth.user?.displayName }}
+      </RouterLink>
+      <RouterLink v-else to="/prihlaseni" class="login">Přihlásit se</RouterLink>
 
       <button
         class="toggle"
@@ -90,7 +102,10 @@ function target(hash: string): string {
           </a>
         </li>
         <li class="overlay-login" :style="{ '--i': navItems.length }">
-          <RouterLink to="/prihlaseni">Přihlásit se</RouterLink>
+          <RouterLink v-if="auth.isAuthenticated" to="/ucet">
+            {{ auth.user?.displayName }}
+          </RouterLink>
+          <RouterLink v-else to="/prihlaseni">Přihlásit se</RouterLink>
         </li>
       </ul>
       <p class="mono overlay-foot">{{ site.domain }}</p>
@@ -178,6 +193,11 @@ function target(hash: string): string {
 .login {
   display: none;
   color: var(--cp-muted);
+}
+
+/* Přihlášený uživatel je viditelnější než výzva k přihlášení. */
+.login.account {
+  color: var(--cp-yellow);
 }
 
 .toggle {

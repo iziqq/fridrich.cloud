@@ -115,13 +115,29 @@ export async function readJson(request: HttpRequest): Promise<unknown> {
 /**
  * IP klienta pro rate limiting.
  *
- * Za reverzní proxy Azure je skutečná adresa v `x-forwarded-for`; bereme
- * první položku, protože další už si může přidat kdokoli.
+ * Pořadí zdrojů je tu podstatné, ne kosmetické:
+ *
+ * 1. `x-azure-clientip` nastavuje platforma a příchozí hodnotu přepisuje,
+ *    takže se nedá podvrhnout.
+ * 2. V `x-forwarded-for` je seznam `klient, proxy1, proxy2`, kde každá proxy
+ *    připojuje adresu, ze které požadavek dostala. Bereme **poslední**
+ *    položku – tu přidal front end Azure, takže odpovídá skutečnému spojení.
+ *    První položku si posílá klient sám; kdyby se použila, stačilo by ji
+ *    obměňovat a rate limiting by přestal platit.
  */
 export function clientIp(request: HttpRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const first = forwarded?.split(',')[0]?.trim();
-  if (first) return first.replace(/:\d+$/, '');
+  const azure = request.headers.get('x-azure-clientip')?.trim();
+  if (azure) return stripPort(azure);
 
-  return request.headers.get('x-client-ip') ?? 'unknown';
+  const forwarded = request.headers.get('x-forwarded-for');
+  const hops = forwarded?.split(',').map((hop) => hop.trim()).filter(Boolean) ?? [];
+  const nearest = hops.at(-1);
+  if (nearest) return stripPort(nearest);
+
+  return request.headers.get('x-client-ip')?.trim() ?? 'unknown';
+}
+
+/** Azure připojuje k adrese port (`1.2.3.4:56789`), pro klíč limitu je navíc. */
+function stripPort(address: string): string {
+  return address.replace(/:\d+$/, '');
 }
