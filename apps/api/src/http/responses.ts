@@ -80,6 +80,17 @@ export function errorResponse(request: HttpRequest, error: DomainError): HttpRes
   return json(request, mapping.status, body);
 }
 
+export function methodNotAllowed(
+  request: HttpRequest,
+  allowed: readonly string[],
+): HttpResponseInit {
+  const body: ApiErrorBody = {
+    error: 'NotFound',
+    message: `Metoda ${request.method} není na této adrese podporovaná`,
+  };
+  return json(request, 405, body, { Allow: allowed.join(', ') });
+}
+
 export function serverError(request: HttpRequest): HttpResponseInit {
   const body: ApiErrorBody = {
     error: 'InternalServerError',

@@ -9,7 +9,7 @@ import {
 } from '../application/weddy/guests.js';
 import type { GuestFilter } from '../domain/weddy/ports.js';
 import { weddyDeps } from '../infrastructure/container.js';
-import { authenticatedEndpoint } from '../http/handler.js';
+import { routeByMethod } from '../http/handler.js';
 import { json, noContent, readJson } from '../http/responses.js';
 
 /** Hosté – `/api/weddy/weddings/{weddingId}/guests`. */
@@ -30,77 +30,75 @@ function parseFilter(request: HttpRequest): GuestFilter {
   return filter;
 }
 
-app.http('listGuests', {
-  methods: ['GET', 'OPTIONS'],
+app.http('guestCollection', {
   route: 'weddy/weddings/{weddingId}/guests',
   authLevel: 'anonymous',
-  handler: authenticatedEndpoint(async (request, _context, user) =>
-    json(
-      request,
-      200,
-      await listGuests(weddyDeps(), request.params['weddingId'], user.id, parseFilter(request)),
-    ),
-  ),
-});
+  ...routeByMethod({
+    GET: async (request, _context, user) =>
+      json(
+        request,
+        200,
+        await listGuests(weddyDeps(), request.params['weddingId'], user.id, parseFilter(request)),
+      ),
 
-app.http('createGuest', {
-  methods: ['POST', 'OPTIONS'],
-  route: 'weddy/weddings/{weddingId}/guests',
-  authLevel: 'anonymous',
-  handler: authenticatedEndpoint(async (request, _context, user) => {
-    const guest = await createGuest(
-      weddyDeps(),
-      request.params['weddingId'],
-      await readJson(request),
-      user.id,
-    );
-    return json(request, 201, guest);
+    POST: async (request, _context, user) =>
+      json(
+        request,
+        201,
+        await createGuest(
+          weddyDeps(),
+          request.params['weddingId'],
+          await readJson(request),
+          user.id,
+        ),
+      ),
   }),
 });
 
-app.http('updateGuest', {
-  methods: ['PUT', 'OPTIONS'],
+app.http('guestItem', {
   route: 'weddy/weddings/{weddingId}/guests/{guestId}',
   authLevel: 'anonymous',
-  handler: authenticatedEndpoint(async (request, _context, user) => {
-    const guest = await updateGuest(
-      weddyDeps(),
-      request.params['weddingId'],
-      request.params['guestId'],
-      await readJson(request),
-      user.id,
-    );
-    return json(request, 200, guest);
+  ...routeByMethod({
+    PUT: async (request, _context, user) =>
+      json(
+        request,
+        200,
+        await updateGuest(
+          weddyDeps(),
+          request.params['weddingId'],
+          request.params['guestId'],
+          await readJson(request),
+          user.id,
+        ),
+      ),
+
+    DELETE: async (request, _context, user) => {
+      await deleteGuest(
+        weddyDeps(),
+        request.params['weddingId'],
+        request.params['guestId'],
+        user.id,
+      );
+      return noContent(request);
+    },
   }),
 });
 
-app.http('updateGuestStatus', {
-  methods: ['PATCH', 'OPTIONS'],
+app.http('guestStatus', {
   route: 'weddy/weddings/{weddingId}/guests/{guestId}/status',
   authLevel: 'anonymous',
-  handler: authenticatedEndpoint(async (request, _context, user) => {
-    const guest = await changeGuestStatus(
-      weddyDeps(),
-      request.params['weddingId'],
-      request.params['guestId'],
-      await readJson(request),
-      user.id,
-    );
-    return json(request, 200, guest);
-  }),
-});
-
-app.http('deleteGuest', {
-  methods: ['DELETE', 'OPTIONS'],
-  route: 'weddy/weddings/{weddingId}/guests/{guestId}',
-  authLevel: 'anonymous',
-  handler: authenticatedEndpoint(async (request, _context, user) => {
-    await deleteGuest(
-      weddyDeps(),
-      request.params['weddingId'],
-      request.params['guestId'],
-      user.id,
-    );
-    return noContent(request);
+  ...routeByMethod({
+    PATCH: async (request, _context, user) =>
+      json(
+        request,
+        200,
+        await changeGuestStatus(
+          weddyDeps(),
+          request.params['weddingId'],
+          request.params['guestId'],
+          await readJson(request),
+          user.id,
+        ),
+      ),
   }),
 });

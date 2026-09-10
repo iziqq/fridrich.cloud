@@ -1,10 +1,21 @@
-import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import type {
+  HttpMethod,
+  HttpRequest,
+  HttpResponseInit,
+  InvocationContext,
+} from '@azure/functions';
 import { resolveSession } from '../application/identity/session.js';
 import { identityDeps } from '../infrastructure/container.js';
 import type { User } from '../domain/identity/User.js';
 import { DomainError } from '../domain/shared/DomainError.js';
 import { readSessionToken } from './cookies.js';
-import { errorResponse, preflight, serverError, toResponse } from './responses.js';
+import {
+  errorResponse,
+  methodNotAllowed,
+  preflight,
+  serverError,
+  toResponse,
+} from './responses.js';
 
 export type PublicHandler = (
   request: HttpRequest,
@@ -54,4 +65,34 @@ export function authenticatedEndpoint(handler: AuthenticatedHandler): PublicHand
 
     return handler(request, context, user);
   });
+}
+
+/**
+ * Chráněná cesta obsluhující víc HTTP metod.
+ *
+ * Azure Functions nedovolí zaregistrovat dvě funkce na stejnou cestu, i když
+ * každá obsluhuje jinou metodu – `GET /weddings` a `POST /weddings` musí být
+ * jedna funkce. Rozhodnutí podle metody je čtení požadavku, ne business
+ * logika, takže handler zůstává tenký (CLAUDE.md, pravidlo 2).
+ *
+ * Vrací rovnou i seznam metod k registraci, ať se nemůže rozejít s tím, co
+ * handler skutečně umí.
+ */
+export function routeByMethod(handlers: Partial<Record<string, AuthenticatedHandler>>): {
+  methods: HttpMethod[];
+  handler: PublicHandler;
+} {
+  const methods = [...Object.keys(handlers), 'OPTIONS'] as HttpMethod[];
+
+  return {
+    methods,
+    handler: authenticatedEndpoint(async (request, context, user) => {
+      const handler = handlers[request.method];
+      // Pojistka pro případ, že by se `methods` rozešlo s `handlers`.
+      // Na neregistrovanou metodu odpoví runtime 404 dřív, než sem dojde.
+      if (!handler) return methodNotAllowed(request, methods);
+
+      return handler(request, context, user);
+    }),
+  };
 }
