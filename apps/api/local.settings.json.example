@@ -1,0 +1,18 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "NODE_ENV": "development",
+
+    "COSMOS_ENDPOINT": "https://localhost:8081",
+    "COSMOS_KEY": "<klic-emulatoru>",
+    "COSMOS_DATABASE": "fridrich-cloud",
+
+    "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:5174,http://localhost:5175",
+    "APP_URL": "http://localhost:5173",
+
+    "CONTACT_INBOX": "liborfridrich@gmail.com",
+    "EMAIL_FROM": "no-reply@fridrich.cloud"
+  }
+}

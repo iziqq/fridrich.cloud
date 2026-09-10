@@ -1,0 +1,24 @@
+{
+  "name": "@fridrich/portal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --build && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --build --force"
+  },
+  "dependencies": {
+    "@fridrich/design": "*",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.0",
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vue-tsc": "^2.1.10"
+  }
+}

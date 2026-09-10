@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+.tmp/
+
+# Azure Functions
+apps/api/local.settings.json
+apps/api/bin/
+apps/api/obj/
+.azure/
+.func/
+
+# Static Web Apps CLI
+swa-cli.config.json
+.swa/
+
+# logs
+*.log
+npm-debug.log*
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# env
+.env
+.env.local
+.env.*.local

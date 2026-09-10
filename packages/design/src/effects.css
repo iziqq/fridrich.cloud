@@ -1,0 +1,232 @@
+/*
+ * Cyberpunkové efekty – zkosené rohy, neonový svit, scanlines, šum, glitch.
+ * Viz doc/portal.md, kap. 4.3, 4.4 a 5.
+ */
+
+/* --- Zkosené rohy (podpis stylu, místo border-radius) --- */
+
+.bevel {
+  clip-path: polygon(
+    var(--bevel) 0,
+    100% 0,
+    100% calc(100% - var(--bevel)),
+    calc(100% - var(--bevel)) 100%,
+    0 100%,
+    0 var(--bevel)
+  );
+}
+
+.bevel-tl {
+  clip-path: polygon(var(--bevel) 0, 100% 0, 100% 100%, 0 100%, 0 var(--bevel));
+}
+
+.bevel-sm {
+  clip-path: polygon(
+    var(--bevel-sm) 0,
+    100% 0,
+    100% calc(100% - var(--bevel-sm)),
+    calc(100% - var(--bevel-sm)) 100%,
+    0 100%,
+    0 var(--bevel-sm)
+  );
+}
+
+/* --- Neonový svit --- */
+
+.neon-yellow {
+  box-shadow:
+    0 0 0 1px var(--cp-yellow),
+    0 0 24px -6px color-mix(in srgb, var(--cp-yellow) 70%, transparent);
+}
+
+.neon-cyan {
+  box-shadow:
+    0 0 0 1px var(--cp-cyan),
+    0 0 24px -6px color-mix(in srgb, var(--cp-cyan) 70%, transparent);
+}
+
+.text-glow-yellow {
+  text-shadow: 0 0 18px color-mix(in srgb, var(--cp-yellow) 55%, transparent);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 18px color-mix(in srgb, var(--cp-cyan) 55%, transparent);
+}
+
+/* --- Scanlines --- */
+
+.scanlines {
+  position: relative;
+}
+
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.9) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* --- Šum / CRT (SVG feTurbulence jako data URI) --- */
+
+.noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --- Hexagonální mřížka na pozadí --- */
+
+.grid-bg {
+  background-image:
+    linear-gradient(to right, var(--cp-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--cp-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+}
+
+/* --- Glitch nadpis --- */
+
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+/*
+ * Dvě barevné kopie textu posunuté o pár pixelů – chromatická aberace.
+ * Základní text prosvítá pod nimi, proto vrstvy nemají vlastní pozadí.
+ */
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.glitch::before {
+  color: var(--cp-cyan);
+  transform: translate(-2px, -1px);
+  clip-path: inset(0 0 62% 0);
+}
+
+.glitch::after {
+  color: var(--cp-magenta);
+  transform: translate(2px, 1px);
+  clip-path: inset(58% 0 0 0);
+}
+
+/* Glitch se přehraje jednou při zobrazení, neběží ve smyčce. */
+.glitch.is-visible::before {
+  animation: glitch-top 420ms steps(3, end) 1;
+}
+
+.glitch.is-visible::after {
+  animation: glitch-bottom 420ms steps(3, end) 1;
+}
+
+@keyframes glitch-top {
+  0% {
+    transform: translate(-2px, -1px);
+    clip-path: inset(0 0 62% 0);
+  }
+  33% {
+    transform: translate(6px, -3px);
+    clip-path: inset(0 0 40% 0);
+  }
+  66% {
+    transform: translate(-8px, 1px);
+    clip-path: inset(0 0 70% 0);
+  }
+  100% {
+    transform: translate(-2px, -1px);
+    clip-path: inset(0 0 62% 0);
+  }
+}
+
+@keyframes glitch-bottom {
+  0% {
+    transform: translate(2px, 1px);
+    clip-path: inset(58% 0 0 0);
+  }
+  33% {
+    transform: translate(-6px, 3px);
+    clip-path: inset(45% 0 0 0);
+  }
+  66% {
+    transform: translate(8px, -1px);
+    clip-path: inset(66% 0 0 0);
+  }
+  100% {
+    transform: translate(2px, 1px);
+    clip-path: inset(58% 0 0 0);
+  }
+}
+
+/* --- Odhalení sekce při scrollu --- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- Blikající kurzor terminálu --- */
+
+.caret::after {
+  content: '▌';
+  margin-left: 0.1em;
+  animation: caret-blink 1s steps(2, end) infinite;
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/*
+ * Kdo si vyžádal omezení pohybu, dostane obsah rovnou a bez efektů.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .glitch::before,
+  .glitch::after,
+  .scanlines::after,
+  .noise::before {
+    display: none;
+  }
+}

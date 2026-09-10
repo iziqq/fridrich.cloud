@@ -1,6 +1,26 @@
-# 💍 Svatební plánovač
+# 💍 IziWeddy – svatební plánovač
 
 Mobilní webová aplikace pro plánování svatby. Umožňuje spravovat údaje o snoubencích, seznam hostů, jednotlivé oblasti přípravy (místo obřadu, veselka, květiny, šaty…) a automaticky počítá rozpočet.
+
+IziWeddy je **jeden z produktů pod `fridrich.cloud`**, ne samostatný projekt. Rozdělení celku, sdílené balíčky a společná identita jsou popsané v [architecture.md](architecture.md).
+
+| | |
+|---|---|
+| **Doména** | `iziweddy.fridrich.cloud` |
+| **Modul API** | `/api/weddy/*` |
+| **Frontend** | `apps/iziweddy` |
+| **Sdílené typy** | `packages/weddy-shared` |
+| **Přihlášení** | Společný účet `fridrich.cloud` – viz [architecture.md, kap. 5](architecture.md#5-identita-registrace-a-přihlášení) |
+
+> ⚠️ **Poznámka k tomuto dokumentu.** Vznikl dřív než rozdělení projektu, takže
+> kapitoly [3](#3-struktura-repozitáře), [7](#7-rest-api), [9](#9-ukládání-dat),
+> [10](#10-lokální-vývoj) a [11](#11-nasazení) popisují IziWeddy jako samostatný
+> repozitář. Platí místo nich [architecture.md](architecture.md); konkrétně:
+> aplikace žije v `apps/iziweddy`, endpointy mají prefix `/api/weddy`, backend
+> je organizovaný domain-first podle [`CLAUDE.md`](../CLAUDE.md) a otázka
+> přihlašování (kap. 12, otázka 1) je už zodpovězená – účet je společný pro
+> všechny produkty. **Kapitoly 4, 5, 6, 8 a 12 platí beze změny** – to je
+> vlastní zadání aplikace.
 
 ---
 
@@ -468,44 +488,44 @@ Všechny endpointy mají prefix `/api`. Data se přenášejí ve formátu JSON.
 
 | Metoda | Endpoint | Popis |
 |---|---|---|
-| `GET` | `/api/weddings` | Seznam svateb vč. souhrnných statistik pro dashboard |
-| `POST` | `/api/weddings` | Vytvoření svatby |
-| `GET` | `/api/weddings/{weddingId}` | Detail svatby |
-| `PUT` | `/api/weddings/{weddingId}` | Úprava svatby (název, datum, snoubenci) |
-| `DELETE` | `/api/weddings/{weddingId}` | Smazání svatby včetně hostů a položek |
+| `GET` | `/api/weddy/weddings` | Seznam svateb vč. souhrnných statistik pro dashboard |
+| `POST` | `/api/weddy/weddings` | Vytvoření svatby |
+| `GET` | `/api/weddy/weddings/{weddingId}` | Detail svatby |
+| `PUT` | `/api/weddy/weddings/{weddingId}` | Úprava svatby (název, datum, snoubenci) |
+| `DELETE` | `/api/weddy/weddings/{weddingId}` | Smazání svatby včetně hostů a položek |
 
 ### 7.2 Hosté
 
 | Metoda | Endpoint | Popis |
 |---|---|---|
-| `GET` | `/api/weddings/{weddingId}/guests` | Seznam hostů (volitelné filtry `?side=`, `?ageGroup=`, `?status=`) |
-| `POST` | `/api/weddings/{weddingId}/guests` | Přidání hosta |
-| `PUT` | `/api/weddings/{weddingId}/guests/{guestId}` | Úprava hosta |
-| `PATCH` | `/api/weddings/{weddingId}/guests/{guestId}/status` | Rychlá změna stavu |
-| `DELETE` | `/api/weddings/{weddingId}/guests/{guestId}` | Smazání hosta |
+| `GET` | `/api/weddy/weddings/{weddingId}/guests` | Seznam hostů (volitelné filtry `?side=`, `?ageGroup=`, `?status=`) |
+| `POST` | `/api/weddy/weddings/{weddingId}/guests` | Přidání hosta |
+| `PUT` | `/api/weddy/weddings/{weddingId}/guests/{guestId}` | Úprava hosta |
+| `PATCH` | `/api/weddy/weddings/{weddingId}/guests/{guestId}/status` | Rychlá změna stavu |
+| `DELETE` | `/api/weddy/weddings/{weddingId}/guests/{guestId}` | Smazání hosta |
 
 ### 7.3 Položky plánování
 
 | Metoda | Endpoint | Popis |
 |---|---|---|
-| `GET` | `/api/weddings/{weddingId}/items` | Seznam položek (volitelný filtr `?category=`) |
-| `POST` | `/api/weddings/{weddingId}/items` | Přidání položky |
-| `PUT` | `/api/weddings/{weddingId}/items/{itemId}` | Úprava položky |
-| `PATCH` | `/api/weddings/{weddingId}/items/{itemId}/status` | Rychlá změna stavu |
-| `DELETE` | `/api/weddings/{weddingId}/items/{itemId}` | Smazání položky |
+| `GET` | `/api/weddy/weddings/{weddingId}/items` | Seznam položek (volitelný filtr `?category=`) |
+| `POST` | `/api/weddy/weddings/{weddingId}/items` | Přidání položky |
+| `PUT` | `/api/weddy/weddings/{weddingId}/items/{itemId}` | Úprava položky |
+| `PATCH` | `/api/weddy/weddings/{weddingId}/items/{itemId}/status` | Rychlá změna stavu |
+| `DELETE` | `/api/weddy/weddings/{weddingId}/items/{itemId}` | Smazání položky |
 
 ### 7.4 Rozpočet
 
 | Metoda | Endpoint | Popis |
 |---|---|---|
-| `GET` | `/api/weddings/{weddingId}/budget` | Vypočítaný rozpočet |
+| `GET` | `/api/weddy/weddings/{weddingId}/budget` | Vypočítaný rozpočet |
 
 ### 7.5 Příklady
 
 **Vytvoření položky plánování**
 
 ```http
-POST /api/weddings/7f3c.../items
+POST /api/weddy/weddings/7f3c.../items
 Content-Type: application/json
 
 {
@@ -535,7 +555,7 @@ Odpověď `201 Created`:
 **Rozpočet**
 
 ```http
-GET /api/weddings/7f3c.../budget
+GET /api/weddy/weddings/7f3c.../budget
 ```
 
 ```json

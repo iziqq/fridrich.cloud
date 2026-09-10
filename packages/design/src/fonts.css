@@ -1,0 +1,21 @@
+/*
+ * Fonty jsou self-hostované přes @fontsource – žádné volání na fonts.google.com
+ * (GDPR) a žádný skok layoutu při načtení (doc/portal.md, kap. 4.2).
+ *
+ * Importují se jen subsety latin a latin-ext. Latin-ext nese českou diakritiku
+ * (ř, ě, ů, č…), zbytek subsetů (devanagari, thajština, vietnamština) by jen
+ * nafoukl build o písma, která web nikdy nevykreslí.
+ */
+
+@import '@fontsource/rajdhani/latin-600.css';
+@import '@fontsource/rajdhani/latin-ext-600.css';
+@import '@fontsource/rajdhani/latin-700.css';
+@import '@fontsource/rajdhani/latin-ext-700.css';
+
+@import '@fontsource/chakra-petch/latin-400.css';
+@import '@fontsource/chakra-petch/latin-ext-400.css';
+@import '@fontsource/chakra-petch/latin-500.css';
+@import '@fontsource/chakra-petch/latin-ext-500.css';
+
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource/jetbrains-mono/latin-ext-400.css';

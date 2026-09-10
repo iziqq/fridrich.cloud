@@ -1,0 +1,22 @@
+{
+  "name": "@fridrich/design",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Design tokeny a sdílené styly – cyberpunkové téma fridrich.cloud",
+  "exports": {
+    ".": "./src/index.css",
+    "./tokens.css": "./src/tokens.css",
+    "./fonts.css": "./src/fonts.css",
+    "./base.css": "./src/base.css",
+    "./effects.css": "./src/effects.css"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@fontsource/chakra-petch": "^5.1.0",
+    "@fontsource/jetbrains-mono": "^5.1.0",
+    "@fontsource/rajdhani": "^5.1.0"
+  }
+}
