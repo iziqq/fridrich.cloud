@@ -590,11 +590,23 @@ nenašlo.
 workspaces. Spravované funkce se ale na Azure instalují `npm install` jen
 v adresáři API a tyhle balíčky na npm nejsou – instalace by selhala.
 
+Azure navíc u spravovaných funkcí **závislosti nedoinstaluje** – nahraje se
+přesně to, co pošleme. Balíček si je tedy musí přinést s sebou.
+
 Proto `npm run build:api` (skript `apps/api/scripts/build-deploy.mjs`) spojí
-esbuildem zdrojový kód **i sdílené balíčky** do jednoho `index.js` a vyrobí
-`apps/api/deploy/` s package.json, ve kterém zůstaly jen závislosti z registru.
-Ty se rovnou doinstalují, takže se nasazuje hotový balíček a build na Azure
-se přeskakuje.
+esbuildem do jednoho `index.js` úplně všechno: vlastní kód, sdílené workspace
+balíčky i závislosti z registru. Venku zůstává jen `@azure/functions`.
+
+> ⚠️ **Posílat `node_modules` nefunguje.** Se závislostmi na disku má balíček
+> 87 MB a přes 13 000 souborů (samotné `@azure/*` 11 700) a nasazení padá na
+> `An unknown exception has occurred` bez dalšího vysvětlení. Po zabalení
+> zbude ~120 souborů a 3 MB a projde. Vyhodit `node_modules` a spolehnout se,
+> že si je Azure doinstaluje, taky nejde – funkce pak vracejí 404.
+
+> ℹ️ Bundle potřebuje shim `createRequire`. Část závislostí Azure SDK
+> (`https-proxy-agent`) je CommonJS a uvnitř volá `require`; v ESM bundlu ho
+> nic nedefinuje a worker se neodpíchne s hláškou
+> `Dynamic require of "net" is not supported`.
 
 ### Nasazení
 

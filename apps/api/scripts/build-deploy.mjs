@@ -7,11 +7,14 @@ import { build } from 'esbuild';
 /*
  * Sestaví z apps/api balíček, který jde nasadit sám o sobě.
  *
- * Azure Static Web Apps spouští u spravovaných funkcí `npm install` jen
- * v adresáři API. Workspace závislosti (`@fridrich/shared`) na npm nejsou,
- * takže by instalace selhala – proto se zdrojový kód i se sdílenými balíčky
- * spojí esbuildem do jednoho souboru a do package.json jdou jen závislosti,
- * které se opravdu dají stáhnout z registru.
+ * Nahrává se jako hotový balíček – Azure u spravovaných funkcí závislosti
+ * nedoinstaluje, takže si je musíme přinést s sebou. Esbuild proto spojí
+ * do jednoho souboru úplně všechno: vlastní kód, sdílené workspace balíčky
+ * i závislosti z registru.
+ *
+ * Bez toho je balíček 87 MB a přes 13 000 souborů (samotné `@azure/*` jich
+ * mají 11 700) a nasazení padá na `An unknown exception has occurred`.
+ * Po zabalení zbude ~120 souborů a 3 MB.
  */
 
 const apiDir = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -24,10 +27,14 @@ const pkg = JSON.parse(
   }),
 );
 
-// Balíky z registru zůstanou venku a doinstalují se; workspace balíčky se
-// zabalí dovnitř, protože je odjinud než z tohohle repozitáře nevytáhneme.
-const external = Object.entries(pkg.dependencies ?? {}).filter(
-  ([name]) => !name.startsWith('@fridrich/'),
+/*
+ * Venku zůstává jen `@azure/functions` – programovací model si runtime
+ * načítá sám a je malý. Všechno ostatní jde dovnitř bundlu.
+ */
+const EXTERNAL = ['@azure/functions'];
+
+const external = Object.entries(pkg.dependencies ?? {}).filter(([name]) =>
+  EXTERNAL.includes(name),
 );
 
 rmSync(outDir, { recursive: true, force: true });
@@ -41,7 +48,19 @@ await build({
   target: 'node20',
   format: 'esm',
   sourcemap: true,
-  external: external.map(([name]) => name),
+  external: EXTERNAL,
+  /*
+   * Některé závislosti Azure SDK (`https-proxy-agent`) jsou CommonJS a uvnitř
+   * volají `require`. V ESM bundlu ho nic nedefinuje, takže by se worker
+   * neodpíchl: „Dynamic require of 'net' is not supported". Tenhle shim ho
+   * doplní.
+   */
+  banner: {
+    js: [
+      "import { createRequire as __createRequire } from 'node:module';",
+      'const require = __createRequire(import.meta.url);',
+    ].join('\n'),
+  },
 });
 
 writeFileSync(
