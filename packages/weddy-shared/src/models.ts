@@ -26,14 +26,30 @@ export interface Wedding {
   updatedAt: string;
 }
 
+/**
+ * Rodina, do které host patří.
+ *
+ * Rodina nemá vlastní záznam – je to skupina hostů se stejným `id` a názvem.
+ * Díky tomu zůstává strana na hostovi, takže filtry i statistiky fungují
+ * beze změny a nemůže se stát, že by se strana rodiny rozešla se stranou
+ * jejích členů.
+ */
+export interface GuestFamily {
+  id: string;
+  /** Jak se rodina jmenuje, např. „Novákovi". */
+  name: string;
+}
+
 export interface Guest {
   id: string;
   weddingId: string;
   firstName: string;
-  lastName: string;
+  /** U členů rodiny nepovinné – příjmení nese název rodiny. */
+  lastName?: string;
   side: GuestSide;
   ageGroup: AgeGroup;
   status: GuestStatus;
+  family?: GuestFamily;
   note?: string;
   createdAt: string;
   updatedAt: string;
@@ -71,11 +87,41 @@ export interface WeddingInput {
 
 export interface GuestInput {
   firstName: string;
-  lastName: string;
+  lastName?: string;
   side: GuestSide;
   ageGroup: AgeGroup;
   status?: GuestStatus;
   note?: string;
+}
+
+/** Člen rodiny. Bez `id` vznikne nový host, s `id` se upraví stávající. */
+export interface FamilyMemberInput {
+  id?: string;
+  firstName: string;
+  lastName?: string;
+  ageGroup: AgeGroup;
+  status?: GuestStatus;
+  note?: string;
+}
+
+/**
+ * Zadání celé rodiny najednou.
+ *
+ * Strana se volí pro rodinu jako celek, věková skupina u každého člena
+ * zvlášť (doc/iziweddy.md, kap. 5.3).
+ */
+export interface FamilyInput {
+  name: string;
+  side: GuestSide;
+  members: FamilyMemberInput[];
+}
+
+/** Rodina složená ze svých členů – odvozuje se ze seznamu hostů. */
+export interface Family {
+  id: string;
+  name: string;
+  side: GuestSide;
+  members: Guest[];
 }
 
 export interface PlanningItemInput {

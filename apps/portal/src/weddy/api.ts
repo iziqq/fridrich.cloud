@@ -1,5 +1,7 @@
 import type {
   BudgetSummary,
+  Family,
+  FamilyInput,
   Guest,
   GuestInput,
   GuestListResponse,
@@ -43,6 +45,19 @@ export const guestsApi = {
     http.patch<Guest>(`/weddy/weddings/${weddingId}/guests/${guestId}/status`, { status }),
   remove: (weddingId: string, guestId: string) =>
     http.delete(`/weddy/weddings/${weddingId}/guests/${guestId}`),
+};
+
+/**
+ * Rodiny se nečtou zvlášť – poskládají se ze seznamu hostů přes
+ * `groupIntoFamilies()`. Endpointy jsou proto jen zápisové.
+ */
+export const familiesApi = {
+  create: (weddingId: string, input: FamilyInput) =>
+    http.post<Family>(`/weddy/weddings/${weddingId}/families`, input),
+  update: (weddingId: string, familyId: string, input: FamilyInput) =>
+    http.put<Family>(`/weddy/weddings/${weddingId}/families/${familyId}`, input),
+  remove: (weddingId: string, familyId: string) =>
+    http.delete(`/weddy/weddings/${weddingId}/families/${familyId}`),
 };
 
 export const itemsApi = {

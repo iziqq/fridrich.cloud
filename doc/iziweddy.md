@@ -338,16 +338,35 @@ Hosté se zobrazují v jedné společné tabulce.
 | Pole | Povinné | Výchozí hodnota |
 |---|---|---|
 | Jméno | ✅ | |
-| Příjmení | ✅ | |
-| Strana (ženich / nevěsta) | ✅ | |
+| Příjmení | ❌ | u členů rodiny se nevyplňuje – příjmení nese název rodiny |
+| Strana (ženich / nevěsta) | ✅ | u členů rodiny ji určuje rodina |
 | Věková skupina (dospělý / dítě) | ✅ | Dospělý |
 | Stav | ✅ | Návrh (`draft`) |
+| Rodina | ❌ | |
 | Poznámka | ❌ | |
+
+#### Rodiny
+
+Rodinu (`Rodina Novákovi`) zadává uživatel **najednou**: název, stranu a seznam
+členů. U každého člena volí věkovou skupinu, **stranu volí pro rodinu jako celek**.
+
+> **Rodina nemá vlastní záznam.** Je to skupina hostů se stejným `family.id`
+> a názvem. Díky tomu zůstává strana na hostovi, takže filtry i statistiky
+> fungují beze změny – a nemůže se stát, že by se strana rodiny rozešla se
+> stranou jejích členů. Cenou je, že přejmenování rodiny nebo její přesun na
+> druhou stranu přepíše všechny její členy.
+
+- Seznam členů je při úpravě **úplný**: kdo v něm chybí, přestává být hostem.
+  Jinak by nešlo člena odebrat.
+- Smazání rodiny smaže i všechny členy.
+- Stav pozvánky si drží **každý člen zvlášť** – jeden z rodiny může odmítnout.
+- Rodina bez členů nedává smysl, proto ji API odmítne.
 
 #### Funkce
 
 - **Přidání, úprava a smazání** hosta.
 - **Rychlá změna stavu** přímo ze seznamu (bez otevírání formuláře).
+- **Zadání celé rodiny najednou** – viz níže.
 - **Filtrování** podle strany, věkové skupiny a stavu.
 - **Vyhledávání** podle jména.
 - **Řazení** podle příjmení (výchozí) nebo jména. Volba není filtr, takže ji
@@ -367,6 +386,17 @@ Hosté se zobrazují v jedné společné tabulce.
 | Odmítnuto | počet `rejected` |
 | Ženich / Nevěsta | rozdělení podle strany |
 | Dospělí / Děti | rozdělení podle věkové skupiny |
+
+#### Členění přehledu
+
+Strana **není štítek u jména, ale celá sekce**. Seznam má dva oddíly –
+*Ženich* a *Nevěsta* – a uvnitř každého stojí nejdřív rodiny jako ohraničené
+bloky a pod nimi jednotlivci. U jména už se strana neopakuje, plyne z toho,
+kde host stojí.
+
+Členové rodiny se uvnitř bloku řadí podle zvoleného řazení, tedy abecedně
+podle křestního jména – příjmení nemají. Pořadí, ve kterém je uživatel zapsal,
+se nezachovává.
 
 > **Mobilní zobrazení:** Na úzkých displejích se tabulka vykresluje jako seznam karet (jméno, barevný štítek stavu, ikona strany a věkové skupiny). Na širších displejích jako klasická tabulka.
 
@@ -517,6 +547,33 @@ Všechny endpointy mají prefix `/api`. Data se přenášejí ve formátu JSON.
 | `PUT` | `/api/weddy/weddings/{weddingId}/guests/{guestId}` | Úprava hosta |
 | `PATCH` | `/api/weddy/weddings/{weddingId}/guests/{guestId}/status` | Rychlá změna stavu |
 | `DELETE` | `/api/weddy/weddings/{weddingId}/guests/{guestId}` | Smazání hosta |
+
+#### Rodiny
+
+Rodina nemá vlastní záznam, takže **čtecí endpoint neexistuje** – poskládá se
+ze seznamu hostů přes `groupIntoFamilies()` v `@fridrich/weddy-shared`.
+
+| Metoda | Endpoint | Popis |
+|---|---|---|
+| `POST` | `/api/weddy/weddings/{weddingId}/families` | Založení rodiny i se členy |
+| `PUT` | `/api/weddy/weddings/{weddingId}/families/{familyId}` | Přepis rodiny; chybějící členové se smažou |
+| `DELETE` | `/api/weddy/weddings/{weddingId}/families/{familyId}` | Smazání rodiny i všech členů |
+
+```jsonc
+// POST /api/weddy/weddings/{weddingId}/families
+{
+  "name": "Novákovi",
+  "side": "groom",
+  "members": [
+    { "firstName": "Josef", "ageGroup": "adult" },
+    { "firstName": "Martina", "ageGroup": "adult" },
+    { "firstName": "Themos", "ageGroup": "child" },
+    { "firstName": "Magdaléna", "ageGroup": "child" }
+  ]
+}
+```
+
+Při úpravě nese existující člen `id`; bez něj vznikne nový.
 
 ### 7.3 Položky plánování
 

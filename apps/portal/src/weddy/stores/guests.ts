@@ -1,8 +1,15 @@
-import type { AgeGroup, Guest, GuestInput, GuestSide, GuestStatus } from '@fridrich/weddy-shared';
-import { calculateGuestStats } from '@fridrich/weddy-shared';
+import type {
+  AgeGroup,
+  FamilyInput,
+  Guest,
+  GuestInput,
+  GuestSide,
+  GuestStatus,
+} from '@fridrich/weddy-shared';
+import { calculateGuestStats, groupIntoFamilies, guestFullName } from '@fridrich/weddy-shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { guestsApi } from '@/weddy/api';
+import { familiesApi, guestsApi } from '@/weddy/api';
 
 export interface GuestFilters {
   side: GuestSide | 'all';
@@ -33,8 +40,13 @@ export const GUEST_SORT_LABELS: Record<GuestSort, string> = {
 function compareBy(sort: GuestSort): (a: Guest, b: Guest) => number {
   const secondary: GuestSort = sort === 'lastName' ? 'firstName' : 'lastName';
 
+  // Členové rodiny příjmení nemívají – prázdná hodnota je řadí na začátek,
+  // což je uvnitř rodiny to, co chceme.
+  const key = (guest: Guest, field: GuestSort): string => guest[field] ?? '';
+
   return (a, b) =>
-    a[sort].localeCompare(b[sort], 'cs') || a[secondary].localeCompare(b[secondary], 'cs');
+    key(a, sort).localeCompare(key(b, sort), 'cs') ||
+    key(a, secondary).localeCompare(key(b, secondary), 'cs');
 }
 
 /** Vyhledávání nesmí padat na diakritice – „Novak" musí najít „Novák". */
@@ -66,7 +78,8 @@ export const useGuestsStore = defineStore('guests', () => {
         if (ageGroup !== 'all' && guest.ageGroup !== ageGroup) return false;
         if (status !== 'all' && guest.status !== status) return false;
         if (needle === '') return true;
-        return normalize(`${guest.firstName} ${guest.lastName}`).includes(needle);
+        // Hledá se i podle rodiny, ať „Novákovi" najde celou rodinu.
+        return normalize(`${guestFullName(guest)} ${guest.family?.name ?? ''}`).includes(needle);
       })
       .sort(compareBy(sort.value));
   });
@@ -78,10 +91,26 @@ export const useGuestsStore = defineStore('guests', () => {
    * takže „Jana Adamová, Petr Novák" působí jako náhodné pořadí.
    */
   function displayName(guest: Guest): string {
+    if (!guest.lastName) return guest.firstName;
+
     return sort.value === 'lastName'
       ? `${guest.lastName} ${guest.firstName}`
       : `${guest.firstName} ${guest.lastName}`;
   }
+
+  /**
+   * Filtrovaní hosté rozdělení podle strany a uvnitř podle rodin.
+   *
+   * Strana je v přehledu celá sekce, ne štítek u jména – vedle sebe stojí
+   * dva samostatné seznamy (doc/iziweddy.md, kap. 5.3).
+   */
+  const sections = computed(() =>
+    (['groom', 'bride'] as const).map((side) => ({
+      side,
+      ...groupIntoFamilies(filtered.value, side),
+      count: filtered.value.filter((guest) => guest.side === side).length,
+    })),
+  );
 
   const hasActiveFilters = computed(() => {
     const { side, ageGroup, status, search } = filters.value;
@@ -136,6 +165,29 @@ export const useGuestsStore = defineStore('guests', () => {
     guests.value = guests.value.filter((guest) => guest.id !== guestId);
   }
 
+  async function createFamily(weddingId: string, input: FamilyInput): Promise<void> {
+    const family = await familiesApi.create(weddingId, input);
+    guests.value = [...guests.value, ...family.members];
+  }
+
+  async function updateFamily(
+    weddingId: string,
+    familyId: string,
+    input: FamilyInput,
+  ): Promise<void> {
+    const family = await familiesApi.update(weddingId, familyId, input);
+    // Členů mohlo ubýt i přibýt, takže se celá rodina nahradí novým seznamem.
+    guests.value = [
+      ...guests.value.filter((guest) => guest.family?.id !== familyId),
+      ...family.members,
+    ];
+  }
+
+  async function removeFamily(weddingId: string, familyId: string): Promise<void> {
+    await familiesApi.remove(weddingId, familyId);
+    guests.value = guests.value.filter((guest) => guest.family?.id !== familyId);
+  }
+
   function resetFilters(): void {
     filters.value = emptyFilters();
   }
@@ -145,6 +197,7 @@ export const useGuestsStore = defineStore('guests', () => {
     filters,
     sort,
     filtered,
+    sections,
     displayName,
     stats,
     hasActiveFilters,
@@ -155,6 +208,9 @@ export const useGuestsStore = defineStore('guests', () => {
     update,
     setStatus,
     remove,
+    createFamily,
+    updateFamily,
+    removeFamily,
     resetFilters,
   };
 });

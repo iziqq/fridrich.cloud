@@ -6,4 +6,5 @@ import './functions/auth.js';
 import './functions/contact.js';
 import './functions/weddings.js';
 import './functions/guests.js';
+import './functions/families.js';
 import './functions/planning.js';

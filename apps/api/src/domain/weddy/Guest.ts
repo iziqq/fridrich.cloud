@@ -1,4 +1,10 @@
-import type { AgeGroup, Guest as GuestData, GuestSide, GuestStatus } from '@fridrich/weddy-shared';
+import type {
+  AgeGroup,
+  Guest as GuestData,
+  GuestFamily,
+  GuestSide,
+  GuestStatus,
+} from '@fridrich/weddy-shared';
 import { isAgeGroup, isGuestSide, isGuestStatus } from '@fridrich/weddy-shared';
 import type { Clock } from '../shared/Clock.js';
 import { DomainError } from '../shared/DomainError.js';
@@ -8,10 +14,11 @@ const NOTE_MAX = 2000;
 
 interface ParsedGuest {
   firstName: string;
-  lastName: string;
+  lastName: string | undefined;
   side: GuestSide;
   ageGroup: AgeGroup;
   status: GuestStatus;
+  family: GuestFamily | undefined;
   note: string | undefined;
 }
 
@@ -52,6 +59,7 @@ export class Guest {
         side: state.side,
         ageGroup: state.ageGroup,
         status: state.status,
+        family: state.family,
         note: state.note,
       },
       state.createdAt,
@@ -64,7 +72,15 @@ export class Guest {
     const details: { field: string; message: string }[] = [];
 
     const firstName = Guest.text(input['firstName'], 'firstName', 'jméno', details);
-    const lastName = Guest.text(input['lastName'], 'lastName', 'příjmení', details);
+
+    /*
+     * Příjmení je nepovinné. U členů rodiny ho uživatel obvykle nevyplňuje –
+     * pod jménem rodiny („Novákovi") by bylo jen opakování.
+     */
+    let lastName: string | undefined;
+    if (input['lastName'] !== undefined && String(input['lastName']).trim() !== '') {
+      lastName = Guest.text(input['lastName'], 'lastName', 'příjmení', details);
+    }
 
     if (!isGuestSide(input['side'])) {
       details.push({ field: 'side', message: 'Vyberte, na čí straně host je' });
@@ -96,6 +112,8 @@ export class Guest {
       side: isGuestSide(input['side']) ? input['side'] : 'groom',
       ageGroup: isAgeGroup(input['ageGroup']) ? input['ageGroup'] : 'adult',
       status: isGuestStatus(input['status']) ? input['status'] : 'draft',
+      // Rodinu nastavuje use-case pro rodiny, z běžného formuláře nechodí.
+      family: undefined,
       note,
     };
   }
@@ -123,12 +141,36 @@ export class Guest {
     return this.data.status;
   }
 
+  get side(): GuestSide {
+    return this.data.side;
+  }
+
+  get family(): GuestFamily | undefined {
+    return this.data.family;
+  }
+
   get updatedAt(): string {
     return this.updatedAtValue;
   }
 
   update(raw: unknown, clock: Clock): void {
+    const family = this.data.family;
     this.data = Guest.parse(raw);
+    // Úprava hosta ho z rodiny nevyřadí – k tomu slouží úprava rodiny.
+    this.data.family = family;
+    this.touch(clock);
+  }
+
+  /**
+   * Zařadí hosta do rodiny.
+   *
+   * Strana patří rodině jako celku, takže se přepíše i tady – jinak by se
+   * po přesunu rodiny na druhou stranu rozešla se stranou svých členů
+   * a rozbila statistiky.
+   */
+  joinFamily(family: GuestFamily, side: GuestSide, clock: Clock): void {
+    this.data.family = family;
+    this.data.side = side;
     this.touch(clock);
   }
 
@@ -151,7 +193,6 @@ export class Guest {
       id: this.id,
       weddingId: this.weddingId,
       firstName: this.data.firstName,
-      lastName: this.data.lastName,
       side: this.data.side,
       ageGroup: this.data.ageGroup,
       status: this.data.status,
@@ -159,6 +200,8 @@ export class Guest {
       updatedAt: this.updatedAtValue,
     };
 
+    if (this.data.lastName) state.lastName = this.data.lastName;
+    if (this.data.family) state.family = this.data.family;
     if (this.data.note) state.note = this.data.note;
     return state;
   }

@@ -1,12 +1,17 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { calculateBudget, calculateGuestStats } from '@fridrich/weddy-shared';
+import { calculateBudget, calculateGuestStats, groupIntoFamilies } from '@fridrich/weddy-shared';
 import {
   changeGuestStatus,
   createGuest,
   deleteGuest,
   listGuests,
 } from '../src/application/weddy/guests.js';
+import {
+  createFamily,
+  deleteFamily,
+  updateFamily,
+} from '../src/application/weddy/families.js';
 import { createItem, getBudget, listItems } from '../src/application/weddy/planning.js';
 import {
   createWedding,
@@ -295,5 +300,133 @@ describe('výpočty sdílené s frontendem', () => {
     assert.equal(stats.total, 1);
     assert.equal(stats.rejected, 1);
     assert.equal(stats.bride, 0);
+  });
+});
+
+describe('rodiny', () => {
+  const novakovi = {
+    name: 'Novákovi',
+    side: 'groom' as const,
+    members: [
+      { firstName: 'Josef', ageGroup: 'adult' as const },
+      { firstName: 'Martina', ageGroup: 'adult' as const },
+      { firstName: 'Themos', ageGroup: 'child' as const },
+      { firstName: 'Magdaléna', ageGroup: 'child' as const },
+    ],
+  };
+
+  it('založí z jednoho zadání všechny členy', async () => {
+    const { deps, weddingId } = await withWedding();
+
+    const family = await createFamily(deps, weddingId, novakovi, OWNER);
+
+    assert.equal(family.members.length, 4);
+    assert.equal(family.name, 'Novákovi');
+
+    const { guests } = await listGuests(deps, weddingId, OWNER, {});
+    assert.equal(guests.length, 4);
+    // Všichni patří do téže rodiny a stojí na stejné straně.
+    assert.equal(new Set(guests.map((g) => g.family?.id)).size, 1);
+    assert.ok(guests.every((g) => g.side === 'groom'));
+  });
+
+  it('věkovou skupinu si drží každý člen zvlášť', async () => {
+    const { deps, weddingId } = await withWedding();
+    await createFamily(deps, weddingId, novakovi, OWNER);
+
+    const { stats } = await listGuests(deps, weddingId, OWNER, {});
+    assert.equal(stats.adults, 2);
+    assert.equal(stats.children, 2);
+  });
+
+  it('členové se dají seskupit zpátky do rodiny', async () => {
+    const { deps, weddingId } = await withWedding();
+    await createFamily(deps, weddingId, novakovi, OWNER);
+    await createGuest(deps, weddingId, { firstName: 'Eva', lastName: 'Malá', side: 'bride' }, OWNER);
+
+    const { guests } = await listGuests(deps, weddingId, OWNER, {});
+    const grouped = groupIntoFamilies(guests);
+
+    assert.equal(grouped.families.length, 1);
+    assert.equal(grouped.families[0]?.members.length, 4);
+    assert.equal(grouped.solo.length, 1);
+  });
+
+  it('přesun rodiny na druhou stranu přepíše stranu všem členům', async () => {
+    const { deps, weddingId } = await withWedding();
+    const family = await createFamily(deps, weddingId, novakovi, OWNER);
+
+    await updateFamily(
+      deps,
+      weddingId,
+      family.id,
+      {
+        ...novakovi,
+        side: 'bride',
+        members: family.members.map((m) => ({ id: m.id, firstName: m.firstName, ageGroup: m.ageGroup })),
+      },
+      OWNER,
+    );
+
+    const { guests, stats } = await listGuests(deps, weddingId, OWNER, {});
+    assert.ok(guests.every((g) => g.side === 'bride'));
+    assert.equal(stats.groom, 0);
+    assert.equal(stats.bride, 4);
+  });
+
+  it('člen vynechaný ze seznamu z rodiny i ze seznamu hostů zmizí', async () => {
+    const { deps, weddingId } = await withWedding();
+    const family = await createFamily(deps, weddingId, novakovi, OWNER);
+
+    const bezDeti = family.members
+      .filter((m) => m.ageGroup === 'adult')
+      .map((m) => ({ id: m.id, firstName: m.firstName, ageGroup: m.ageGroup }));
+
+    await updateFamily(deps, weddingId, family.id, { ...novakovi, members: bezDeti }, OWNER);
+
+    const { guests } = await listGuests(deps, weddingId, OWNER, {});
+    assert.equal(guests.length, 2);
+  });
+
+  it('nový člen v seznamu se přidá k existující rodině', async () => {
+    const { deps, weddingId } = await withWedding();
+    const family = await createFamily(deps, weddingId, novakovi, OWNER);
+
+    const members = [
+      ...family.members.map((m) => ({ id: m.id, firstName: m.firstName, ageGroup: m.ageGroup })),
+      { firstName: 'Babička', ageGroup: 'adult' as const },
+    ];
+    const updated = await updateFamily(deps, weddingId, family.id, { ...novakovi, members }, OWNER);
+
+    assert.equal(updated.members.length, 5);
+    assert.ok(updated.members.every((m) => m.family?.id === family.id));
+  });
+
+  it('smazání rodiny odstraní všechny členy', async () => {
+    const { deps, weddingId } = await withWedding();
+    const family = await createFamily(deps, weddingId, novakovi, OWNER);
+
+    await deleteFamily(deps, weddingId, family.id, OWNER);
+
+    const { guests } = await listGuests(deps, weddingId, OWNER, {});
+    assert.equal(guests.length, 0);
+  });
+
+  it('odmítne rodinu bez členů i bez názvu', async () => {
+    const { deps, weddingId } = await withWedding();
+
+    await assert.rejects(
+      createFamily(deps, weddingId, { ...novakovi, members: [] }, OWNER),
+      isDomainError,
+    );
+    await assert.rejects(createFamily(deps, weddingId, { ...novakovi, name: '  ' }, OWNER), isDomainError);
+  });
+
+  it('cizí uživatel rodinu nezaloží ani nesmaže', async () => {
+    const { deps, weddingId } = await withWedding();
+    const family = await createFamily(deps, weddingId, novakovi, OWNER);
+
+    await assert.rejects(createFamily(deps, weddingId, novakovi, STRANGER), isDomainError);
+    await assert.rejects(deleteFamily(deps, weddingId, family.id, STRANGER), isDomainError);
   });
 });
