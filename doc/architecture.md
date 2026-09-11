@@ -600,16 +600,42 @@ se přeskakuje.
 
 Vše obstará jeden workflow `.github/workflows/azure-static-web-apps.yml`.
 
-- Před nasazením běží `typecheck`, `lint` i testy.
-- Pull request vytvoří **preview prostředí** (Free plán jich zvládne 3),
-  po zavření se zase zruší.
+- Před nasazením běží `typecheck`, `lint` i testy. Navíc krok, který ověří,
+  že testů **opravdu proběhlo** aspoň 60: `node --test` na nenalezené soubory
+  odpoví nulou testů a návratovým kódem 0, tedy tiše, a nasadit neověřené API
+  je horší než spadlý build.
+- Pull request vytvoří **preview prostředí** `pr-<číslo>` (Free plán jich
+  zvládne 3). Azure z názvu odstraní pomlčky, takže vznikne `pr123`.
+  Zrušit ho jde přes `az staticwebapp environment delete`.
+- Nasazení jde spustit i ručně přes `workflow_dispatch` (*Actions → Nasazení
+  na Azure Static Web Apps → Run workflow*).
 - Jediné tajemství v repozitáři je `AZURE_STATIC_WEB_APPS_API_TOKEN`
   (*Secrets and variables → Actions* na GitHubu), který se vezme
   z *Manage deployment token* ve Static Web App.
 
+> ⚠️ **Nasazuje SWA CLI, ne akce `Azure/static-web-apps-deploy@v1`.**
+> Ta u tohohle projektu padala na `An unknown exception has occurred` bez
+> jediného řádku navíc. Důvod: neumí přeskočit build API – `skip_api_build`
+> mezi její vstupy nepatří (nabídne je ve varování) – takže se pokoušela
+> znovu sestavit balíček, který už hotový je. CLI nahraje, co dostane,
+> a když něco selže, řekne co.
+>
+> Nasadit se dá i ručně odsud, což se hodí při ladění:
+>
+> ```bash
+> npm run build && npm run build:api
+> export SWA_CLI_DEPLOYMENT_TOKEN=…   # Manage deployment token
+> npx @azure/static-web-apps-cli@2 deploy apps/portal/dist \
+>   --api-location apps/api/deploy --api-language node --api-version 20 \
+>   --env production --no-use-keychain
+> ```
+
 ### Nastavení v Azure
 
 *Application settings* Static Web App (platí i pro API):
+
+Nastavené jsou v Azure už teď (Static Web App `LiborFridrich`, resource group
+`lf-page`, předplatné *Static Web App*):
 
 | Klíč | Hodnota |
 |---|---|
