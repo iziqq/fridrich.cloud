@@ -36,6 +36,15 @@ jobs:
           npm run lint
           npm run test
 
+      # Pojistka: kdyby se testy přestaly nacházet, `node --test` by skončil
+      # s nulou testů a kódem 0 – tedy tiše. Nasadit neověřené API je horší
+      # než spadlý build.
+      - name: Testy opravdu proběhly
+        run: |
+          COUNT=$(npm run test --workspace apps/api 2>&1 | grep -oP '^# pass \K\d+' | tail -1)
+          echo "prošlo testů: ${COUNT:-0}"
+          [ "${COUNT:-0}" -ge 60 ] || { echo "Testů proběhlo příliš málo."; exit 1; }
+
       - name: Build webu
         run: npm run build
 
