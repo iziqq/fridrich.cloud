@@ -2,9 +2,10 @@
 import { PLANNING_CATEGORY_LABELS, formatCurrency } from '@fridrich/weddy-shared';
 import { computed, onMounted, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import ErrorBlock from '@/components/ErrorBlock.vue';
-import LoadingBlock from '@/components/LoadingBlock.vue';
-import { usePlanningStore } from '@/stores/planning';
+import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
+import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
+import { usePlanningStore } from '@/weddy/stores/planning';
+import { weddyPath } from '@/weddy/routes';
 
 const route = useRoute();
 const store = usePlanningStore();
@@ -39,7 +40,7 @@ const ICONS: Record<string, string> = {
       <ul class="sections">
         <li v-for="section in store.overview" :key="section.category">
           <RouterLink
-            :to="`/weddings/${weddingId}/planning/${section.category}`"
+            :to="weddyPath(`/weddings/${weddingId}/planning/${section.category}`)"
             class="section card"
           >
             <span class="icon" aria-hidden="true">{{ ICONS[section.category] }}</span>

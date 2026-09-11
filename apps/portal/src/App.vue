@@ -1,16 +1,31 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router';
+import { computed } from 'vue';
+import { RouterView, useRoute } from 'vue-router';
 import SiteFooter from '@/components/SiteFooter.vue';
 import SiteNav from '@/components/SiteNav.vue';
+
+const route = useRoute();
+
+/*
+ * Produkty kreslí vlastní hlavičku i spodní navigaci, takže obal portálu
+ * by se jim jen pletl do cesty. Nese si i vlastní `main#obsah` – kdyby ho
+ * App.vue přidal taky, byly by na stránce dva prvky se stejným `id`
+ * a skip link by skočil na ten nesprávný.
+ */
+const bare = computed(() => route.meta.bare === true);
 </script>
 
 <template>
-  <a class="skip-link" href="#obsah">Přeskočit na obsah</a>
-  <SiteNav />
+  <RouterView v-if="bare" />
 
-  <main id="obsah">
-    <RouterView />
-  </main>
+  <template v-else>
+    <a class="skip-link" href="#obsah">Přeskočit na obsah</a>
+    <SiteNav />
 
-  <SiteFooter />
+    <main id="obsah">
+      <RouterView />
+    </main>
+
+    <SiteFooter />
+  </template>
 </template>

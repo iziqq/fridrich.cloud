@@ -25,16 +25,20 @@ jak spolu komunikují a kam co patří. Pravidla pro psaní kódu uvnitř jednot
 
 | Princip | Důsledek |
 |---|---|
-| **Portál je samostatná aplikace** | Prezentační web se buildí i nasazuje nezávisle na produktech. Výpadek nebo redesign IziWeddy se ho nedotkne. |
-| **Každý produkt je samostatná aplikace** | IziWeddy a IziBudgy mají vlastní frontend, vlastní build, vlastní release. |
+| **Jedna frontendová aplikace** | Portál i produkty jsou jeden Vue projekt, jeden build, jedno nasazení. Produkt je podstrom rout s vlastním vzhledem, ne samostatný web. |
 | **Jedna doména, cesty místo subdomén** | Všechno visí pod `www.fridrich.cloud` – portál na `/`, produkty na `/izi-weddy` a `/izi-budgy`, API na `/api`. Jeden origin znamená žádné CORS a cookie bez triku se subdoménami. |
 | **Jedna identita pro všechno** | Uživatel se registruje jednou na `fridrich.cloud` a tímtéž účtem se přihlásí do IziWeddy i IziBudgy. |
 | **Jedno API, více modulů** | Backend je jedna Azure Functions aplikace rozdělená na moduly (`identity`, `weddy`, `budgy`) – ne tři samostatné Function Apps. |
 | **Doména před infrastrukturou** | Doménové objekty jsou jádro, Functions handlery i Cosmos repozitáře jsou tenké adaptéry (viz `CLAUDE.md`). |
 
-> **Proč jeden repozitář:** produkty sdílejí identitu, design tokeny i společné
-> typy. Monorepo drží kontrakt na jednom místě a umožňuje atomickou změnu
-> napříč frontendem i backendem.
+> **Proč jedna aplikace, a ne samostatné weby:** produkty sdílejí identitu,
+> design tokeny i společné typy a stejně běží na jedné doméně. Oddělené buildy
+> za to chtěly vlastní dev server, vlastní nasazení, proxy při vývoji a přepisy
+> cest ve Static Web Apps – tedy hromadu obsluhy kolem něčeho, co uživatel
+> stejně vidí jako jeden web.
+>
+> Cenou je, že se všechno nasazuje najednou: změna v plánovači znamená nové
+> nasazení portálu. Při téhle velikosti je to výhodná směna.
 
 ---
 
@@ -45,21 +49,26 @@ Repozitář využívá **npm workspaces**.
 ```
 fridrich.cloud/
 ├── apps/
-│   ├── portal/                   # www.fridrich.cloud/ – prezentační web
+│   ├── portal/                   # www.fridrich.cloud – celý frontend
+│   │   ├── public/               # robots.txt, sitemap.xml, staticwebapp.config.json
 │   │   ├── src/
-│   │   │   ├── assets/           # obrázky, fonty, textury
+│   │   │   ├── api/              # HTTP klient sdílený portálem i produkty
 │   │   │   ├── components/       # GlitchHeading, NeonPanel, HudFrame, …
 │   │   │   ├── content/          # texty sekcí (o mně, služby, vývoj, projekty)
-│   │   │   ├── router/
+│   │   │   ├── router/           # routy portálu + vložené routy produktů
 │   │   │   ├── sections/         # HeroSection, ServicesSection, …
+│   │   │   ├── stores/           # přihlášený uživatel
 │   │   │   ├── views/
+│   │   │   ├── weddy/            # IziWeddy – vlastní routy, vzhled a stores
+│   │   │   │   ├── components/ layouts/ stores/ views/
+│   │   │   │   ├── api.ts        # endpointy modulu weddy
+│   │   │   │   ├── routes.ts     # WEDDY_BASE, weddyPath(), definice rout
+│   │   │   │   ├── weddy.css     # téma pod třídou .weddy
+│   │   │   │   └── WeddyShell.vue
 │   │   │   └── main.ts
 │   │   └── vite.config.ts
 │   │
-│   ├── iziweddy/                 # /izi-weddy – svatební plánovač
 │   │   └── src/                  # api/ components/ layouts/ router/ stores/ views/
-│   │
-│   ├── izibudgy/                 # /izi-budgy – rozpočet domácnosti (TODO)
 │   │
 │   └── api/                      # /api – Azure Functions (TypeScript)
 │       ├── src/
@@ -97,7 +106,7 @@ fridrich.cloud/
 | Kód | Umístění |
 |---|---|
 | Vzhled a texty prezentace | `apps/portal` |
-| Obrazovky konkrétního produktu | `apps/<produkt>` |
+| Obrazovky konkrétního produktu | `apps/portal/src/<produkt>` |
 | Business logika (jakákoli) | `apps/api/src/domain` + `application` |
 | Práce s Cosmos DB | `apps/api/src/infrastructure/cosmos` |
 | Typy, které vidí frontend i backend | `packages/*-shared` |
@@ -124,13 +133,10 @@ přesměrovává na `www`). Části se rozlišují cestou:
 > CORS i session cookie roztažená přes `Domain=.fridrich.cloud`. Prohlížeč vidí
 > jeden web, ne čtyři – jeden certifikát, jeden DNS záznam, jedno nastavení.
 >
-> **Samostatnost se tím neztrácí.** Každá aplikace má pořád vlastní `package.json`,
-> vlastní build a vlastní workflow; při nasazení se jen její `dist` zkopíruje do
-> podadresáře výsledného webu. Release IziWeddy se portálu nedotkne.
->
-> **Co si to vybírá:** aplikace musí vědět, pod jakou cestou běží. Řeší to
-> `base` ve `vite.config.ts` a `createWebHistory(import.meta.env.BASE_URL)`
-> v routeru – nikde v kódu nesmí být natvrdo napsaný prefix.
+> **Produkty jsou součástí portálu**, ne samostatné weby – viz
+> [kap. 1](#1-principy-rozdělení). Prefix cesty drží konstanta `WEDDY_BASE`
+> v `weddy/routes.ts` a odkazy si ho skládají přes `weddyPath()`, takže přesun
+> pod jinou cestu je změna jednoho řádku.
 
 ### Routy portálu
 
@@ -145,9 +151,33 @@ přesměrovává na `www`). Části se rozlišují cestou:
 | `/overeni-emailu` | Aktivace účtu z odkazu v e-mailu |
 | `/ucet` | Profil uživatele a rozcestník do aplikací (po přihlášení) |
 
-Router portálu obsluhuje jen kořen webu. Cesty `/izi-weddy/*`, `/izi-budgy/*`
-a `/api/*` patří jiným aplikacím – portál na ně proto nikdy nenaviguje přes
-`router.push()`, ale celou stránkou (`window.location`).
+Routy produktů se do routeru portálu vkládají ze souboru produktu
+(`weddy/routes.ts`), takže navigace mezi portálem a plánovačem je běžný
+`RouterLink`, ne načtení celé stránky. Jediná cesta, která portálu nepatří,
+je `/api/*`.
+
+### Vzhled produktu
+
+Produkt vypadá jinak než portál, ale běží ve stejném dokumentu. Řeší to obal
+`WeddyShell.vue`, který obsah zabalí do `<div class="weddy">`; `weddy.css`
+na té třídě předefinuje designové tokeny. Vlastnosti CSS se dědí, takže
+cyberpunkové barvy portálu do plánovače neprosáknou a naopak.
+
+Produkt navíc **nechce hlavičku ani patičku portálu** – má vlastní horní
+lištu i spodní navigaci. Routa si to řekne přes `meta: { bare: true }`
+a `App.vue` v takovém případě vykreslí jen `<RouterView />`. Děti routu
+dědí, takže stačí jednou na kořeni produktu.
+
+> ⚠️ **Obal portálu nese `<main id="obsah">` pro skip link.** Stránky produktu
+> si vlastní `main` kreslí samy, takže bez `bare` by na stránce byly dva prvky
+> se stejným `id` a skip link by skočil na ten nesprávný. Každá obrazovka
+> plánovače proto musí mít právě jeden `main#obsah` – buď z `WeddingLayout`,
+> nebo jako kořen vlastního pohledu.
+
+> ⚠️ **V tématu produktu nesmí být nic na `:root` ani holý selektor prvku.**
+> Tokeny na `:root` by přebily paletu portálu na celém webu a pravidlo jako
+> `h1 { text-transform: none }` by odverzálkovalo nadpisy prezentace. Všechno
+> patří pod `.weddy`.
 
 Detail routování produktů je v dokumentaci konkrétního produktu
 (viz [iziweddy.md, kap. 6](iziweddy.md#6-obrazovky-a-navigace)).
@@ -187,7 +217,8 @@ Kontrola původu ale ze systému nemizí, jen se zjednodušuje:
 
 - `ALLOWED_ORIGINS` obsahuje v produkci jediný záznam `https://www.fridrich.cloud`
   a při vývoji `http://localhost:5173`–`5175`, protože Vite dev server běží na
-  vlastním portu a proxy `/api` posílá dál na `http://localhost:7071`.
+  vlastním portu (a když je obsazený, uskočí na další) a proxy `/api` posílá
+  požadavky dál na `http://localhost:7071`.
 - Hlavičky CORS řeší **kód**, ne nastavení Function App: kdyby se někdy
   objevil cizí původ (preview prostředí, mobilní klient), musí se vracet
   konkrétní původ a `Access-Control-Allow-Credentials: true`. Se session cookie
@@ -415,24 +446,16 @@ nástroje je zafixovaná v repozitáři jako každá jiná závislost.
 
 ### Porty
 
-**Do prohlížeče patří jediná adresa: `http://localhost:5173`.** Dev server
-portálu tam zastupuje Static Web Apps a ostatní části proxuje k sobě, takže
-lokální adresy vypadají stejně jako produkční:
+Stačí dva procesy – frontend je jedna aplikace, produkty jsou její součást:
 
 | Adresa | Obslouží |
 |---|---|
 | `http://localhost:5173/` | Portál |
-| `http://localhost:5173/izi-weddy/` | IziWeddy (proxy na `:5174`) |
-| `http://localhost:5173/izi-budgy/` | IziBudgy (proxy na `:5175`) |
+| `http://localhost:5173/izi-weddy/…` | IziWeddy – stejná aplikace, jiné routy |
 | `http://localhost:5173/api/*` | API (proxy na `:7071`) |
 
-Každá aplikace má pořád vlastní dev server – IziWeddy `:5174`, IziBudgy `:5175`,
-API `:7071` – a musí běžet, jinak proxy nemá kam sáhnout. Otevírat je přímo se
-ale nevyplácí: portál by byl na jiném originu a přesměrování z přihlášení by
-skončilo jinde než v produkci.
-
-Produkty jedou pod svou cestou i na vlastním portu (`http://localhost:5174/`
-přesměruje na `/izi-weddy/`) – stará se o to `base` ve `vite.config.ts`.
+> ℹ️ Když je `5173` obsazený, Vite uskočí na další volný port a **vypíše ho
+> při startu**. Adresu si proto berte z výpisu, ne z paměti.
 
 ### Skripty v kořenovém `package.json`
 
@@ -516,72 +539,112 @@ neztrácely v logu.
 > Řešení: počkat, smazat obsah kontejneru `rateLimits`, nebo požadavkům
 > posílat hlavičku `x-forwarded-for` s různou adresou.
 
-Proxy jsou ve `vite.config.ts` každé aplikace: `/api` → `http://localhost:7071`
-u všech, navíc `/izi-weddy` → `http://localhost:5174` u portálu (s `ws: true`,
-jinak by produktu nefungoval hot reload). Díky tomu jede i při vývoji všechno
-na jednom originu, stejně jako v produkci.
+Ve `vite.config.ts` je proxy `/api` → `http://localhost:7071`, takže i při
+vývoji jede volání API na stejný origin jako v produkci.
 
 ---
 
 ## 9. Nasazení
 
-| Část | Služba |
+Cílem je vejít se do **bezplatných tierů**. To není jen otázka fakturace –
+určuje to, jak API běží.
+
+| Část | Služba | Tier |
+|---|---|---|
+| Frontend (portál i produkty) | Jedna Azure Static Web App na doméně `www.fridrich.cloud` | **Free** – 100 GB provozu, 2 domény, TLS zdarma, 250 MB web, bez SLA |
+| API | **Spravované funkce** té samé Static Web App na `/api` | součást Free plánu |
+| Databáze | Azure Cosmos DB, sdílená kapacita databáze | **Free tier** – 1000 RU/s a 25 GB |
+| E-maily | SMTP (viz [kap. 8](#8-lokální-vývoj)) | zdarma přes vlastní schránku |
+
+> ⚠️ **API nesmí být samostatný Function App.** Připojení vlastní Functions
+> aplikace („bring your own functions") je funkce **Standard** plánu; Free
+> umí jen spravované funkce, které si Static Web Apps nasazuje sama.
+> Původní návrh s odděleným Function Appem by stál ~9 $/měsíc navíc.
+>
+> **Co z toho plyne:**
+> - **Žádná managed identity.** Ke Cosmos DB se chodí klíčem z *Application
+>   settings*, ne přes identitu. `COSMOS_KEY` tedy v produkci **není** prázdný.
+> - **Žádné Key Vault reference.** Klíč k databázi i SMTP heslo leží
+>   v nastavení v otevřené podobě.
+> - Triggery jen HTTP – to nám nevadí, jiné nemáme.
+> - Runtime volí `platform.apiRuntime` v `staticwebapp.config.json`; máme
+>   `node:20`, což je Functions v4, takže programovací model v4 platí dál.
+
+> ⚠️ **Free tier Cosmos DB jde zapnout jen při zakládání účtu** a smí být
+> **jeden na předplatné**. Na existující účet ho doplnit nelze. Sdílená
+> kapacita databáze se do 1000 RU/s vejde i s rezervou – dnes je nastavená
+> na 400 RU/s a kontejnerů je devět (limit je 25).
+
+### Co se nasazuje
+
+`npm run build` vyrobí `apps/portal/dist` – hotový web včetně produktů.
+Skládání několika buildů dohromady odpadlo spolu s oddělenými aplikacemi.
+
+`staticwebapp.config.json` leží v `apps/portal/public/`, takže ho Vite zkopíruje
+do `dist` sám. V kořeni aplikace by zůstal mimo build a Static Web Apps by ho
+nenašlo.
+
+### API jako soběstačný balíček
+
+`apps/api` závisí na `@fridrich/shared` a `@fridrich/weddy-shared` přes npm
+workspaces. Spravované funkce se ale na Azure instalují `npm install` jen
+v adresáři API a tyhle balíčky na npm nejsou – instalace by selhala.
+
+Proto `npm run build:api` (skript `apps/api/scripts/build-deploy.mjs`) spojí
+esbuildem zdrojový kód **i sdílené balíčky** do jednoho `index.js` a vyrobí
+`apps/api/deploy/` s package.json, ve kterém zůstaly jen závislosti z registru.
+Ty se rovnou doinstalují, takže se nasazuje hotový balíček a build na Azure
+se přeskakuje.
+
+### Nasazení
+
+Vše obstará jeden workflow `.github/workflows/azure-static-web-apps.yml`.
+
+- Před nasazením běží `typecheck`, `lint` i testy.
+- Pull request vytvoří **preview prostředí** (Free plán jich zvládne 3),
+  po zavření se zase zruší.
+- Jediné tajemství v repozitáři je `AZURE_STATIC_WEB_APPS_API_TOKEN`
+  (*Secrets and variables → Actions* na GitHubu), který se vezme
+  z *Manage deployment token* ve Static Web App.
+
+### Nastavení v Azure
+
+*Application settings* Static Web App (platí i pro API):
+
+| Klíč | Hodnota |
 |---|---|
-| Portál, IziWeddy, IziBudgy | Jedna Azure Static Web App na doméně `www.fridrich.cloud` |
-| API | Azure Functions (Flex Consumption), připojené k té Static Web App jako **linked backend** na `/api` |
-| Databáze | Azure Cosmos DB serverless |
+| `NODE_ENV` | `production` |
+| `COSMOS_ENDPOINT` | `https://<účet>.documents.azure.com:443/` |
+| `COSMOS_KEY` | primární klíč účtu |
+| `COSMOS_DATABASE` | `izi-db` |
+| `COSMOS_THROUGHPUT` | `400` (prázdné na serverless účtu) |
+| `ALLOWED_ORIGINS` | `https://www.fridrich.cloud` |
+| `APP_URL` | `https://www.fridrich.cloud` |
+| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | poštovní schránka |
+| `CONTACT_INBOX` | adresa pro kontaktní formulář |
 
-### Jak se z několika buildů stane jeden web
-
-Aplikace se buildí samostatně, spojí se až při publikování – výsledný adresář
-vypadá takhle:
-
-```
-dist/
-├── index.html                # apps/portal/dist
-├── assets/
-├── izi-weddy/                # apps/iziweddy/dist  (build s base: '/izi-weddy/')
-│   ├── index.html
-│   └── assets/
-├── izi-budgy/                # apps/izibudgy/dist  (TODO)
-└── staticwebapp.config.json  # jediná platná konfigurace – z apps/portal
-```
-
-- Nasazení přes **GitHub Actions**; každý workflow má `paths:` filtr, aby se
-  změna v portálu nebuildila IziWeddy a naopak. Workflow produktu publikuje
-  **jen svůj podadresář**, zbytek webu nechá být.
-- Pull request vytvoří preview prostředí pro dotčenou aplikaci.
-- Tajemství (Cosmos klíč, podpisový klíč tokenů, SMTP) v *Application settings*,
-  ideálně přes Key Vault referenci.
+`COOKIE_DOMAIN` se nechává **prázdný** – všechno běží na jednom originu
+(viz [kap. 5](#5-identita-registrace-a-přihlášení)).
 
 ### `staticwebapp.config.json`
 
-Static Web Apps čte **jeden** konfigurační soubor z kořene webu – ten portálu.
-Musí proto obsloužit i routery produktů: každá aplikace potřebuje vlastní
-`navigationFallback` na svůj `index.html`, jinak by přímé otevření
-`/izi-weddy/weddings/123/guests` skončilo na portálu.
+Aplikace je jedna, takže stačí jeden `navigationFallback` – přímé otevření
+`/izi-weddy/weddings/123/guests` spadne na `index.html` a routu si najde Vue
+Router. Přepisy na podadresáře, které tu stály, dokud byl každý produkt
+vlastním buildem, už nejsou potřeba.
 
 ```json
 {
-  "routes": [
-    { "route": "/izi-weddy/assets/*" },
-    { "route": "/izi-weddy/*", "rewrite": "/izi-weddy/index.html" },
-    { "route": "/izi-budgy/assets/*" },
-    { "route": "/izi-budgy/*", "rewrite": "/izi-budgy/index.html" }
-  ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/api/*", "/assets/*", "/izi-weddy/*", "/izi-budgy/*", "/*.{png,jpg,svg,ico,webmanifest,xml,txt}"]
-  }
+    "exclude": ["/api/*", "/assets/*", "/*.{png,jpg,svg,ico,webmanifest,xml,txt}"]
+  },
+  "platform": { "apiRuntime": "node:20" }
 }
 ```
 
-Pravidlo bez `rewrite` (`/izi-weddy/assets/*`) jen pustí požadavek na skutečný
-soubor – musí stát **před** přepisem na `index.html`, protože se routy
-vyhodnocují shora dolů.
-
-Soubory `staticwebapp.config.json` v adresářích produktů zůstávají kvůli
-samostatnému preview nasazení, ale na produkci se neuplatní.
+`exclude` drží mimo fallback API a skutečné soubory – bez něj by chybějící
+obrázek vrátil HTML stránku místo poctivé 404.
 
 ---
 

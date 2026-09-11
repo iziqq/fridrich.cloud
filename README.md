@@ -1,7 +1,8 @@
 # fridrich.cloud
 
 Monorepozitář pro `fridrich.cloud` – prezentační portál a produkty pod ním.
-Všechno běží na **jedné doméně** a rozlišuje se cestou.
+Frontend je **jedna aplikace** na jedné doméně; produkty jsou podstromy rout
+s vlastním vzhledem.
 
 | Část | Adresa | Popis |
 |---|---|---|

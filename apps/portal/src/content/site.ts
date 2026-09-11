@@ -38,7 +38,7 @@ export interface Project {
   status: 'development' | 'planned' | 'live';
   statusLabel: string;
   stack: string[];
-  /** Adresa aplikace – cesta na tomhle webu, např. `/izi-weddy/`. */
+  /** Cesta k aplikaci uvnitř portálu, např. `/izi-weddy`. */
   url?: string;
 }
 
@@ -183,7 +183,7 @@ export const projects = {
       status: 'development',
       statusLabel: 'Ve vývoji',
       stack: ['Vue 3', 'Azure Functions', 'Cosmos DB'],
-      url: '/izi-weddy/',
+      url: '/izi-weddy',
     },
     {
       id: 'izibudgy',

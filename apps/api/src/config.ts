@@ -83,8 +83,9 @@ export function getCosmosConfig(): CosmosConfig {
     database: optional('COSMOS_DATABASE', 'izi-db'),
   };
 
-  // Klíč jen tam, kde je (emulátor, lokální vývoj) – v Azure jedeme
-  // na managed identity, aby v nastavení neležel tajný klíč.
+  // Bez klíče se sáhne po managed identity. Na spravovaných funkcích Static
+  // Web Apps ta ale není k dispozici, takže tam musí být klíč vyplněný
+  // (doc/architecture.md, kap. 9); identita zbývá pro samostatný Function App.
   const key = process.env['COSMOS_KEY'];
   if (key) config.key = key;
 

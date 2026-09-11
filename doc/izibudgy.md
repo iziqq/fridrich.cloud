@@ -9,7 +9,7 @@ Aplikace na rozpočet domácnosti – přehled příjmů, výdajů a úspor.
 |---|---|
 | **Adresa** | `www.fridrich.cloud/izi-budgy` |
 | **Modul API** | `/api/budgy/*` |
-| **Frontend** | `apps/izibudgy` |
+| **Frontend** | `apps/portal/src/budgy` – podstrom portálu, stejně jako [IziWeddy](iziweddy.md) |
 | **Sdílené typy** | `packages/budgy-shared` |
 | **Identita** | Společný účet `fridrich.cloud` – viz [architecture.md, kap. 5](architecture.md#5-identita-registrace-a-přihlášení) |
 

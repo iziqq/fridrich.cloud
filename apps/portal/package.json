@@ -10,8 +10,11 @@
     "typecheck": "vue-tsc --build --force"
   },
   "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.1.0",
+    "@fontsource/inter": "^5.1.0",
     "@fridrich/design": "*",
     "@fridrich/shared": "*",
+    "@fridrich/weddy-shared": "*",
     "pinia": "^2.2.6",
     "vue": "^3.5.13",
     "vue-router": "^4.4.5"

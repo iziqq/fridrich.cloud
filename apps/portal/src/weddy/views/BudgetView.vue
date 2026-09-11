@@ -2,9 +2,10 @@
 import { PLANNING_CATEGORIES, PLANNING_CATEGORY_LABELS, formatCurrency } from '@fridrich/weddy-shared';
 import { computed, onMounted, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import ErrorBlock from '@/components/ErrorBlock.vue';
-import LoadingBlock from '@/components/LoadingBlock.vue';
-import { usePlanningStore } from '@/stores/planning';
+import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
+import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
+import { usePlanningStore } from '@/weddy/stores/planning';
+import { weddyPath } from '@/weddy/routes';
 
 const route = useRoute();
 const store = usePlanningStore();
@@ -73,12 +74,12 @@ function share(amount: number): string {
 
       <p v-if="usedCategories.length === 0" class="empty">
         Zatím tu není žádná položka s cenou.
-        <RouterLink :to="`/weddings/${weddingId}/planning`">Přejít na plánování</RouterLink>
+        <RouterLink :to="weddyPath(`/weddings/${weddingId}/planning`)">Přejít na plánování</RouterLink>
       </p>
 
       <ul v-else class="rows">
         <li v-for="category in usedCategories" :key="category" class="row card">
-          <RouterLink :to="`/weddings/${weddingId}/planning/${category}`" class="link">
+          <RouterLink :to="weddyPath(`/weddings/${weddingId}/planning/${category}`)" class="link">
             <span class="name">{{ PLANNING_CATEGORY_LABELS[category] }}</span>
             <span class="values">
               <span class="sum">{{ formatCurrency(budget.byCategory[category].total) }}</span>

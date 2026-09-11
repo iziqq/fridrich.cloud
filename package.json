@@ -12,13 +12,13 @@
   "scripts": {
     "dev": "npm run dev -w apps/portal",
     "dev:portal": "npm run dev -w apps/portal",
-    "dev:weddy": "npm run dev -w apps/iziweddy",
     "dev:api": "npm run start -w apps/api",
     "build": "npm run build --workspaces --if-present",
     "build:portal": "npm run build -w apps/portal",
     "preview:portal": "npm run preview -w apps/portal",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "build:api": "npm run build:deploy -w apps/api"
   }
 }

@@ -1,4 +1,3 @@
-import type { User } from '@fridrich/shared';
 import type {
   BudgetSummary,
   Guest,
@@ -13,7 +12,7 @@ import type {
   WeddingInput,
   WeddingSummary,
 } from '@fridrich/weddy-shared';
-import { http } from './client';
+import { http } from '@/api/client';
 
 function query(params: Record<string, string | undefined>): string {
   const search = new URLSearchParams();
@@ -23,11 +22,6 @@ function query(params: Record<string, string | undefined>): string {
   const serialized = search.toString();
   return serialized ? `?${serialized}` : '';
 }
-
-export const authApi = {
-  me: () => http.get<User>('/auth/me'),
-  logout: () => http.post<void>('/auth/logout', {}),
-};
 
 export const weddingsApi = {
   list: () => http.get<WeddingSummary[]>('/weddy/weddings'),
@@ -68,4 +62,4 @@ export const budgetApi = {
   get: (weddingId: string) => http.get<BudgetSummary>(`/weddy/weddings/${weddingId}/budget`),
 };
 
-export { ApiError } from './client';
+export { ApiError } from '@/api/client';

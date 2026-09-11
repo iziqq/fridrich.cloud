@@ -1,5 +1,8 @@
 <script setup lang="ts">
-withDefaults(
+import { computed } from 'vue';
+import { RouterLink } from 'vue-router';
+
+const props = withDefaults(
   defineProps<{
     variant?: 'primary' | 'ghost';
     href?: string;
@@ -8,11 +11,20 @@ withDefaults(
   }>(),
   { variant: 'primary', type: 'button', disabled: false },
 );
+
+/*
+ * Cesta na tomhle webu se prochází routerem, ne celou stránkou – produkty
+ * jsou od sloučení součástí portálu, takže by šlo o zbytečný reload.
+ */
+const internal = computed(() => props.href?.startsWith('/') && !props.href.startsWith('//'));
 </script>
 
 <template>
   <!-- Odkaz i tlačítko sdílí vzhled, ale zůstávají správným prvkem kvůli klávesnici. -->
-  <a v-if="href" :href="href" class="cyber-btn bevel-sm" :class="variant">
+  <RouterLink v-if="href && internal" :to="href" class="cyber-btn bevel-sm" :class="variant">
+    <span><slot /></span>
+  </RouterLink>
+  <a v-else-if="href" :href="href" class="cyber-btn bevel-sm" :class="variant">
     <span><slot /></span>
   </a>
   <button v-else class="cyber-btn bevel-sm" :class="variant" :type="type" :disabled="disabled">

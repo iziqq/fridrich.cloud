@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { formatCurrency } from '@fridrich/weddy-shared';
 import { onMounted } from 'vue';
-import { RouterLink } from 'vue-router';
-import EmptyState from '@/components/EmptyState.vue';
-import ErrorBlock from '@/components/ErrorBlock.vue';
-import LoadingBlock from '@/components/LoadingBlock.vue';
+import { RouterLink, useRouter } from 'vue-router';
+import EmptyState from '@/weddy/components/EmptyState.vue';
+import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
+import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import { useAuthStore } from '@/stores/auth';
-import { useWeddingsStore } from '@/stores/weddings';
+import { useWeddingsStore } from '@/weddy/stores/weddings';
+import { weddyPath } from '@/weddy/routes';
 
 const weddings = useWeddingsStore();
 const auth = useAuthStore();
+const router = useRouter();
+
+/* Po odhlášení nemá plánovač co zobrazit, tak se jde na portál. */
+async function signOut(): Promise<void> {
+  await auth.logout();
+  await router.push('/');
+}
 
 onMounted(() => weddings.loadList());
 
@@ -33,13 +41,13 @@ function formatDate(iso: string | undefined): string {
 </script>
 
 <template>
-  <div class="dashboard">
+  <main id="obsah" class="dashboard">
     <header class="head container">
       <div>
         <p class="hello">{{ auth.user?.displayName }}</p>
         <h1>Vaše plánování</h1>
       </div>
-      <button type="button" class="btn btn-ghost sign-out" @click="auth.logout()">
+      <button type="button" class="btn btn-ghost sign-out" @click="signOut">
         Odhlásit se
       </button>
     </header>
@@ -54,12 +62,12 @@ function formatDate(iso: string | undefined): string {
         title="Zatím tu nic není"
         description="Založte první plánování a začněte skládat svatbu dohromady."
       >
-        <RouterLink to="/weddings/new" class="btn btn-primary">Přidat plánování</RouterLink>
+        <RouterLink :to="weddyPath('/weddings/new')" class="btn btn-primary">Přidat plánování</RouterLink>
       </EmptyState>
 
       <ul v-else class="list">
         <li v-for="wedding in weddings.summaries" :key="wedding.id">
-          <RouterLink :to="`/weddings/${wedding.id}/couple`" class="card wedding">
+          <RouterLink :to="weddyPath(`/weddings/${wedding.id}/couple`)" class="card wedding">
             <div class="title-row">
               <h2>{{ wedding.title }}</h2>
               <span v-if="countdown(wedding.daysUntilWedding)" class="countdown">
@@ -86,11 +94,11 @@ function formatDate(iso: string | undefined): string {
         </li>
       </ul>
 
-      <RouterLink v-if="weddings.summaries.length > 0" to="/weddings/new" class="btn btn-primary add">
+      <RouterLink v-if="weddings.summaries.length > 0" :to="weddyPath('/weddings/new')" class="btn btn-primary add">
         Přidat plánování
       </RouterLink>
     </div>
-  </div>
+  </main>
 </template>
 
 <style scoped>

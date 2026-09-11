@@ -1,9 +1,13 @@
 /*
  * Téma IziWeddy.
  *
- * Ze sdíleného balíčku bereme jen strukturu (rozestupy, pohyb, reset) –
- * cyberpunkové barvy portálu by na svatebním plánovači působily nepatřičně.
- * Paleta je proto vlastní: teplá, světlá, klidná.
+ * Plánovač běží uvnitř portálu, takže se **všechno musí vejít pod `.weddy`**.
+ * Tokeny na `:root` by přebily cyberpunkovou paletu portálu na celém webu;
+ * takhle platí jen v podstromu, který kreslí `WeddyShell.vue`. Vlastnosti
+ * CSS se dědí, proto stačí předefinovat je na obalu.
+ *
+ * Strukturu (rozestupy, pohyb, reset) bere plánovač ze sdíleného balíčku
+ * stejně jako portál – jiná je jen paleta a písmo: teplé, světlé, klidné.
  */
 @import '@fontsource/cormorant-garamond/latin-600.css';
 @import '@fontsource/cormorant-garamond/latin-ext-600.css';
@@ -14,10 +18,16 @@
 @import '@fontsource/inter/latin-600.css';
 @import '@fontsource/inter/latin-ext-600.css';
 
-@import '@fridrich/design/primitives.css';
-@import '@fridrich/design/base.css';
-
-:root {
+/*
+ * Tokeny dostane i `body`, dokud je plánovač na obrazovce.
+ *
+ * Samotný obal má `min-height: 100dvh`, takže viewport pokryje – ale
+ * přetažení scrollu na mobilu sahá za něj a odhalilo by tmavý podklad
+ * portálu. Portálová hlavička ani patička se přitom na těchto stránkách
+ * nekreslí (`meta.bare`), takže se tokeny nemají kde potkat.
+ */
+.weddy,
+body:has(.weddy) {
   /* --- Paleta --- */
   --rose-50: #fff7f8;
   --rose-100: #ffeef1;
@@ -67,19 +77,28 @@
   color-scheme: light;
 }
 
-body {
+.weddy,
+body:has(.weddy) {
   background: var(--color-bg);
 }
 
-h1,
-h2,
-h3 {
+.weddy {
+  min-height: 100dvh;
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.weddy h1,
+.weddy h2,
+.weddy h3 {
   font-weight: 600;
   letter-spacing: -0.01em;
+  /* Portál nadpisy verzálkuje, tady mají zůstat, jak jsou napsané. */
+  text-transform: none;
 }
 
 /* Mono třídu ze sdíleného resetu tu používáme na drobné popisky. */
-.mono {
+.weddy .mono {
   font-family: var(--font-body);
   font-size: var(--text-label);
   font-weight: 600;
@@ -89,7 +108,7 @@ h3 {
 
 /* --- Sdílené prvky --- */
 
-.card {
+.weddy .card {
   padding: var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -97,7 +116,7 @@ h3 {
   box-shadow: var(--shadow-sm);
 }
 
-.btn {
+.weddy .btn {
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
@@ -117,48 +136,48 @@ h3 {
     color var(--dur-fast) var(--ease);
 }
 
-.btn:disabled {
+.weddy .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-primary {
+.weddy .btn-primary {
   background: var(--color-accent);
   color: var(--color-on-accent);
 }
 
-.btn-primary:hover:not(:disabled) {
+.weddy .btn-primary:hover:not(:disabled) {
   background: var(--rose-700);
   color: var(--color-on-accent);
 }
 
-.btn-secondary {
+.weddy .btn-secondary {
   border-color: var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
 }
 
-.btn-secondary:hover:not(:disabled) {
+.weddy .btn-secondary:hover:not(:disabled) {
   border-color: var(--rose-400);
   color: var(--color-accent);
 }
 
-.btn-ghost {
+.weddy .btn-ghost {
   color: var(--color-muted);
 }
 
-.btn-ghost:hover:not(:disabled) {
+.weddy .btn-ghost:hover:not(:disabled) {
   background: var(--sand-100);
   color: var(--color-text);
 }
 
-.btn-danger {
+.weddy .btn-danger {
   background: var(--clay-500);
   color: #ffffff;
 }
 
 /* Obsah stránky uvnitř plánování – nad spodní navigací. */
-.page {
+.weddy .page {
   padding-block: var(--space-2) calc(var(--bottom-nav) + var(--space-6));
 }
 

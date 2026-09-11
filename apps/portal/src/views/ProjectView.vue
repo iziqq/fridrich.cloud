@@ -27,7 +27,7 @@ const project = computed(() =>
       </ul>
 
       <div class="actions">
-        <CyberButton v-if="project.url" :href="project.url">Otevřít aplikaci ↗</CyberButton>
+        <CyberButton v-if="project.url" :href="project.url">Otevřít aplikaci</CyberButton>
         <RouterLink to="/#projekty" class="back mono">← Zpět na projekty</RouterLink>
       </div>
     </div>

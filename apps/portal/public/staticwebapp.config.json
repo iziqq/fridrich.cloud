@@ -1,17 +1,9 @@
 {
-  "routes": [
-    { "route": "/izi-weddy/assets/*" },
-    { "route": "/izi-weddy/*", "rewrite": "/izi-weddy/index.html" },
-    { "route": "/izi-budgy/assets/*" },
-    { "route": "/izi-budgy/*", "rewrite": "/izi-budgy/index.html" }
-  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
       "/api/*",
       "/assets/*",
-      "/izi-weddy/*",
-      "/izi-budgy/*",
       "/*.{png,jpg,svg,ico,webmanifest,xml,txt}"
     ]
   },
@@ -19,5 +11,8 @@
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin"
+  },
+  "platform": {
+    "apiRuntime": "node:20"
   }
 }

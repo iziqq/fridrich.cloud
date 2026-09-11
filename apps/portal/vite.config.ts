@@ -17,16 +17,6 @@ export default defineConfig({
         target: 'http://localhost:7071',
         changeOrigin: true,
       },
-      /*
-       * Produkty mají vlastní dev server, ale i při vývoji musí být vidět
-       * pod stejnou cestou jako v produkci – jinak by se prefix /izi-weddy
-       * a návrat z přihlášení daly vyzkoušet až po nasazení. Tady portál
-       * zastupuje Static Web Apps, které to jinak řeší routami.
-       */
-      '/izi-weddy': {
-        target: 'http://localhost:5174',
-        ws: true,
-      },
     },
   },
   build: {

@@ -8,7 +8,7 @@ IziWeddy je **jeden z produktů pod `fridrich.cloud`**, ne samostatný projekt. 
 |---|---|
 | **Adresa** | `www.fridrich.cloud/izi-weddy` |
 | **Modul API** | `/api/weddy/*` |
-| **Frontend** | `apps/iziweddy` |
+| **Frontend** | `apps/portal/src/weddy` – podstrom portálu, ne samostatná aplikace |
 | **Sdílené typy** | `packages/weddy-shared` |
 | **Přihlášení** | Společný účet `fridrich.cloud` – viz [architecture.md, kap. 5](architecture.md#5-identita-registrace-a-přihlášení) |
 
@@ -16,7 +16,7 @@ IziWeddy je **jeden z produktů pod `fridrich.cloud`**, ne samostatný projekt. 
 > kapitoly [3](#3-struktura-repozitáře), [7](#7-rest-api), [9](#9-ukládání-dat),
 > [10](#10-lokální-vývoj) a [11](#11-nasazení) popisují IziWeddy jako samostatný
 > repozitář. Platí místo nich [architecture.md](architecture.md); konkrétně:
-> aplikace žije v `apps/iziweddy`, endpointy mají prefix `/api/weddy`, backend
+> aplikace žije v `apps/portal/src/weddy`, endpointy mají prefix `/api/weddy`, backend
 > je organizovaný domain-first podle [`CLAUDE.md`](../CLAUDE.md) a otázka
 > přihlašování (kap. 12, otázka 1) je už zodpovězená – účet je společný pro
 > všechny produkty. **Kapitoly 4, 5, 6, 8 a 12 platí beze změny** – to je
@@ -447,14 +447,13 @@ export function calculateBudget(items: PlanningItem[]): BudgetSummary {
 
 ### 6.1 Routy
 
-Aplikace běží pod cestou **`/izi-weddy`**, ne na vlastní doméně. Routy níže se
-proto uvádějí relativně k tomuto základu – `/weddings/new` je v prohlížeči
+Aplikace běží pod cestou **`/izi-weddy`** uvnitř portálu. Routy níže se proto
+uvádějí relativně k tomuto základu – `/weddings/new` je v prohlížeči
 `www.fridrich.cloud/izi-weddy/weddings/new`.
 
-Základ nikde v kódu nefiguruje natvrdo: drží ho `base: '/izi-weddy/'` ve
-`vite.config.ts` a router ho převezme přes `createWebHistory(import.meta.env.BASE_URL)`.
-Odkazy v šablonách (`RouterLink to="/weddings/new"`) zůstávají krátké a Vue Router
-si prefix doplní sám.
+Základ nikde nefiguruje natvrdo: drží ho konstanta `WEDDY_BASE` v `weddy/routes.ts`
+a odkazy si ho skládají přes `weddyPath('/weddings/new')`. Přesun pod jinou
+cestu je tedy změna jednoho řádku.
 
 | Routa | Stránka |
 |---|---|
@@ -696,16 +695,14 @@ přinese `npm install` jako devDependency `apps/api` – globálně se instalova
 # Instalace závislostí pro všechny workspaces
 npm install
 
-# V samostatných terminálech – každá část má vlastní dev server
+# Ve dvou terminálech
 npm run dev:api      # :7071
-npm run dev:weddy    # :5174
 npm run dev:portal   # :5173 – tudy se chodí
 ```
 
-Aplikace se otevírá na **`http://localhost:5173/izi-weddy/`**, ne na `:5174`.
-Dev server portálu proxuje `/izi-weddy` i `/api` k sobě, takže lokální adresy
-odpovídají produkčním a funguje i návrat z přihlášení na portálu. Přímé
-otevření `:5174` aplikaci zobrazí, ale přihlášení skončí na cizím originu.
+Plánovač se otevírá na **`http://localhost:5173/izi-weddy/`**. Vlastní dev
+server nemá – je to táž aplikace jako portál. Když je port obsazený, Vite
+uskočí na další volný a vypíše ho při startu.
 
 ### Doporučené skripty v root `package.json`
 
@@ -746,33 +743,12 @@ otevření `:5174` aplikaci zobrazí, ale přihlášení skončí na cizím orig
 > Závazný popis nasazení je v [architecture.md, kap. 9](architecture.md#9-nasazení).
 > Tahle kapitola jen shrnuje, co z něj plyne pro IziWeddy.
 
-IziWeddy se nenasazuje jako samostatný web. Buildí se zvlášť (`npm run build -w apps/iziweddy`),
-ale publikuje se do **podadresáře `izi-weddy/`** společné Static Web App na
-`www.fridrich.cloud`. Build proto musí jít s `base: '/izi-weddy/'`, jinak by
-aplikace hledala své `assets/` v kořeni webu a nenašla je.
+IziWeddy se nenasazuje samostatně – je součástí portálu, takže ho publikuje
+nasazení celého webu. Podrobnosti v [architecture.md, kap. 9](architecture.md#9-nasazení).
 
-- Nasazení přes **GitHub Actions** s `paths:` filtrem na `apps/iziweddy/**`,
-  `packages/weddy-shared/**` a `packages/shared/**`.
-- Workflow publikuje jen podadresář `izi-weddy/`; portál ani API se ho netýkají.
-- Pro každý pull request se vytvoří **preview prostředí**.
-
-### `staticwebapp.config.json`
-
-Na produkci platí **jen konfigurace v kořeni webu**, tedy ta portálova – ta už
-obsahuje pravidla pro `/izi-weddy/*` (viz [architecture.md, kap. 9](architecture.md#9-nasazení)).
-Soubor v `apps/iziweddy/` slouží pro samostatné preview nasazení, kdy aplikace
-běží v kořeni:
-
-```json
-{
-  "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": ["/api/*", "/assets/*"]
-  }
-}
-```
-
-`navigationFallback` zajistí, že přímý přístup na URL jako `/weddings/123/guests` funguje i s Vue Routerem v režimu history.
+Cenou za to je, že **změna v plánovači znamená nové nasazení celého webu**.
+Při téhle velikosti je to výhodnější než udržovat druhý build, druhé workflow
+a přepisy cest ve Static Web Apps.
 
 ---
 

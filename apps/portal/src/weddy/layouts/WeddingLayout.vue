@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
-import { useWeddingsStore } from '@/stores/weddings';
+import { useWeddingsStore } from '@/weddy/stores/weddings';
+import { weddyPath } from '@/weddy/routes';
 
 const route = useRoute();
 const weddings = useWeddingsStore();
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 
+/*
+ * Detail svatby potřebuje název do hlavičky i data do formuláře snoubenců.
+ * Načítá se tady, protože je to nejvyšší místo, které svatbu zná – jako
+ * hlídač v routeru by to běželo i pro stránky portálu, které o plánovači
+ * nevědí. `immediate` pokryje první zobrazení, watch pak přepnutí svatby.
+ */
+watch(weddingId, (id) => id && weddings.loadOne(id), { immediate: true });
+
 const tabs = computed(() => [
-  { to: `/weddings/${weddingId.value}/couple`, icon: '💑', label: 'Snoubenci' },
-  { to: `/weddings/${weddingId.value}/guests`, icon: '👥', label: 'Hosté' },
-  { to: `/weddings/${weddingId.value}/planning`, icon: '📋', label: 'Plánování' },
-  { to: `/weddings/${weddingId.value}/budget`, icon: '💰', label: 'Rozpočet' },
+  { to: weddyPath(`/weddings/${weddingId.value}/couple`), icon: '💑', label: 'Snoubenci' },
+  { to: weddyPath(`/weddings/${weddingId.value}/guests`), icon: '👥', label: 'Hosté' },
+  { to: weddyPath(`/weddings/${weddingId.value}/planning`), icon: '📋', label: 'Plánování' },
+  { to: weddyPath(`/weddings/${weddingId.value}/budget`), icon: '💰', label: 'Rozpočet' },
 ]);
 
 const title = computed(() => weddings.current?.title ?? 'Plánování');
@@ -22,7 +31,7 @@ const title = computed(() => weddings.current?.title ?? 'Plánování');
   <div class="layout">
     <header class="top">
       <div class="container bar">
-        <RouterLink to="/" class="back" aria-label="Zpět na přehled">
+        <RouterLink :to="weddyPath()" class="back" aria-label="Zpět na přehled">
           <span aria-hidden="true">←</span>
         </RouterLink>
         <h1>{{ title }}</h1>

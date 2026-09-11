@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import type { Wedding } from '@fridrich/weddy-shared';
 import { RouterLink, useRouter } from 'vue-router';
-import WeddingForm from '@/components/WeddingForm.vue';
-import { useWeddingsStore } from '@/stores/weddings';
+import WeddingForm from '@/weddy/components/WeddingForm.vue';
+import { useWeddingsStore } from '@/weddy/stores/weddings';
+import { weddyPath } from '@/weddy/routes';
 
 const weddings = useWeddingsStore();
 const router = useRouter();
 
 async function onSaved(wedding: Wedding): Promise<void> {
-  await router.replace(`/weddings/${wedding.id}/couple`);
+  await router.replace(weddyPath(`/weddings/${wedding.id}/couple`));
 }
 </script>
 
 <template>
-  <div class="page-new container">
-    <RouterLink to="/" class="back">← Zpět na přehled</RouterLink>
+  <main id="obsah" class="page-new container">
+    <RouterLink :to="weddyPath()" class="back">← Zpět na přehled</RouterLink>
     <h1>Nové plánování</h1>
     <p class="lead">Stačí název a jména snoubenců, zbytek se dá doplnit kdykoli později.</p>
 
@@ -23,7 +24,7 @@ async function onSaved(wedding: Wedding): Promise<void> {
       :save="(input) => weddings.create(input)"
       @saved="onSaved"
     />
-  </div>
+  </main>
 </template>
 
 <style scoped>

@@ -2,7 +2,7 @@ import type { AgeGroup, Guest, GuestInput, GuestSide, GuestStatus } from '@fridr
 import { calculateGuestStats } from '@fridrich/weddy-shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { guestsApi } from '@/api';
+import { guestsApi } from '@/weddy/api';
 
 export interface GuestFilters {
   side: GuestSide | 'all';

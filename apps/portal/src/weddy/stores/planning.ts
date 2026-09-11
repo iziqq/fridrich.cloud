@@ -7,7 +7,7 @@ import type {
 import { PLANNING_CATEGORIES, calculateBudget } from '@fridrich/weddy-shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { itemsApi } from '@/api';
+import { itemsApi } from '@/weddy/api';
 
 export interface CategoryOverview {
   category: PlanningCategory;

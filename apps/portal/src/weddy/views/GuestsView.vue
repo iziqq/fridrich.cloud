@@ -8,16 +8,16 @@ import {
 } from '@fridrich/weddy-shared';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { ApiError } from '@/api';
-import BottomSheet from '@/components/BottomSheet.vue';
-import ChoiceField from '@/components/ChoiceField.vue';
-import EmptyState from '@/components/EmptyState.vue';
-import ErrorBlock from '@/components/ErrorBlock.vue';
-import FabButton from '@/components/FabButton.vue';
-import FormField from '@/components/FormField.vue';
-import LoadingBlock from '@/components/LoadingBlock.vue';
-import StatusBadge from '@/components/StatusBadge.vue';
-import { GUEST_SORT_LABELS, useGuestsStore } from '@/stores/guests';
+import { ApiError } from '@/weddy/api';
+import BottomSheet from '@/weddy/components/BottomSheet.vue';
+import ChoiceField from '@/weddy/components/ChoiceField.vue';
+import EmptyState from '@/weddy/components/EmptyState.vue';
+import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
+import FabButton from '@/weddy/components/FabButton.vue';
+import FormField from '@/weddy/components/FormField.vue';
+import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
+import StatusBadge from '@/weddy/components/StatusBadge.vue';
+import { GUEST_SORT_LABELS, useGuestsStore } from '@/weddy/stores/guests';
 
 const route = useRoute();
 const store = useGuestsStore();

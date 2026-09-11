@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import ErrorBlock from '@/components/ErrorBlock.vue';
-import LoadingBlock from '@/components/LoadingBlock.vue';
-import WeddingForm from '@/components/WeddingForm.vue';
-import { useWeddingsStore } from '@/stores/weddings';
+import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
+import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
+import WeddingForm from '@/weddy/components/WeddingForm.vue';
+import { useWeddingsStore } from '@/weddy/stores/weddings';
 
 const route = useRoute();
 const weddings = useWeddingsStore();

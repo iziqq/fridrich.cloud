@@ -1,7 +1,7 @@
 import type { Wedding, WeddingInput, WeddingSummary } from '@fridrich/weddy-shared';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { weddingsApi } from '@/api';
+import { weddingsApi } from '@/weddy/api';
 
 export const useWeddingsStore = defineStore('weddings', () => {
   const summaries = ref<WeddingSummary[]>([]);
