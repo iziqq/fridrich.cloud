@@ -6,7 +6,7 @@ IziWeddy je **jeden z produktů pod `fridrich.cloud`**, ne samostatný projekt. 
 
 | | |
 |---|---|
-| **Doména** | `iziweddy.fridrich.cloud` |
+| **Adresa** | `www.fridrich.cloud/izi-weddy` |
 | **Modul API** | `/api/weddy/*` |
 | **Frontend** | `apps/iziweddy` |
 | **Sdílené typy** | `packages/weddy-shared` |
@@ -350,6 +350,12 @@ Hosté se zobrazují v jedné společné tabulce.
 - **Rychlá změna stavu** přímo ze seznamu (bez otevírání formuláře).
 - **Filtrování** podle strany, věkové skupiny a stavu.
 - **Vyhledávání** podle jména.
+- **Řazení** podle příjmení (výchozí) nebo jména. Volba není filtr, takže ji
+  „Zrušit filtry" nechává být. Při shodě rozhoduje to druhé jméno a porovnává
+  se česky – `Čermák` patří za `Cach`, ne až za `Žák`.
+- **Jméno se vypisuje v pořadí, ve kterém se řadí** (`Novák Petr` při řazení
+  podle příjmení). Jinak vypadá seznam rozbitě: oko čte první slovo, takže
+  `Jana Adamová, Petr Novák` působí jako náhodné pořadí.
 - **Souhrnné statistiky** nad tabulkou:
 
 | Statistika | Výpočet |
@@ -440,6 +446,15 @@ export function calculateBudget(items: PlanningItem[]): BudgetSummary {
 ## 6. Obrazovky a navigace
 
 ### 6.1 Routy
+
+Aplikace běží pod cestou **`/izi-weddy`**, ne na vlastní doméně. Routy níže se
+proto uvádějí relativně k tomuto základu – `/weddings/new` je v prohlížeči
+`www.fridrich.cloud/izi-weddy/weddings/new`.
+
+Základ nikde v kódu nefiguruje natvrdo: drží ho `base: '/izi-weddy/'` ve
+`vite.config.ts` a router ho převezme přes `createWebHistory(import.meta.env.BASE_URL)`.
+Odkazy v šablonách (`RouterLink to="/weddings/new"`) zůstávají krátké a Vue Router
+si prefix doplní sám.
 
 | Routa | Stránka |
 |---|---|
@@ -670,9 +685,10 @@ Partition key `weddingId` zajistí, že všechny dotazy v rámci jedné svatby (
 ### Požadavky
 
 - Node.js 20 LTS nebo novější
-- [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
-- [Azure Static Web Apps CLI](https://azure.github.io/static-web-apps-cli/) (`npm i -g @azure/static-web-apps-cli`)
 - Cosmos DB Emulator nebo připojení ke vzdálené Cosmos DB
+
+[Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
+přinese `npm install` jako devDependency `apps/api` – globálně se instalovat nemusí.
 
 ### Spuštění
 
@@ -680,9 +696,16 @@ Partition key `weddingId` zajistí, že všechny dotazy v rámci jedné svatby (
 # Instalace závislostí pro všechny workspaces
 npm install
 
-# Spuštění frontendu i API najednou
-npm run dev
+# V samostatných terminálech – každá část má vlastní dev server
+npm run dev:api      # :7071
+npm run dev:weddy    # :5174
+npm run dev:portal   # :5173 – tudy se chodí
 ```
+
+Aplikace se otevírá na **`http://localhost:5173/izi-weddy/`**, ne na `:5174`.
+Dev server portálu proxuje `/izi-weddy` i `/api` k sobě, takže lokální adresy
+odpovídají produkčním a funguje i návrat z přihlášení na portálu. Přímé
+otevření `:5174` aplikaci zobrazí, ale přihlášení skončí na cizím originu.
 
 ### Doporučené skripty v root `package.json`
 
@@ -720,19 +743,25 @@ npm run dev
 
 ## 11. Nasazení
 
-**Doporučení:** [Azure Static Web Apps](https://learn.microsoft.com/azure/static-web-apps/) – hostuje Vue frontend a Azure Functions API společně, přímo z jednoho repozitáře.
+> Závazný popis nasazení je v [architecture.md, kap. 9](architecture.md#9-nasazení).
+> Tahle kapitola jen shrnuje, co z něj plyne pro IziWeddy.
 
-| Nastavení | Hodnota |
-|---|---|
-| App location | `apps/web` |
-| API location | `apps/api` |
-| Output location | `dist` |
+IziWeddy se nenasazuje jako samostatný web. Buildí se zvlášť (`npm run build -w apps/iziweddy`),
+ale publikuje se do **podadresáře `izi-weddy/`** společné Static Web App na
+`www.fridrich.cloud`. Build proto musí jít s `base: '/izi-weddy/'`, jinak by
+aplikace hledala své `assets/` v kořeni webu a nenašla je.
 
-- Nasazení probíhá automaticky přes **GitHub Actions** (nebo Azure DevOps) při pushi do hlavní větve.
-- Pro každý pull request se automaticky vytvoří **preview prostředí**.
-- Připojovací údaje k databázi se nastavují v *Application settings* dané Static Web App.
+- Nasazení přes **GitHub Actions** s `paths:` filtrem na `apps/iziweddy/**`,
+  `packages/weddy-shared/**` a `packages/shared/**`.
+- Workflow publikuje jen podadresář `izi-weddy/`; portál ani API se ho netýkají.
+- Pro každý pull request se vytvoří **preview prostředí**.
 
 ### `staticwebapp.config.json`
+
+Na produkci platí **jen konfigurace v kořeni webu**, tedy ta portálova – ta už
+obsahuje pravidla pro `/izi-weddy/*` (viz [architecture.md, kap. 9](architecture.md#9-nasazení)).
+Soubor v `apps/iziweddy/` slouží pro samostatné preview nasazení, kdy aplikace
+běží v kořeni:
 
 ```json
 {

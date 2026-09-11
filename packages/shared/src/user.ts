@@ -1,8 +1,8 @@
 /**
  * Uživatel tak, jak ho vidí frontend.
  *
- * Hash hesla ani nic z bezpečnostní vrstvy sem nepatří – tenhle tvar jde
- * po drátě, takže obsahuje jen to, co smí vidět prohlížeč.
+ * Nic z bezpečnostní vrstvy sem nepatří – tenhle tvar jde po drátě, takže
+ * obsahuje jen to, co smí vidět prohlížeč.
  */
 export interface User {
   id: string;
@@ -13,28 +13,25 @@ export interface User {
   updatedAt: string;
 }
 
+/** Registrace: jen jméno a e-mail, ověřovací odkaz přijde do schránky. */
 export interface RegisterRequest {
   email: string;
-  password: string;
   displayName: string;
 }
 
+/** První krok přihlášení – vyžádání kódu na e-mail. */
 export interface LoginRequest {
   email: string;
-  password: string;
+}
+
+/** Druhý krok přihlášení – opsání kódu ze schránky. */
+export interface LoginCodeRequest {
+  email: string;
+  code: string;
 }
 
 export interface VerifyEmailRequest {
   token: string;
-}
-
-export interface ForgotPasswordRequest {
-  email: string;
-}
-
-export interface ResetPasswordRequest {
-  token: string;
-  password: string;
 }
 
 export interface ContactRequest {
@@ -43,6 +40,5 @@ export interface ContactRequest {
   message: string;
 }
 
-/** Minimální délka hesla – stejná hodnota platí na frontendu i backendu. */
-export const PASSWORD_MIN_LENGTH = 12;
-export const PASSWORD_MAX_LENGTH = 200;
+/** Délka přihlašovacího kódu – stejná hodnota platí na frontendu i backendu. */
+export const LOGIN_CODE_LENGTH = 6;

@@ -1,6 +1,5 @@
 import { app } from '@azure/functions';
-import { loginUser } from '../application/identity/loginUser.js';
-import { requestPasswordReset, resetPassword } from '../application/identity/passwordReset.js';
+import { requestLoginCode, verifyLoginCode } from '../application/identity/login.js';
 import { registerUser } from '../application/identity/registerUser.js';
 import { logout } from '../application/identity/session.js';
 import { verifyEmail } from '../application/identity/verifyEmail.js';
@@ -33,7 +32,7 @@ app.http('register', {
     // Odpověď je stejná, ať účet vznikl, nebo byl e-mail už obsazený –
     // jinak by šlo formulářem zjišťovat, kdo je registrovaný.
     return json(request, 202, {
-      message: 'Pokud je adresa volná, poslali jsme na ni ověřovací odkaz.',
+      message: 'Poslali jsme vám e-mail. Otevřením odkazu účet aktivujete.',
     });
   }),
 });
@@ -43,8 +42,12 @@ app.http('verifyEmail', {
   route: 'auth/verify-email',
   authLevel: 'anonymous',
   handler: publicEndpoint(async (request) => {
-    const user = await verifyEmail(identityDeps(), { raw: await readJson(request) });
-    return json(request, 200, user);
+    const result = await verifyEmail(identityDeps(), { raw: await readJson(request) });
+
+    // Otevření odkazu ze schránky rovnou přihlašuje.
+    return json(request, 200, result.user, {
+      'Set-Cookie': sessionCookie(result.sessionToken, result.expiresAt),
+    });
   }),
 });
 
@@ -53,17 +56,31 @@ app.http('login', {
   route: 'auth/login',
   authLevel: 'anonymous',
   handler: publicEndpoint(async (request) => {
-    const result = await loginUser(identityDeps(), {
+    await requestLoginCode(identityDeps(), {
       raw: await readJson(request),
       sourceIp: clientIp(request),
     });
 
-    return json(
-      request,
-      200,
-      result.user,
-      { 'Set-Cookie': sessionCookie(result.sessionToken, result.expiresAt) },
-    );
+    // Neprozrazuje, jestli adresa v systému je.
+    return json(request, 202, {
+      message: 'Pokud účet existuje, poslali jsme na něj přihlašovací kód.',
+    });
+  }),
+});
+
+app.http('loginVerify', {
+  methods: [...AUTH_METHODS],
+  route: 'auth/login/verify',
+  authLevel: 'anonymous',
+  handler: publicEndpoint(async (request) => {
+    const result = await verifyLoginCode(identityDeps(), {
+      raw: await readJson(request),
+      sourceIp: clientIp(request),
+    });
+
+    return json(request, 200, result.user, {
+      'Set-Cookie': sessionCookie(result.sessionToken, result.expiresAt),
+    });
   }),
 });
 
@@ -84,37 +101,4 @@ app.http('me', {
   handler: authenticatedEndpoint(async (request, _context, user) =>
     json(request, 200, user.toPublic()),
   ),
-});
-
-app.http('forgotPassword', {
-  methods: [...AUTH_METHODS],
-  route: 'auth/forgot-password',
-  authLevel: 'anonymous',
-  handler: publicEndpoint(async (request) => {
-    await requestPasswordReset(identityDeps(), {
-      raw: await readJson(request),
-      sourceIp: clientIp(request),
-      appUrl: getConfig().appUrl,
-    });
-
-    // Neprozrazuje, jestli adresa v systému je.
-    return json(request, 202, {
-      message: 'Pokud účet existuje, poslali jsme na něj odkaz pro obnovu hesla.',
-    });
-  }),
-});
-
-app.http('resetPassword', {
-  methods: [...AUTH_METHODS],
-  route: 'auth/reset-password',
-  authLevel: 'anonymous',
-  handler: publicEndpoint(async (request) => {
-    await resetPassword(identityDeps(), {
-      raw: await readJson(request),
-      appUrl: getConfig().appUrl,
-    });
-
-    // Heslo se změnilo a všechny session padly – uživatel se přihlásí znovu.
-    return noContent(request, { 'Set-Cookie': clearedSessionCookie() });
-  }),
 });

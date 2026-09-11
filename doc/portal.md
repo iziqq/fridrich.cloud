@@ -173,7 +173,7 @@ Vlastní produkty jako důkaz schopností. Velké karty přes celou šířku.
 
 | Projekt | Stav | Popis | Odkaz |
 |---|---|---|---|
-| **IziWeddy** | Ve vývoji | Svatební plánovač – hosté, přípravy, rozpočet na jednom místě | `/projekty/iziweddy` → `iziweddy.fridrich.cloud` |
+| **IziWeddy** | Ve vývoji | Svatební plánovač – hosté, přípravy, rozpočet na jednom místě | `/projekty/iziweddy` → `/izi-weddy` |
 | **IziBudgy** | Připravujeme | Rozpočet domácnosti – přehled příjmů, výdajů a úspor | `/projekty/izibudgy` |
 
 Karta obsahuje: náhled aplikace, název, stavový štítek, popis, použité

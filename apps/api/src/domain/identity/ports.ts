@@ -1,6 +1,6 @@
-import type { Credentials } from './Credentials.js';
 import type { EmailAddress } from './EmailAddress.js';
-import type { OneTimeToken, TokenPurpose } from './OneTimeToken.js';
+import type { LoginCode } from './LoginCode.js';
+import type { OneTimeToken } from './OneTimeToken.js';
 import type { Session } from './Session.js';
 import type { User } from './User.js';
 
@@ -17,31 +17,42 @@ export interface UserRepository {
   save(user: User): Promise<void>;
 }
 
-export interface CredentialsRepository {
-  findByUserId(userId: string): Promise<Credentials | undefined>;
-  save(credentials: Credentials): Promise<void>;
-}
-
 export interface TokenRepository {
   findByHash(tokenHash: string): Promise<OneTimeToken | undefined>;
   save(token: OneTimeToken): Promise<void>;
-  /** Zneplatní starší nespotřebované tokeny stejného účelu. */
-  invalidateAll(userId: string, purpose: TokenPurpose): Promise<void>;
+  /** Zneplatní starší nespotřebované ověřovací odkazy uživatele. */
+  invalidateAll(userId: string): Promise<void>;
+}
+
+export interface LoginCodeRepository {
+  /** Poslední vystavená výzva uživatele; starší se při vystavení nové ruší. */
+  findForUser(userId: string): Promise<LoginCode | undefined>;
+  save(challenge: LoginCode): Promise<void>;
+  deleteAllForUser(userId: string): Promise<void>;
 }
 
 export interface SessionRepository {
   findByHash(tokenHash: string): Promise<Session | undefined>;
   save(session: Session): Promise<void>;
   delete(sessionId: string, userId: string): Promise<void>;
-  /** Odhlásí uživatele na všech zařízeních – po změně hesla. */
+  /** Odhlásí uživatele na všech zařízeních. */
   deleteAllForUser(userId: string): Promise<void>;
 }
 
-/** Generátor náhodných tokenů a jejich otisků. */
+/**
+ * Generátor náhodných hodnot a jejich otisků.
+ *
+ * Doména potřebuje tokeny do odkazů, šestimístné kódy a porovnání otisku –
+ * odkud se bere náhoda a jaká hashovací funkce je pod tím, ji nezajímá.
+ */
 export interface TokenGenerator {
   /** Vrátí token pro uživatele a jeho otisk pro databázi. */
   generate(): { token: string; tokenHash: string };
-  hash(token: string): string;
+  /** Šestimístný přihlašovací kód z kryptograficky bezpečného zdroje. */
+  generateCode(): string;
+  hash(value: string): string;
+  /** Porovnání otisku odolné vůči odvození obsahu z délky trvání. */
+  matches(hash: string, value: string): boolean;
 }
 
 export interface IdGenerator {

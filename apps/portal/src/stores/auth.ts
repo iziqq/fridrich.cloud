@@ -1,10 +1,4 @@
-import type {
-  ForgotPasswordRequest,
-  LoginRequest,
-  RegisterRequest,
-  ResetPasswordRequest,
-  User,
-} from '@fridrich/shared';
+import type { LoginCodeRequest, LoginRequest, RegisterRequest, User } from '@fridrich/shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { ApiError, http } from '@/api/client';
@@ -17,7 +11,9 @@ interface MessageResponse {
  * Přihlášený uživatel.
  *
  * Session drží httpOnly cookie, kterou JavaScript nepřečte – stav se proto
- * zjišťuje dotazem na `/api/auth/me`, ne čtením tokenu.
+ * zjišťuje dotazem na `/api/auth/me`, ne čtením tokenu. Hesla v systému
+ * nejsou: totožnost prokazuje přístup ke schránce, ať už odkazem
+ * z registrace, nebo kódem při přihlášení.
  */
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
@@ -44,14 +40,21 @@ export const useAuthStore = defineStore('auth', () => {
     return pending;
   }
 
-  async function login(credentials: LoginRequest): Promise<void> {
-    user.value = await http.post<User>('/auth/login', credentials);
-    loaded.value = true;
-  }
-
   async function register(input: RegisterRequest): Promise<string> {
     const response = await http.post<MessageResponse>('/auth/register', input);
     return response.message;
+  }
+
+  /** První krok přihlášení – nechá si poslat kód na e-mail. */
+  async function requestLoginCode(input: LoginRequest): Promise<string> {
+    const response = await http.post<MessageResponse>('/auth/login', input);
+    return response.message;
+  }
+
+  /** Druhý krok přihlášení – ověří opsaný kód a založí session. */
+  async function submitLoginCode(input: LoginCodeRequest): Promise<void> {
+    user.value = await http.post<User>('/auth/login/verify', input);
+    loaded.value = true;
   }
 
   async function logout(): Promise<void> {
@@ -64,18 +67,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function forgotPassword(input: ForgotPasswordRequest): Promise<string> {
-    const response = await http.post<MessageResponse>('/auth/forgot-password', input);
-    return response.message;
-  }
-
-  async function resetPassword(input: ResetPasswordRequest): Promise<void> {
-    await http.post<void>('/auth/reset-password', input);
-    user.value = null;
-  }
-
+  /** Aktivace účtu z odkazu v e-mailu – zároveň přihlašuje. */
   async function verifyEmail(token: string): Promise<void> {
     user.value = await http.post<User>('/auth/verify-email', { token });
+    loaded.value = true;
   }
 
   return {
@@ -83,11 +78,10 @@ export const useAuthStore = defineStore('auth', () => {
     loaded,
     isAuthenticated,
     load,
-    login,
     register,
+    requestLoginCode,
+    submitLoginCode,
     logout,
-    forgotPassword,
-    resetPassword,
     verifyEmail,
   };
 });

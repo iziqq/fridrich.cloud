@@ -17,7 +17,7 @@ import FabButton from '@/components/FabButton.vue';
 import FormField from '@/components/FormField.vue';
 import LoadingBlock from '@/components/LoadingBlock.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
-import { useGuestsStore } from '@/stores/guests';
+import { GUEST_SORT_LABELS, useGuestsStore } from '@/stores/guests';
 
 const route = useRoute();
 const store = useGuestsStore();
@@ -194,6 +194,15 @@ const statusOptions = GUEST_STATUSES.map((status) => ({
               </option>
             </select>
           </label>
+
+          <!-- Řazení není filtr, proto ho „Zrušit filtry" nechává být. -->
+          <label>
+            <span>Řadit podle</span>
+            <select v-model="store.sort">
+              <option value="lastName">{{ GUEST_SORT_LABELS.lastName }}</option>
+              <option value="firstName">{{ GUEST_SORT_LABELS.firstName }}</option>
+            </select>
+          </label>
         </div>
 
         <button
@@ -223,7 +232,7 @@ const statusOptions = GUEST_STATUSES.map((status) => ({
       <ul v-else class="guests">
         <li v-for="guest in store.filtered" :key="guest.id" class="guest card">
           <div class="who">
-            <p class="name">{{ guest.firstName }} {{ guest.lastName }}</p>
+            <p class="name">{{ store.displayName(guest) }}</p>
             <p class="meta">
               {{ GUEST_SIDE_LABELS[guest.side] }} · {{ AGE_GROUP_LABELS[guest.ageGroup] }}
               <template v-if="guest.note"> · {{ guest.note }}</template>
@@ -369,7 +378,8 @@ const statusOptions = GUEST_STATUSES.map((status) => ({
 
 .selects {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Sloupců je tolik, kolik se jich vejde – na mobilu dva, na tabletu čtyři. */
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   gap: 0.5rem;
   margin-top: var(--space-1);
 }

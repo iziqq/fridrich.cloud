@@ -1,69 +1,18 @@
-import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2';
-import type { Password } from '../domain/identity/Password.js';
-import type { PasswordHasher } from '../domain/identity/PasswordHasher.js';
+import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
+import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
 import type { IdGenerator, TokenGenerator } from '../domain/identity/ports.js';
 
 /**
- * Parametry Argon2id podle doporučení OWASP (19 MiB, 2 iterace, 1 vlákno).
+ * Náhodné hodnoty pro session cookie, e-mailové odkazy a přihlašovací kódy.
  *
- * Až se budou zvyšovat, `needsRehash()` postupně převede existující účty
- * při přihlášení – jednorázová migrace hesel není možná, protože originály
- * neznáme.
- */
-const ARGON_OPTIONS = {
-  memoryCost: 19_456,
-  timeCost: 2,
-  parallelism: 1,
-} as const;
-
-/** Hash neexistujícího hesla pro vyrovnání času odpovědi. */
-let dummyHashPromise: Promise<string> | undefined;
-
-export const argon2Hasher: PasswordHasher = {
-  async hash(password: Password) {
-    return argonHash(password.reveal(), ARGON_OPTIONS);
-  },
-
-  async verify(encodedHash: string, password: Password) {
-    try {
-      return await argonVerify(encodedHash, password.reveal(), ARGON_OPTIONS);
-    } catch {
-      // Poškozený nebo cizí formát hashe znamená „neověřeno", ne pád.
-      return false;
-    }
-  },
-
-  needsRehash(encodedHash: string) {
-    const memoryMatch = /\bm=(\d+)/.exec(encodedHash);
-    const timeMatch = /\bt=(\d+)/.exec(encodedHash);
-
-    if (!encodedHash.startsWith('$argon2id$')) return true;
-    if (!memoryMatch?.[1] || !timeMatch?.[1]) return true;
-
-    return (
-      Number(memoryMatch[1]) < ARGON_OPTIONS.memoryCost ||
-      Number(timeMatch[1]) < ARGON_OPTIONS.timeCost
-    );
-  },
-
-  async dummyVerify() {
-    dummyHashPromise ??= argonHash('dummy-password-for-timing', ARGON_OPTIONS);
-    const encoded = await dummyHashPromise;
-    try {
-      await argonVerify(encoded, 'wrong-password', ARGON_OPTIONS);
-    } catch {
-      // výsledek nikoho nezajímá, jde jen o strávený čas
-    }
-  },
-};
-
-/**
- * Tokeny do session cookie a do e-mailových odkazů.
+ * Tokeny mají 32 bajtů z kryptograficky bezpečného zdroje; v databázi leží
+ * jen SHA-256 otisk. Otisk stačí – token je dost dlouhý a náhodný na to, aby
+ * ho nešlo uhodnout ani předpočítat, takže není potřeba pomalá hashovací
+ * funkce.
  *
- * 32 bajtů z kryptograficky bezpečného zdroje; v databázi leží jen SHA-256
- * otisk. Otisk stačí – token je dost dlouhý a náhodný na to, aby ho nešlo
- * uhodnout ani předpočítat, takže není potřeba pomalá hashovací funkce.
+ * U šestimístného kódu to neplatí: milion možností se z otisku dopočítá
+ * během chvilky, takže se hashuje spolu s `id` výzvy a obrana stojí jinde –
+ * na desetiminutové platnosti a počítadle pokusů v `LoginCode`.
  */
 export const tokenGenerator: TokenGenerator = {
   generate() {
@@ -71,8 +20,19 @@ export const tokenGenerator: TokenGenerator = {
     return { token, tokenHash: this.hash(token) };
   },
 
-  hash(token: string) {
-    return createHash('sha256').update(token).digest('hex');
+  generateCode() {
+    const max = 10 ** LOGIN_CODE_LENGTH;
+    // `randomInt` bere z téhož zdroje jako `randomBytes` a nemá zkreslení
+    // modulem, které by hádání kódu ulehčilo.
+    return String(randomInt(0, max)).padStart(LOGIN_CODE_LENGTH, '0');
+  },
+
+  hash(value: string) {
+    return createHash('sha256').update(value).digest('hex');
+  },
+
+  matches(hash: string, value: string) {
+    return safeEquals(hash, this.hash(value));
   },
 };
 

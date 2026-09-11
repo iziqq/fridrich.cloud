@@ -34,17 +34,20 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AuthCard label="// Ověření e-mailu" title="Ověření e-mailu">
+  <AuthCard label="// Aktivace účtu" title="Aktivace účtu">
     <p v-if="state === 'working'" class="mono caret">&gt; ověřuji</p>
 
     <div v-else-if="state === 'done'" class="block">
-      <p class="mono ok">&gt; e-mail ověřen</p>
-      <p>Účet je aktivní. Můžete se pustit do práce.</p>
+      <p class="mono ok">&gt; účet aktivován</p>
+      <p>Rovnou jsme vás přihlásili. Můžete se pustit do práce.</p>
     </div>
 
     <div v-else class="block">
       <p class="mono error">&gt; {{ error }}</p>
-      <p>Odkaz platí 24 hodin a jde použít jen jednou.</p>
+      <p>
+        Odkaz platí 24 hodin a jde použít jen jednou. Do účtu se dostanete i
+        přihlášením – pošleme vám kód na e-mail.
+      </p>
     </div>
 
     <template #footer>

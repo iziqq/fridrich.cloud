@@ -1,15 +1,11 @@
 import { CONTAINERS } from '../../config.js';
-import { Credentials, type CredentialsState } from '../../domain/identity/Credentials.js';
 import type { EmailAddress } from '../../domain/identity/EmailAddress.js';
-import {
-  OneTimeToken,
-  type OneTimeTokenState,
-  type TokenPurpose,
-} from '../../domain/identity/OneTimeToken.js';
+import { LoginCode, type LoginCodeState } from '../../domain/identity/LoginCode.js';
+import { OneTimeToken, type OneTimeTokenState } from '../../domain/identity/OneTimeToken.js';
 import { Session, type SessionState } from '../../domain/identity/Session.js';
 import { User, type UserState } from '../../domain/identity/User.js';
 import type {
-  CredentialsRepository,
+  LoginCodeRepository,
   SessionRepository,
   TokenRepository,
   UserRepository,
@@ -54,25 +50,36 @@ export const userCosmosRepository: UserRepository = {
   },
 };
 
-export const credentialsCosmosRepository: CredentialsRepository = {
-  async findByUserId(userId) {
-    try {
-      const container = await getContainer(CONTAINERS.credentials);
-      // Dokument má vlastní `id`, aby šel číst přímo bez dotazu.
-      const { resource } = await container
-        .item(`cred-${userId}`, userId)
-        .read<CredentialsState>();
-      return resource ? Credentials.fromState(stripSystemFields(resource)) : undefined;
-    } catch (error) {
-      if (isNotFound(error)) return undefined;
-      throw error;
-    }
+export const loginCodeCosmosRepository: LoginCodeRepository = {
+  async findForUser(userId) {
+    const container = await getContainer(CONTAINERS.loginCodes);
+    const { resources } = await container.items
+      .query<LoginCodeState>({
+        // Dotaz drží jedna partition, takže jde o levné čtení.
+        query: 'SELECT * FROM c WHERE c.userId = @userId ORDER BY c.createdAt DESC OFFSET 0 LIMIT 1',
+        parameters: [{ name: '@userId', value: userId }],
+      })
+      .fetchAll();
+
+    const found = resources[0];
+    return found ? LoginCode.fromState(stripSystemFields(found)) : undefined;
   },
 
-  async save(credentials) {
-    const container = await getContainer(CONTAINERS.credentials);
-    const state = credentials.toState();
-    await container.items.upsert({ id: `cred-${state.userId}`, ...state });
+  async save(challenge) {
+    const container = await getContainer(CONTAINERS.loginCodes);
+    await container.items.upsert(challenge.toState());
+  },
+
+  async deleteAllForUser(userId) {
+    const container = await getContainer(CONTAINERS.loginCodes);
+    const { resources } = await container.items
+      .query<LoginCodeState>({
+        query: 'SELECT c.id FROM c WHERE c.userId = @userId',
+        parameters: [{ name: '@userId', value: userId }],
+      })
+      .fetchAll();
+
+    await Promise.all(resources.map((state) => container.item(state.id, userId).delete()));
   },
 };
 
@@ -95,16 +102,12 @@ export const tokenCosmosRepository: TokenRepository = {
     await container.items.upsert(token.toState());
   },
 
-  async invalidateAll(userId, purpose: TokenPurpose) {
+  async invalidateAll(userId) {
     const container = await getContainer(CONTAINERS.tokens);
     const { resources } = await container.items
       .query<OneTimeTokenState>({
-        query:
-          'SELECT * FROM c WHERE c.userId = @userId AND c.purpose = @purpose AND NOT IS_DEFINED(c.usedAt)',
-        parameters: [
-          { name: '@userId', value: userId },
-          { name: '@purpose', value: purpose },
-        ],
+        query: 'SELECT c.id FROM c WHERE c.userId = @userId AND NOT IS_DEFINED(c.usedAt)',
+        parameters: [{ name: '@userId', value: userId }],
       })
       .fetchAll();
 

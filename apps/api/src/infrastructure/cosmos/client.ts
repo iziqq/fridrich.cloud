@@ -1,3 +1,4 @@
+import { Agent } from 'node:https';
 import { CosmosClient, type Container, type Database } from '@azure/cosmos';
 import { DefaultAzureCredential } from '@azure/identity';
 import { CONTAINERS, getCosmosConfig, type ContainerName } from '../../config.js';
@@ -16,8 +17,10 @@ const CONTAINER_DEFINITIONS: {
   ttlSeconds?: number;
 }[] = [
   { id: CONTAINERS.users, partitionKey: '/id' },
-  { id: CONTAINERS.credentials, partitionKey: '/userId' },
   { id: CONTAINERS.tokens, partitionKey: '/userId', ttlSeconds: 30 * 24 * 60 * 60 },
+  // Kód platí deset minut; hodina TTL nechá rezervu na posun hodin mezi
+  // instancemi a stejně ho uklidí dřív, než se stihne nasbírat.
+  { id: CONTAINERS.loginCodes, partitionKey: '/userId', ttlSeconds: 60 * 60 },
   { id: CONTAINERS.sessions, partitionKey: '/userId', ttlSeconds: 60 * 24 * 60 * 60 },
   { id: CONTAINERS.rateLimits, partitionKey: '/id', ttlSeconds: 24 * 60 * 60 },
   { id: CONTAINERS.contactMessages, partitionKey: '/id' },
@@ -28,15 +31,37 @@ const CONTAINER_DEFINITIONS: {
 
 let databasePromise: Promise<Database> | undefined;
 
+/**
+ * Emulátor se prokazuje self-signed certifikátem, který Node odmítne.
+ *
+ * Výjimka se proto dává **jen pro localhost** a jen tomuhle jednomu
+ * klientovi – ne přes `NODE_TLS_REJECT_UNAUTHORIZED`, který by ochranu
+ * vypnul celému procesu včetně volání na Azure.
+ */
+function localEmulatorAgent(endpoint: string): Agent | undefined {
+  let hostname: string;
+  try {
+    hostname = new URL(endpoint).hostname;
+  } catch {
+    return undefined;
+  }
+
+  if (hostname !== 'localhost' && hostname !== '127.0.0.1') return undefined;
+  return new Agent({ rejectUnauthorized: false });
+}
+
 async function initDatabase(): Promise<Database> {
   const cosmos = getCosmosConfig();
 
+  const agent = localEmulatorAgent(cosmos.endpoint);
+  const connection = {
+    endpoint: cosmos.endpoint,
+    ...(agent ? { agent } : {}),
+  };
+
   const client = cosmos.key
-    ? new CosmosClient({ endpoint: cosmos.endpoint, key: cosmos.key })
-    : new CosmosClient({
-        endpoint: cosmos.endpoint,
-        aadCredentials: new DefaultAzureCredential(),
-      });
+    ? new CosmosClient({ ...connection, key: cosmos.key })
+    : new CosmosClient({ ...connection, aadCredentials: new DefaultAzureCredential() });
 
   /*
    * Throughput se nastavuje na databázi, ne na kontejnerech.

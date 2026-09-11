@@ -1,16 +1,22 @@
-import type { User as PublicUser } from '@fridrich/shared';
 import { DomainError } from '../../domain/shared/DomainError.js';
+import { startSession, type SessionResult } from './session.js';
 import type { IdentityDeps } from './deps.js';
 
 export interface VerifyEmailCommand {
   raw: unknown;
 }
 
-/** Ověření e-mailu podle jednorázového tokenu z odkazu. */
+/**
+ * Aktivace účtu podle jednorázového tokenu z odkazu.
+ *
+ * Odkaz rovnou přihlašuje: kdo ho otevřel, prokázal přístup ke schránce a
+ * to je v bezheslovém systému jediný důkaz totožnosti, jaký máme. Nutit ho
+ * hned nato ještě o kód by nic nepřidalo.
+ */
 export async function verifyEmail(
   deps: IdentityDeps,
   command: VerifyEmailCommand,
-): Promise<PublicUser> {
+): Promise<SessionResult> {
   const raw = (typeof command.raw === 'object' && command.raw !== null ? command.raw : {}) as Record<
     string,
     unknown
@@ -27,7 +33,7 @@ export async function verifyEmail(
   }
 
   // Domain objekt sám rozhodne, jestli je token použitelný.
-  record.consume('emailVerification', deps.clock);
+  record.consume(deps.clock);
 
   const user = await deps.users.findById(record.userId);
   if (!user) throw DomainError.notFound('Uživatel');
@@ -37,5 +43,5 @@ export async function verifyEmail(
   await deps.users.save(user);
   await deps.tokens.save(record);
 
-  return user.toPublic();
+  return startSession(deps, user);
 }

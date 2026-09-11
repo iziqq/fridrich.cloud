@@ -31,17 +31,6 @@ const routes: RouteRecordRaw[] = [
     meta: { guestOnly: true },
   },
   {
-    path: '/zapomenute-heslo',
-    name: 'forgot-password',
-    component: () => import('@/views/ForgotPasswordView.vue'),
-    meta: { guestOnly: true },
-  },
-  {
-    path: '/obnova-hesla',
-    name: 'reset-password',
-    component: () => import('@/views/ResetPasswordView.vue'),
-  },
-  {
     path: '/overeni-emailu',
     name: 'verify-email',
     component: () => import('@/views/VerifyEmailView.vue'),

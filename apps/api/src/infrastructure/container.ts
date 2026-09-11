@@ -3,10 +3,10 @@ import { systemClock } from '../domain/shared/Clock.js';
 import type { ContactDeps } from '../application/contact/submitContactMessage.js';
 import type { IdentityDeps } from '../application/identity/deps.js';
 import type { WeddyDeps } from '../application/weddy/deps.js';
-import { argon2Hasher, tokenGenerator, uuidGenerator } from './crypto.js';
+import { tokenGenerator, uuidGenerator } from './crypto.js';
 import { createEmailSender } from './email/senders.js';
 import {
-  credentialsCosmosRepository,
+  loginCodeCosmosRepository,
   sessionCosmosRepository,
   tokenCosmosRepository,
   userCosmosRepository,
@@ -36,10 +36,9 @@ let contact: ContactDeps | undefined;
 export function identityDeps(): IdentityDeps {
   identity ??= {
     users: userCosmosRepository,
-    credentials: credentialsCosmosRepository,
     tokens: tokenCosmosRepository,
+    loginCodes: loginCodeCosmosRepository,
     sessions: sessionCosmosRepository,
-    hasher: argon2Hasher,
     tokenGenerator,
     ids: uuidGenerator,
     clock: systemClock,

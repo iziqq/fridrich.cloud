@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { PASSWORD_MIN_LENGTH } from '@fridrich/shared';
 import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
@@ -11,7 +10,6 @@ const auth = useAuthStore();
 
 const displayName = ref('');
 const email = ref('');
-const password = ref('');
 const fieldErrors = ref<Record<string, string>>({});
 const generalError = ref('');
 const done = ref('');
@@ -20,7 +18,6 @@ const busy = ref(false);
 // Backend hlásí chyby s prefixem pole, frontend je zobrazuje u konkrétního vstupu.
 const nameError = computed(() => fieldErrors.value['displayName']);
 const emailError = computed(() => fieldErrors.value['email']);
-const passwordError = computed(() => fieldErrors.value['password']);
 
 async function submit(): Promise<void> {
   fieldErrors.value = {};
@@ -31,7 +28,6 @@ async function submit(): Promise<void> {
     done.value = await auth.register({
       displayName: displayName.value.trim(),
       email: email.value.trim(),
-      password: password.value,
     });
   } catch (cause) {
     if (cause instanceof ApiError && cause.details.length > 0) {
@@ -55,8 +51,8 @@ async function submit(): Promise<void> {
     <div v-if="done" class="done">
       <p class="mono ok">&gt; {{ done }}</p>
       <p>
-        Otevřete odkaz v e-mailu a účet se aktivuje. Pak se můžete
-        <RouterLink to="/prihlaseni">přihlásit</RouterLink>.
+        Otevřete odkaz v e-mailu – účet se aktivuje a rovnou vás přihlásíme.
+        Příště se přihlásíte <RouterLink to="/prihlaseni">kódem na e-mail</RouterLink>.
       </p>
     </div>
 
@@ -72,15 +68,8 @@ async function submit(): Promise<void> {
         label="E-mail"
         type="email"
         autocomplete="email"
+        hint="Sem pošleme aktivační odkaz i přihlašovací kódy"
         :error="emailError"
-      />
-      <AuthField
-        v-model="password"
-        label="Heslo"
-        type="password"
-        autocomplete="new-password"
-        :hint="`Alespoň ${PASSWORD_MIN_LENGTH} znaků`"
-        :error="passwordError"
       />
 
       <p v-if="generalError" class="error mono" role="alert">&gt; {{ generalError }}</p>

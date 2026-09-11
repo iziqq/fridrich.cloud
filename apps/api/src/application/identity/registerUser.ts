@@ -1,11 +1,9 @@
 import type { User as PublicUser } from '@fridrich/shared';
-import { Credentials } from '../../domain/identity/Credentials.js';
 import { EmailAddress } from '../../domain/identity/EmailAddress.js';
 import { OneTimeToken } from '../../domain/identity/OneTimeToken.js';
-import { Password } from '../../domain/identity/Password.js';
 import { User } from '../../domain/identity/User.js';
 import { DomainError } from '../../domain/shared/DomainError.js';
-import { verificationEmail } from './emails.js';
+import { accountExistsEmail, verificationEmail } from './emails.js';
 import type { IdentityDeps } from './deps.js';
 
 export interface RegisterUserCommand {
@@ -16,11 +14,12 @@ export interface RegisterUserCommand {
 }
 
 /**
- * Registrace nového účtu.
+ * Registrace nového účtu – jméno a e-mail, žádné heslo.
  *
- * Odpověď je záměrně stejná i pro už obsazený e-mail – jinak by registrační
- * formulář fungoval jako nástroj na zjišťování, kdo je v systému
- * registrovaný. Majitel adresy se o pokusu dozví e-mailem.
+ * Odpověď je záměrně stejná i pro už obsazený e-mail, jinak by registrační
+ * formulář fungoval jako nástroj na zjišťování, kdo je v systému. Rozdíl je
+ * jen v tom, co přijde do schránky: buď aktivační odkaz, nebo upozornění,
+ * že účet už existuje – a to vidí jenom její majitel.
  */
 export async function registerUser(
   deps: IdentityDeps,
@@ -39,14 +38,11 @@ export async function registerUser(
   >;
 
   const email = EmailAddress.create(raw['email']);
-  const password = Password.create(raw['password'], {
-    email: email.value,
-    displayName: typeof raw['displayName'] === 'string' ? raw['displayName'] : undefined,
-  });
 
   const existing = await deps.users.findByEmail(email);
   if (existing) {
     // Účet nevzniká, ale volající to nepozná.
+    await deps.email.send(accountExistsEmail(email.value, `${command.appUrl}/prihlaseni`));
     return undefined;
   }
 
@@ -57,36 +53,26 @@ export async function registerUser(
     clock: deps.clock,
   });
 
-  const credentials = await Credentials.create({
-    userId: user.id,
-    password,
-    hasher: deps.hasher,
-    clock: deps.clock,
-  });
-
   await deps.users.save(user);
-  await deps.credentials.save(credentials);
-
   await sendVerification(deps, user.id, email.value, command.appUrl);
 
   return user.toPublic();
 }
 
-/** Vystaví ověřovací token a pošle odkaz e-mailem. */
+/** Vystaví ověřovací token a pošle aktivační odkaz e-mailem. */
 export async function sendVerification(
   deps: IdentityDeps,
   userId: string,
   email: string,
   appUrl: string,
 ): Promise<void> {
-  await deps.tokens.invalidateAll(userId, 'emailVerification');
+  await deps.tokens.invalidateAll(userId);
 
   const { token, tokenHash } = deps.tokenGenerator.generate();
   const record = OneTimeToken.issue({
     id: deps.ids.next(),
     tokenHash,
     userId,
-    purpose: 'emailVerification',
     clock: deps.clock,
   });
 

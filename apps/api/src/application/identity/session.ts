@@ -1,6 +1,34 @@
 import type { User as PublicUser } from '@fridrich/shared';
+import { Session } from '../../domain/identity/Session.js';
 import type { User } from '../../domain/identity/User.js';
 import type { IdentityDeps } from './deps.js';
+
+export interface SessionResult {
+  user: PublicUser;
+  /** Token do session cookie. V databázi leží jen jeho otisk. */
+  sessionToken: string;
+  expiresAt: string;
+}
+
+/**
+ * Založí přihlášení.
+ *
+ * Volají to dvě cesty – opsaný kód i kliknutí na aktivační odkaz – a obě
+ * musí session vyrobit stejně, proto sedí na jednom místě.
+ */
+export async function startSession(deps: IdentityDeps, user: User): Promise<SessionResult> {
+  const { token, tokenHash } = deps.tokenGenerator.generate();
+  const session = Session.start({
+    id: deps.ids.next(),
+    tokenHash,
+    userId: user.id,
+    clock: deps.clock,
+  });
+
+  await deps.sessions.save(session);
+
+  return { user: user.toPublic(), sessionToken: token, expiresAt: session.expiresAt };
+}
 
 /**
  * Přeloží token ze session cookie na přihlášeného uživatele.

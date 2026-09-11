@@ -1,37 +1,32 @@
 import type { Clock } from '../shared/Clock.js';
 import { DomainError } from '../shared/DomainError.js';
 
-export type TokenPurpose = 'emailVerification' | 'passwordReset';
-
-/** Doby platnosti podle doc/architecture.md, kap. 5. */
-export const TOKEN_LIFETIME_MS: Record<TokenPurpose, number> = {
-  emailVerification: 24 * 60 * 60 * 1000, // 24 hodin
-  passwordReset: 60 * 60 * 1000, // 1 hodina
-};
+/** Doba platnosti ověřovacího odkazu podle doc/architecture.md, kap. 5. */
+export const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hodin
 
 export interface OneTimeTokenState {
   id: string;
   /** SHA-256 otisk tokenu. Samotný token v databázi nikdy neleží. */
   tokenHash: string;
   userId: string;
-  purpose: TokenPurpose;
   expiresAt: string;
   usedAt?: string;
   createdAt: string;
 }
 
 /**
- * Jednorázový token pro ověření e-mailu a obnovu hesla.
+ * Jednorázový token z ověřovacího odkazu, který chodí po registraci.
  *
  * V databázi je jen otisk – kdo by získal přístup k datům, nedokáže z něj
- * odvodit odkaz, který uživateli přišel e-mailem.
+ * odvodit odkaz, který uživateli přišel e-mailem. Na rozdíl od
+ * [`LoginCode`](./LoginCode.ts) je dost dlouhý na to, aby se nedal uhodnout,
+ * takže si vystačí s expirací a jednorázovostí.
  */
 export class OneTimeToken {
   private constructor(
     readonly id: string,
     readonly tokenHash: string,
     readonly userId: string,
-    readonly purpose: TokenPurpose,
     readonly expiresAt: string,
     private usedAtValue: string | undefined,
     readonly createdAt: string,
@@ -41,17 +36,15 @@ export class OneTimeToken {
     id: string;
     tokenHash: string;
     userId: string;
-    purpose: TokenPurpose;
     clock: Clock;
   }): OneTimeToken {
     const now = input.clock.now();
-    const expiresAt = new Date(now.getTime() + TOKEN_LIFETIME_MS[input.purpose]);
+    const expiresAt = new Date(now.getTime() + TOKEN_LIFETIME_MS);
 
     return new OneTimeToken(
       input.id,
       input.tokenHash,
       input.userId,
-      input.purpose,
       expiresAt.toISOString(),
       undefined,
       now.toISOString(),
@@ -63,7 +56,6 @@ export class OneTimeToken {
       state.id,
       state.tokenHash,
       state.userId,
-      state.purpose,
       state.expiresAt,
       state.usedAt,
       state.createdAt,
@@ -86,8 +78,8 @@ export class OneTimeToken {
    * Spotřebuje token. Chybová hláška je schválně stejná pro expirovaný,
    * použitý i špatný token – ať se z ní nedá nic odvodit.
    */
-  consume(purpose: TokenPurpose, clock: Clock): void {
-    if (this.purpose !== purpose || this.isUsed() || this.isExpired(clock)) {
+  consume(clock: Clock): void {
+    if (this.isUsed() || this.isExpired(clock)) {
       throw DomainError.field('token', 'Odkaz už není platný. Vyžádejte si nový.');
     }
 
@@ -99,7 +91,6 @@ export class OneTimeToken {
       id: this.id,
       tokenHash: this.tokenHash,
       userId: this.userId,
-      purpose: this.purpose,
       expiresAt: this.expiresAt,
       createdAt: this.createdAt,
     };

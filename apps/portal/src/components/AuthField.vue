@@ -4,12 +4,16 @@ import { computed, useId } from 'vue';
 const props = withDefaults(
   defineProps<{
     label: string;
-    type?: 'text' | 'email' | 'password';
+    type?: 'text' | 'email';
     autocomplete?: string;
     error?: string;
     hint?: string;
+    inputmode?: 'text' | 'numeric';
+    maxlength?: number;
+    /** Velké řídké písmo pro přihlašovací kód, ať se dobře opisuje. */
+    code?: boolean;
   }>(),
-  { type: 'text' },
+  { type: 'text', code: false },
 );
 
 const model = defineModel<string>({ required: true });
@@ -35,6 +39,9 @@ const describedBy = computed(() => {
       v-model="model"
       :type="type"
       :autocomplete="autocomplete"
+      :inputmode="inputmode"
+      :maxlength="maxlength"
+      :class="{ code }"
       :aria-invalid="Boolean(error)"
       :aria-describedby="describedBy"
     />
@@ -62,6 +69,15 @@ input {
   background: var(--cp-black);
   color: var(--cp-text);
   transition: border-color var(--dur-fast) var(--ease);
+}
+
+input.code {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+  /* Odsazení vyrovná mezeru, kterou letter-spacing přidává za poslední znak. */
+  text-indent: 0.4em;
 }
 
 input:focus {

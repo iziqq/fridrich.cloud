@@ -15,6 +15,28 @@ function emptyFilters(): GuestFilters {
   return { side: 'all', ageGroup: 'all', status: 'all', search: '' };
 }
 
+/** Podle čeho se seznam řadí. Není to filtr – „Zrušit filtry" volbu nechá být. */
+export type GuestSort = 'lastName' | 'firstName';
+
+export const GUEST_SORT_LABELS: Record<GuestSort, string> = {
+  lastName: 'Příjmení',
+  firstName: 'Jméno',
+};
+
+/**
+ * Porovnání dvou hostů podle zvoleného pole.
+ *
+ * Při shodě rozhodne to druhé jméno, ať se dva Novákovi neřadí podle toho,
+ * kdy je kdo zapsal. `localeCompare` s češtinou si poradí i s diakritikou –
+ * „Čermák" patří za „Cach", ne až za „Žák".
+ */
+function compareBy(sort: GuestSort): (a: Guest, b: Guest) => number {
+  const secondary: GuestSort = sort === 'lastName' ? 'firstName' : 'lastName';
+
+  return (a, b) =>
+    a[sort].localeCompare(b[sort], 'cs') || a[secondary].localeCompare(b[secondary], 'cs');
+}
+
 /** Vyhledávání nesmí padat na diakritice – „Novak" musí najít „Novák". */
 function normalize(value: string): string {
   return value
@@ -26,6 +48,7 @@ function normalize(value: string): string {
 export const useGuestsStore = defineStore('guests', () => {
   const guests = ref<Guest[]>([]);
   const filters = ref<GuestFilters>(emptyFilters());
+  const sort = ref<GuestSort>('lastName');
   const loading = ref(false);
   const error = ref<string | null>(null);
   const loadedWeddingId = ref<string | null>(null);
@@ -45,8 +68,20 @@ export const useGuestsStore = defineStore('guests', () => {
         if (needle === '') return true;
         return normalize(`${guest.firstName} ${guest.lastName}`).includes(needle);
       })
-      .sort((a, b) => a.lastName.localeCompare(b.lastName, 'cs'));
+      .sort(compareBy(sort.value));
   });
+
+  /**
+   * Jméno v pořadí, ve kterém se seznam řadí.
+   *
+   * Bez toho vypadá řazení podle příjmení rozbitě: oko čte první slovo,
+   * takže „Jana Adamová, Petr Novák" působí jako náhodné pořadí.
+   */
+  function displayName(guest: Guest): string {
+    return sort.value === 'lastName'
+      ? `${guest.lastName} ${guest.firstName}`
+      : `${guest.firstName} ${guest.lastName}`;
+  }
 
   const hasActiveFilters = computed(() => {
     const { side, ageGroup, status, search } = filters.value;
@@ -108,7 +143,9 @@ export const useGuestsStore = defineStore('guests', () => {
   return {
     guests,
     filters,
+    sort,
     filtered,
+    displayName,
     stats,
     hasActiveFilters,
     loading,

@@ -1,16 +1,15 @@
+import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
 import type { IdentityDeps } from '../src/application/identity/deps.js';
 import type { WeddyDeps } from '../src/application/weddy/deps.js';
-import { Credentials } from '../src/domain/identity/Credentials.js';
 import type { EmailAddress } from '../src/domain/identity/EmailAddress.js';
 import type { EmailMessage, EmailSender } from '../src/domain/identity/EmailSender.js';
-import { OneTimeToken, type TokenPurpose } from '../src/domain/identity/OneTimeToken.js';
-import type { Password } from '../src/domain/identity/Password.js';
-import type { PasswordHasher } from '../src/domain/identity/PasswordHasher.js';
+import { LoginCode } from '../src/domain/identity/LoginCode.js';
+import { OneTimeToken } from '../src/domain/identity/OneTimeToken.js';
 import { Session } from '../src/domain/identity/Session.js';
 import { User } from '../src/domain/identity/User.js';
 import type {
-  CredentialsRepository,
   IdGenerator,
+  LoginCodeRepository,
   RateLimiter,
   SessionRepository,
   TokenGenerator,
@@ -55,16 +54,25 @@ export class InMemoryUserRepository implements UserRepository {
   }
 }
 
-export class InMemoryCredentialsRepository implements CredentialsRepository {
-  readonly items = new Map<string, ReturnType<Credentials['toState']>>();
+export class InMemoryLoginCodeRepository implements LoginCodeRepository {
+  readonly items = new Map<string, ReturnType<LoginCode['toState']>>();
 
-  async findByUserId(userId: string): Promise<Credentials | undefined> {
-    const state = this.items.get(userId);
-    return state ? Credentials.fromState(state) : undefined;
+  async findForUser(userId: string): Promise<LoginCode | undefined> {
+    const found = [...this.items.values()]
+      .filter((state) => state.userId === userId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+
+    return found ? LoginCode.fromState(found) : undefined;
   }
 
-  async save(credentials: Credentials): Promise<void> {
-    this.items.set(credentials.userId, credentials.toState());
+  async save(challenge: LoginCode): Promise<void> {
+    this.items.set(challenge.id, challenge.toState());
+  }
+
+  async deleteAllForUser(userId: string): Promise<void> {
+    for (const [id, state] of this.items) {
+      if (state.userId === userId) this.items.delete(id);
+    }
   }
 }
 
@@ -82,11 +90,9 @@ export class InMemoryTokenRepository implements TokenRepository {
     this.items.set(token.id, token.toState());
   }
 
-  async invalidateAll(userId: string, purpose: TokenPurpose): Promise<void> {
+  async invalidateAll(userId: string): Promise<void> {
     for (const [id, state] of this.items) {
-      if (state.userId === userId && state.purpose === purpose && !state.usedAt) {
-        this.items.delete(id);
-      }
+      if (state.userId === userId && !state.usedAt) this.items.delete(id);
     }
   }
 }
@@ -116,35 +122,9 @@ export class InMemorySessionRepository implements SessionRepository {
   }
 }
 
-/**
- * Rychlá náhrada Argon2id.
- *
- * Skutečný hasher je schválně pomalý; v testech by každé přihlášení stálo
- * desítky milisekund navíc a nic by to neověřilo.
- */
-export class FakeHasher implements PasswordHasher {
-  weak = false;
-  dummyCalls = 0;
-
-  async hash(password: Password): Promise<string> {
-    return `${this.weak ? 'v1' : 'v2'}:${password.reveal()}`;
-  }
-
-  async verify(encodedHash: string, password: Password): Promise<boolean> {
-    return encodedHash.split(':').slice(1).join(':') === password.reveal();
-  }
-
-  needsRehash(encodedHash: string): boolean {
-    return encodedHash.startsWith('v1:');
-  }
-
-  async dummyVerify(): Promise<void> {
-    this.dummyCalls += 1;
-  }
-}
-
 export class FakeTokenGenerator implements TokenGenerator {
   private counter = 0;
+  private codeCounter = 0;
 
   generate(): { token: string; tokenHash: string } {
     this.counter += 1;
@@ -152,8 +132,18 @@ export class FakeTokenGenerator implements TokenGenerator {
     return { token, tokenHash: this.hash(token) };
   }
 
-  hash(token: string): string {
-    return `hash(${token})`;
+  /** Předvídatelný kód – test ho tak nemusí lovit z e-mailu přes regulární výraz. */
+  generateCode(): string {
+    this.codeCounter += 1;
+    return String(this.codeCounter).padStart(LOGIN_CODE_LENGTH, '0');
+  }
+
+  hash(value: string): string {
+    return `hash(${value})`;
+  }
+
+  matches(hash: string, value: string): boolean {
+    return hash === this.hash(value);
   }
 }
 
@@ -287,10 +277,10 @@ export class InMemoryItemRepository implements PlanningItemRepository {
 
 export interface IdentityTestContext extends IdentityDeps {
   users: InMemoryUserRepository;
-  credentials: InMemoryCredentialsRepository;
   tokens: InMemoryTokenRepository;
+  loginCodes: InMemoryLoginCodeRepository;
   sessions: InMemorySessionRepository;
-  hasher: FakeHasher;
+  tokenGenerator: FakeTokenGenerator;
   email: CollectingEmailSender;
   rateLimiter: CountingRateLimiter;
   clock: FixedClock;
@@ -299,10 +289,9 @@ export interface IdentityTestContext extends IdentityDeps {
 export function identityTestDeps(): IdentityTestContext {
   return {
     users: new InMemoryUserRepository(),
-    credentials: new InMemoryCredentialsRepository(),
     tokens: new InMemoryTokenRepository(),
+    loginCodes: new InMemoryLoginCodeRepository(),
     sessions: new InMemorySessionRepository(),
-    hasher: new FakeHasher(),
     tokenGenerator: new FakeTokenGenerator(),
     ids: new SequentialIds(),
     clock: new FixedClock(new Date('2026-01-01T10:00:00.000Z')),

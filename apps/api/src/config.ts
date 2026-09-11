@@ -13,8 +13,8 @@ function optional(name: string, fallback: string): string {
 
 export const CONTAINERS = {
   users: 'users',
-  credentials: 'credentials',
   tokens: 'tokens',
+  loginCodes: 'loginCodes',
   sessions: 'sessions',
   rateLimits: 'rateLimits',
   contactMessages: 'contactMessages',
@@ -54,11 +54,22 @@ export interface AppConfig {
   cookieDomain?: string;
   isProduction: boolean;
   email: {
-    /** Připojovací řetězec Azure Communication Services; prázdný = výpis do logu. */
+    /** Připojovací řetězec Azure Communication Services; prázdný = jiný odesílatel. */
     connectionString?: string;
+    /** Vyplněné jen tam, kde je nastavený `SMTP_HOST` – typicky lokální vývoj. */
+    smtp?: SmtpConfig;
     from: string;
     inbox: string;
   };
+}
+
+export interface SmtpConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  /** Odesílatel zprávy; u Gmailu musí sedět s přihlášeným účtem. */
+  from: string;
 }
 
 let cached: AppConfig | undefined;
@@ -110,6 +121,24 @@ export function getConfig(): AppConfig {
 
   const acs = process.env['ACS_CONNECTION_STRING'];
   if (acs) config.email.connectionString = acs;
+
+  // SMTP se bere jako celek – půlka nastavení je horší než žádné, protože
+  // by odesílání selhalo až při prvním e-mailu.
+  const smtpHost = process.env['SMTP_HOST'];
+  const smtpUser = process.env['SMTP_USER'];
+  const smtpPassword = process.env['SMTP_PASSWORD'];
+
+  if (smtpHost && smtpUser && smtpPassword) {
+    config.email.smtp = {
+      host: smtpHost,
+      port: Number(optional('SMTP_PORT', '587')),
+      user: smtpUser,
+      password: smtpPassword,
+      from: optional('SMTP_FROM', smtpUser),
+    };
+  } else if (smtpHost || smtpUser || smtpPassword) {
+    throw new Error('Neúplné nastavení SMTP – vyplňte SMTP_HOST, SMTP_USER i SMTP_PASSWORD.');
+  }
 
   cached = config;
   return config;
