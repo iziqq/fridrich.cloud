@@ -139,6 +139,45 @@ interface MemberRow {
   ageGroup: AgeGroup;
 }
 
+/*
+ * Sbalené rodiny.
+ *
+ * Výchozí stav je sbalený – deset rodin po čtyřech členech je čtyřicet řádků
+ * a přehled se ztratí. V hlavičce proto zůstává souhrn, aby i sbalená rodina
+ * něco říkala.
+ */
+const expandedFamilies = ref(new Set<string>());
+
+function toggleFamily(familyId: string): void {
+  const next = new Set(expandedFamilies.value);
+  if (!next.delete(familyId)) next.add(familyId);
+  expandedFamilies.value = next;
+}
+
+/*
+ * Při hledání a filtrování se rozbalí všechno. Shoda schovaná ve sbalené
+ * rodině by vypadala, že host neexistuje.
+ */
+function isFamilyOpen(familyId: string): boolean {
+  return store.hasActiveFilters || expandedFamilies.value.has(familyId);
+}
+
+/** České tvary: 1 člen, 2–4 členové, 5+ členů. */
+function plural(count: number, one: string, few: string, many: string): string {
+  if (count === 1) return `${count} ${one}`;
+  if (count >= 2 && count <= 4) return `${count} ${few}`;
+  return `${count} ${many}`;
+}
+
+/** Souhrn, který dává smysl i u sbalené rodiny. */
+function familySummary(family: Family): string {
+  const children = family.members.filter((member) => member.ageGroup === 'child').length;
+  const parts = [plural(family.members.length, 'člen', 'členové', 'členů')];
+
+  if (children > 0) parts.push(plural(children, 'dítě', 'děti', 'dětí'));
+  return parts.join(' · ');
+}
+
 const familySheetOpen = ref(false);
 const editingFamily = ref<Family | null>(null);
 const familyErrors = ref<Record<string, string>>({});
@@ -349,10 +388,25 @@ async function removeFamily(family: Family): Promise<void> {
 
           <article v-for="family in group.families" :key="family.id" class="family">
             <header class="family-head">
-              <div>
-                <p class="family-name">{{ family.name }}</p>
-                <p class="meta">{{ family.members.length }} členů</p>
-              </div>
+              <!--
+                Sbalovací tlačítko nesmí obalit i akce – tlačítko v tlačítku
+                je neplatné HTML a klávesnice se v něm ztratí.
+              -->
+              <button
+                type="button"
+                class="family-toggle"
+                :aria-expanded="isFamilyOpen(family.id)"
+                :aria-controls="`family-${family.id}`"
+                @click="toggleFamily(family.id)"
+              >
+                <span class="chevron" :class="{ open: isFamilyOpen(family.id) }" aria-hidden="true">
+                  ▸
+                </span>
+                <span class="family-text">
+                  <span class="family-name">{{ family.name }}</span>
+                  <span class="meta">{{ familySummary(family) }}</span>
+                </span>
+              </button>
               <div class="controls">
                 <button type="button" class="icon-button" @click="openEditFamily(family)">
                   <span class="visually-hidden">Upravit rodinu</span>
@@ -365,7 +419,7 @@ async function removeFamily(family: Family): Promise<void> {
               </div>
             </header>
 
-            <ul class="members">
+            <ul v-show="isFamilyOpen(family.id)" :id="`family-${family.id}`" class="members">
               <li v-for="guest in family.members" :key="guest.id" class="member">
                 <div class="who">
                   <p class="name">{{ store.displayName(guest) }}</p>
@@ -666,6 +720,35 @@ select {
   padding: var(--space-1) var(--space-2);
   border-bottom: 1px solid var(--color-border);
   background: var(--sand-100);
+}
+
+.family-toggle {
+  display: flex;
+  flex: 1;
+  gap: 0.6rem;
+  align-items: center;
+  min-height: var(--touch-target);
+  margin: calc(var(--space-1) * -1) 0 calc(var(--space-1) * -1) calc(var(--space-2) * -1);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.family-text {
+  display: grid;
+}
+
+.chevron {
+  color: var(--color-muted);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.chevron.open {
+  transform: rotate(90deg);
 }
 
 .family-name {

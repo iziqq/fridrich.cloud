@@ -398,6 +398,13 @@ kde host stojí.
 podle křestního jména – příjmení nemají. Pořadí, ve kterém je uživatel zapsal,
 se nezachovává.
 
+**Rodiny jsou sbalené.** Deset rodin po čtyřech členech je čtyřicet řádků
+a přehled by se v nich ztratil, takže se ve výchozím stavu ukazuje jen
+hlavička se souhrnem (`4 členové · 2 děti`). Rozbaluje se kliknutím.
+
+> ℹ️ Při aktivním hledání nebo filtru se **všechny rodiny rozbalí samy**.
+> Shoda schovaná ve sbalené rodině by vypadala, že host neexistuje.
+
 > **Mobilní zobrazení:** Na úzkých displejích se tabulka vykresluje jako seznam karet (jméno, barevný štítek stavu, ikona strany a věkové skupiny). Na širších displejích jako klasická tabulka.
 
 ### 5.4 Sekce plánování
