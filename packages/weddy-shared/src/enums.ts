@@ -10,14 +10,17 @@ export type GuestStatus = 'draft' | 'requested' | 'accepted' | 'rejected';
 /** Stav položky plánování. */
 export type PlanningItemStatus = 'draft' | 'accepted';
 
-/** Osm pevně daných sekcí plánování. */
+/** Pevně dané sekce plánování. */
 export type PlanningCategory =
   | 'ceremonyVenue'
   | 'receptionVenue'
+  | 'food'
+  | 'drinks'
   | 'flowers'
   | 'decorations'
   | 'suit'
   | 'dress'
+  | 'rings'
   | 'bachelorParty'
   | 'otherActivities';
 
@@ -36,14 +39,22 @@ export const PLANNING_ITEM_STATUSES = [
   'accepted',
 ] as const satisfies readonly PlanningItemStatus[];
 
-/** Pořadí sekcí odpovídá pořadí v zadání (doc/iziweddy.md, kap. 5.4). */
+/**
+ * Pořadí sekcí odpovídá pořadí v zadání (doc/iziweddy.md, kap. 5.4).
+ *
+ * Jídlo a pití stojí hned za místem veselky, ke kterému se vážou; prstýnky
+ * za obleky a šaty, aby byly věci na sebe pohromadě.
+ */
 export const PLANNING_CATEGORIES = [
   'ceremonyVenue',
   'receptionVenue',
+  'food',
+  'drinks',
   'flowers',
   'decorations',
   'suit',
   'dress',
+  'rings',
   'bachelorParty',
   'otherActivities',
 ] as const satisfies readonly PlanningCategory[];
@@ -73,10 +84,13 @@ export const PLANNING_ITEM_STATUS_LABELS: Record<PlanningItemStatus, string> = {
 export const PLANNING_CATEGORY_LABELS: Record<PlanningCategory, string> = {
   ceremonyVenue: 'Místo obřadu',
   receptionVenue: 'Místo veselky',
+  food: 'Jídlo',
+  drinks: 'Pití',
   flowers: 'Květiny',
   decorations: 'Výzdoba',
   suit: 'Oblek',
   dress: 'Šaty',
+  rings: 'Prstýnky',
   bachelorParty: 'Rozlučka',
   otherActivities: 'Další aktivity',
 };

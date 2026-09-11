@@ -56,7 +56,7 @@ IziWeddy je **jeden z produktů pod `fridrich.cloud`**, ne samostatný projekt. 
 - **Dashboard** – přehled všech plánování, vytvoření nového plánování.
 - **Snoubenci** – údaje o ženichovi a nevěstě.
 - **Hosté** – seznam hostů se stavem pozvánky.
-- **Plánování** – osm sekcí (místo obřadu, veselka, květiny, …) s položkami od dodavatelů.
+- **Plánování** – jedenáct sekcí (místo obřadu, veselka, jídlo, …) s položkami od dodavatelů.
 - **Rozpočet** – automatický součet všech zadaných cen.
 
 ---
@@ -409,16 +409,22 @@ hlavička se souhrnem (`4 členové · 2 děti`). Rozbaluje se kliknutím.
 
 ### 5.4 Sekce plánování
 
-Aplikace obsahuje osm pevně daných sekcí:
+Aplikace obsahuje jedenáct pevně daných sekcí:
 
 1. Místo obřadu
 2. Místo veselky
-3. Květiny
-4. Výzdoba
-5. Oblek
-6. Šaty
-7. Rozlučka
-8. Další aktivity
+3. Jídlo
+4. Pití
+5. Květiny
+6. Výzdoba
+7. Oblek
+8. Šaty
+9. Prstýnky
+10. Rozlučka
+11. Další aktivity
+
+Pořadí není abecední, ale tematické: jídlo a pití stojí hned za místem
+veselky, ke kterému se vážou, prstýnky za obleky a šaty.
 
 Každá sekce obsahuje **libovolný počet položek** (např. více variant míst obřadu, mezi kterými se rozhoduje).
 

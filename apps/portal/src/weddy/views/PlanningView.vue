@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { PlanningCategory } from '@fridrich/weddy-shared';
 import { PLANNING_CATEGORY_LABELS, formatCurrency } from '@fridrich/weddy-shared';
 import { computed, onMounted, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
@@ -15,13 +16,18 @@ const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 onMounted(() => store.load(weddingId.value));
 watch(weddingId, (id) => store.load(id));
 
-const ICONS: Record<string, string> = {
+// Typ podle výčtu, ne `Record<string, string>` – jinak by se na novou sekci
+// dala zapomenout ikona a v seznamu by zůstalo prázdné místo.
+const ICONS: Record<PlanningCategory, string> = {
   ceremonyVenue: '⛪',
   receptionVenue: '🥂',
+  food: '🍽️',
+  drinks: '🍷',
   flowers: '💐',
   decorations: '🎀',
   suit: '🤵',
   dress: '👰',
+  rings: '💍',
   bachelorParty: '🎉',
   otherActivities: '✨',
 };
