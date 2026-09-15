@@ -17,11 +17,24 @@ on:
         description: 'Diagnostika – nasadit jen web (bez API) do prostředí "diagnostika"'
         type: boolean
         default: false
+      client_version:
+        # Verze binárky StaticSitesClient, kterou si SWA CLI stáhne. CLI sám bere
+        # `stable` (21. 5. 2026) – s ní od června padá nasazení na „An unknown exception
+        # has occurred" (Azure/static-web-apps#1750). `latest` je novější build.
+        description: 'Verze nasazovacího klienta StaticSitesClient'
+        type: choice
+        options: [latest, stable, backup]
+        default: latest
 
 concurrency:
   # Dvě souběžná nasazení do stejného prostředí by si přepsala výsledek.
   group: swa-${{ github.event.pull_request.number || 'main' }}
   cancel-in-progress: true
+
+env:
+  # Nezdokumentovaná proměnná SWA CLI (core/deploy-client.js) – vybírá verzi binárky
+  # StaticSitesClient. Push a pull request vstupy nemají, platí pro ně `latest`.
+  SWA_CLI_DEPLOY_BINARY_VERSION: ${{ inputs.client_version || 'latest' }}
 
 jobs:
   build_and_deploy:

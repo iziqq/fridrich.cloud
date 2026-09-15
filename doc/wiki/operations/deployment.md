@@ -48,7 +48,9 @@ updated: 2026-09-15
 7. `npx @azure/static-web-apps-cli@2 deploy … --verbose=silly` – a PR goes to environment `pr-<number>`
    (Azure turns it into `pr123`, Free supports 3), `main` to `production`.
    Can also be triggered manually (`workflow_dispatch`), optionally with **`without_api`** –
-   a diagnostic run that deploys only the website to the preview environment `diagnostika`.
+   a diagnostic run that deploys only the website to the preview environment `diagnostika`, and
+   **`client_version`** (`latest` default, `stable`, `backup`) – the StaticSitesClient build, passed to the
+   CLI as the undocumented `SWA_CLI_DEPLOY_BINARY_VERSION` (push and PR runs use `latest`).
 
 The only secret: `AZURE_STATIC_WEB_APPS_API_TOKEN` (Manage deployment token).
 
@@ -65,7 +67,11 @@ The only secret: `AZURE_STATIC_WEB_APPS_API_TOKEN` (Manage deployment token).
 | It fails inside `StaticSitesClient` at "Preparing deployment", before upload; the inner exception is swallowed | CLI 2.0.10 log; same message with the GitHub action |
 | The API bundle itself is valid | locally `func start` in `apps/api/deploy` (Node 22) indexes all 20 functions |
 | Microsoft has an open platform-side regression with the same symptom since 2026-05/06 | [static-web-apps#1750](https://github.com/Azure/static-web-apps/issues/1750), [Microsoft Q&A](https://learn.microsoft.com/en-us/answers/questions/5929128/swa-fails-immediately-after-deployment-with-the-sw) |
-| The app still requested the retired `node:20` runtime | fixed 2026-09-15 → `node:22` |
+| The app still requested the retired `node:20` runtime | fixed 2026-09-15 → `node:22` – **did not help**: the next run failed the same way |
+| The client passes validation and gets a `DeploymentId` (e.g. `8cba83a8-46df-4e39-9f12-ba310f96a289`), then fails – the failure is in the Azure deployment backend, matching #1750 | run after the Node 22 change with `--verbose=silly` |
+| **Deploying only the website (no API) fails the same way** – the API bundle is not the cause | diagnostic run `without_api`, `DeploymentId: abefbcbc-809c-4eb8-a53d-27435af28c95`, environment `diagnostika` |
+| The CLI downloads StaticSitesClient `stable` (build 689a6c1, 2026-05-21) by default; a newer `latest` (d3c9158, 2026-08-05) exists and none of the public reports tried it | CLI 2.0.10 verbose log; `SWA_CLI_DEPLOY_BINARY_VERSION` read in `core/deploy-client.js` |
+| A similar case ("Failure during content distribution", one resource only) cleared itself after about a week, cause undocumented | [Microsoft Q&A, 2026-08](https://learn.microsoft.com/en-ie/answers/questions/5973371/static-web-app-deployment-consistently-fails-with) |
 | "missing property jobs.build_and_deploy_job" in the log is only a warning | the CLI looks for the job name the portal generates; it does not affect deployment |
 
 Diagnosis, in this order:

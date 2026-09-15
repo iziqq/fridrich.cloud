@@ -239,3 +239,19 @@ Source: owner's report – the deploy step fails with `An unknown exception has 
 - Verified locally: `npm run build:api` on Windows, `func start` on the bundle (Node 22) indexes all 20 functions.
   The deployment itself could not be tested locally (needs the deployment token).
 - Touched pages: `operations/deployment.md`, `overview.md`, `decisions.md` (decision + open question 17), `index.md`.
+
+## [2026-09-15] change | Deployment still failing after Node 22
+
+- The run after the Node 22 change failed again, this time after receiving `DeploymentId: 8cba83a8-46df-4e39-9f12-ba310f96a289` –
+  the client side (token, validation, runtime) passes and the Azure deployment backend fails, as in static-web-apps#1750.
+- #1750 is still open without a Microsoft response; a commenter reproduced it on a brand-new SWA in another region.
+- Next steps are on the owner's side (Azure portal): diagnostic run `without_api`, stuck environments, token regeneration,
+  a test SWA, posting the deployment IDs to #1750. Recorded in `operations/deployment.md`.
+
+## [2026-09-15] change | Deployment – website-only run also fails, newer deploy client
+
+- Diagnostic run `without_api` failed identically (`DeploymentId: abefbcbc-809c-4eb8-a53d-27435af28c95`) –
+  the API bundle is ruled out; the failure is in the Azure deployment backend or this Static Web App.
+- The CLI uses StaticSitesClient `stable` from 2026-05-21, the time the regression started; a `latest` build from
+  2026-08-05 exists. Workflow now sets `SWA_CLI_DEPLOY_BINARY_VERSION` (default `latest`, manual input `client_version`).
+- If `latest` fails too, only Azure-side steps remain (see `operations/deployment.md`).
