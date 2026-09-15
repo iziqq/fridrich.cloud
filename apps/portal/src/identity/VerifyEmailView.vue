@@ -40,15 +40,15 @@ onMounted(async () => {
 
 <template>
   <AuthCard :label="t('identity.verifyEmail.label')" :title="t('identity.verifyEmail.title')">
-    <p v-if="state === 'working'" class="mono caret">&gt; {{ t('identity.verifyEmail.working') }}</p>
+    <p v-if="state === 'working'" class="working">{{ t('identity.verifyEmail.working') }}</p>
 
     <div v-else-if="state === 'done'" class="block">
-      <p class="mono ok">&gt; {{ t('identity.verifyEmail.done') }}</p>
+      <p class="ok">{{ t('identity.verifyEmail.done') }}</p>
       <p>{{ t('identity.verifyEmail.doneInfo') }}</p>
     </div>
 
     <div v-else class="block">
-      <p class="mono error">&gt; {{ translateMessage(error) }}</p>
+      <p class="error">{{ translateMessage(error) }}</p>
       <p>{{ t('identity.verifyEmail.failedInfo') }}</p>
     </div>
 
@@ -69,14 +69,14 @@ onMounted(async () => {
 }
 
 .block p:not(.mono) {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .error {
-  color: var(--cp-magenta);
+  color: var(--color-danger);
 }
 
 .ok {
-  color: var(--cp-green);
+  color: var(--color-success);
 }
 </style>

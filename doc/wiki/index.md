@@ -39,7 +39,7 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [domains/weddyPlanning.md](domains/weddyPlanning.md) | 11 sections, items, prices, 5 endpoints | 2026-09-15 |
 | [domains/weddyBudget.md](domains/weddyBudget.md) | Budget from items: calculation, where it is computed, `getBudget` endpoint | 2026-09-15 |
 | [domains/budgy.md](domains/budgy.md) | IziBudgy (TODO): rough core and questions before the specification | 2026-09-15 |
-| [domains/portal.md](domains/portal.md) | Portal: content, binding rules (clients, colours, typography), tokens, accessibility | 2026-09-15 |
+| [domains/portal.md](domains/portal.md) | Portal: content, binding rules, Glass design (dark + orange) tokens and components, accessibility | 2026-09-15 |
 
 ## Operations
 

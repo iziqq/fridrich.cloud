@@ -3,21 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Design tokeny a sdílené styly – cyberpunkové téma fridrich.cloud",
+  "description": "Design tokeny a sdílené styly – téma Glass (tmavá + oranžová) portálu fridrich.cloud",
   "exports": {
     ".": "./src/index.css",
     "./primitives.css": "./src/primitives.css",
     "./base.css": "./src/base.css",
     "./fonts.css": "./src/fonts.css",
     "./effects.css": "./src/effects.css",
-    "./theme-cyberpunk.css": "./src/theme-cyberpunk.css"
+    "./theme-glass.css": "./src/theme-glass.css"
   },
   "files": [
     "src"
   ],
   "dependencies": {
-    "@fontsource/chakra-petch": "^5.1.0",
-    "@fontsource/jetbrains-mono": "^5.1.0",
-    "@fontsource/rajdhani": "^5.1.0"
+    "@fontsource/inter": "^5.1.0"
   }
 }

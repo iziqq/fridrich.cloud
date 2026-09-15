@@ -2,8 +2,8 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
-import CyberButton from '@/components/CyberButton.vue';
-import GlitchHeading from '@/components/GlitchHeading.vue';
+import AppButton from '@/components/AppButton.vue';
+import SectionHeading from '@/components/SectionHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { projects } from '@/content/site';
 
@@ -18,24 +18,24 @@ const project = computed(() =>
 <template>
   <section class="page">
     <div v-if="project" class="container">
-      <SectionLabel :text="'// ' + t(`portal.projects.items.${project.id}.tagline`)" />
-      <GlitchHeading :text="project.name" :level="1" />
+      <SectionLabel :text="t(`portal.projects.items.${project.id}.tagline`)" />
+      <SectionHeading :text="project.name" :level="1" />
 
       <p class="status mono" :class="project.status">{{ t(`portal.projects.status.${project.status}`) }}</p>
       <p class="description">{{ t(`portal.projects.items.${project.id}.description`) }}</p>
 
-      <ul class="stack mono">
+      <ul class="stack">
         <li v-for="tech in project.stack" :key="tech">{{ tech }}</li>
       </ul>
 
       <div class="actions">
-        <CyberButton v-if="project.url" :href="project.url">{{ t('portal.projects.openApp') }}</CyberButton>
+        <AppButton v-if="project.url" :href="project.url">{{ t('portal.projects.openApp') }}</AppButton>
         <RouterLink to="/#projekty" class="back mono">{{ t('portal.projects.backToProjects') }}</RouterLink>
       </div>
     </div>
 
     <div v-else class="container">
-      <GlitchHeading :text="t('portal.projects.notFound')" :level="1" />
+      <SectionHeading :text="t('portal.projects.notFound')" :level="1" />
       <RouterLink to="/#projekty" class="back mono">{{ t('portal.projects.backToProjects') }}</RouterLink>
     </div>
   </section>
@@ -47,24 +47,39 @@ const project = computed(() =>
 }
 
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   margin-top: var(--space-2);
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .status.development {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .status.planned {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .status.live {
-  color: var(--cp-green);
+  color: var(--color-success);
 }
 
 .description {
   margin-top: var(--space-2);
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .stack {
@@ -74,10 +89,15 @@ const project = computed(() =>
   margin-top: var(--space-3);
 }
 
+/* Technologie jako skleněné pilulky – drobné, tlumené, ať nepřebíjí nadpis. */
 .stack li {
-  padding: 0.2rem 0.6rem;
-  border: 1px solid var(--cp-line);
-  color: var(--cp-cyan);
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
 .actions {
@@ -89,11 +109,11 @@ const project = computed(() =>
 }
 
 .back {
-  color: var(--cp-muted);
+  color: var(--color-muted);
   text-decoration: none;
 }
 
 .back:hover {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 </style>

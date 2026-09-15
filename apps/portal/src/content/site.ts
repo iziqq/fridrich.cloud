@@ -74,7 +74,7 @@ export const navItems: NavItem[] = [
 ];
 
 export const hero = {
-  eyebrow: '// FRIDRICH.CLOUD',
+  eyebrow: 'fridrich.cloud',
   title: site.name,
   stack: ['Vue 3', 'Svelte', 'TypeScript', 'Azure', 'Cosmos DB', 'MS SQL', 'Node.js', 'NestJS'],
 };

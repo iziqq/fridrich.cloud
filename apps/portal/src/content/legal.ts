@@ -48,7 +48,7 @@ const operator = `${site.name}, ${site.legalForm}, IČO ${site.ico}, se sídlem 
 const contactRetention = CONTACT_MESSAGE_RETENTION_DAYS === 365 ? '1 rok' : `${CONTACT_MESSAGE_RETENTION_DAYS} dní`;
 
 export const privacyPolicy: LegalDocument = {
-  label: '// Ochrana osobních údajů',
+  label: 'Ochrana osobních údajů',
   title: 'Zásady ochrany osobních údajů',
   lead: `Tyto zásady vysvětlují, jaké osobní údaje zpracovávám, když používáte web ${site.domain}, kontaktní formulář, uživatelský účet nebo aplikaci IziWeddy, proč to dělám, jak dlouho údaje uchovávám a jaká máte práva.`,
   version: PRIVACY_POLICY_VERSION,
@@ -232,7 +232,7 @@ export const privacyPolicy: LegalDocument = {
 };
 
 export const termsOfService: LegalDocument = {
-  label: '// Obchodní podmínky',
+  label: 'Obchodní podmínky',
   title: 'Obchodní podmínky',
   lead: `Obchodní podmínky upravují používání webu ${site.domain}, uživatelského účtu a aplikací, které na něm provozuji (nyní IziWeddy). Založením účtu s nimi souhlasíte.`,
   version: TERMS_VERSION,

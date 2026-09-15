@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import GlitchHeading from './GlitchHeading.vue';
+import SectionHeading from './SectionHeading.vue';
 import SectionLabel from './SectionLabel.vue';
 
 defineProps<{ label: string; title: string }>();
@@ -8,9 +8,9 @@ defineProps<{ label: string; title: string }>();
 <template>
   <section class="page">
     <div class="container">
-      <div class="card bevel">
+      <div class="card glass">
         <SectionLabel :text="label" />
-        <GlitchHeading :text="title" :level="1" />
+        <SectionHeading :text="title" :level="1" />
 
         <div class="body">
           <slot />
@@ -41,8 +41,8 @@ defineProps<{ label: string; title: string }>();
   width: 100%;
   max-width: 30rem;
   padding: var(--space-4) var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .card :deep(h1) {
@@ -59,17 +59,17 @@ defineProps<{ label: string; title: string }>();
 .foot {
   margin-top: var(--space-3);
   padding-top: var(--space-2);
-  border-top: 1px solid var(--cp-line);
-  color: var(--cp-muted);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
   font-size: 0.875rem;
 }
 
 .foot :deep(a) {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
   text-decoration: none;
 }
 
 .foot :deep(a:hover) {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 </style>

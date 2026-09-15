@@ -60,7 +60,7 @@ function target(hash: string): string {
 
 <template>
   <header class="site-nav" :class="{ 'is-hidden': hidden }">
-    <nav class="bar bevel-sm" :aria-label="t('portal.nav.label')">
+    <nav class="bar glass" :aria-label="t('portal.nav.label')">
       <RouterLink to="/" class="logo" :aria-label="t('portal.nav.home')">
         <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
           <path
@@ -102,8 +102,8 @@ function target(hash: string): string {
       </button>
     </nav>
 
-    <!-- Mobilní menu přes celou obrazovku, položky nabíhají jako boot sekvence. -->
-    <div v-if="menuOpen" id="mobile-menu" class="overlay scanlines">
+    <!-- Mobilní menu přes celou obrazovku na matném skle, položky postupně najíždějí. -->
+    <div v-if="menuOpen" id="mobile-menu" class="overlay">
       <ul>
         <li v-for="(item, index) in navItems" :key="item.hash" :style="{ '--i': index }">
           <a :href="target(item.hash)" @click="menuOpen = false">
@@ -145,16 +145,16 @@ function target(hash: string): string {
   transform: translateY(calc(-100% - var(--space-4)));
 }
 
+/* Plovoucí skleněná pilulka – rozostření a okraj dodává třída glass. */
 .bar {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   width: 100%;
   max-width: var(--content-max);
-  padding: 0.5rem 0.75rem 0.5rem 1rem;
-  border: 1px solid var(--cp-line);
-  background: color-mix(in srgb, var(--cp-panel) 88%, transparent);
-  backdrop-filter: blur(12px);
+  padding: 0.375rem 0.5rem 0.375rem 0.875rem;
+  border-radius: var(--radius-pill);
+  background: rgb(20 20 24 / 0.55);
 }
 
 .logo {
@@ -162,7 +162,7 @@ function target(hash: string): string {
   place-items: center;
   min-width: 2.75rem;
   min-height: 2.75rem;
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .links {
@@ -177,44 +177,44 @@ function target(hash: string): string {
   display: inline-flex;
   align-items: center;
   min-height: 2.75rem;
-  padding-inline: 0.25rem;
-  color: var(--cp-text);
-  font-family: var(--font-display);
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  padding-inline: 0.875rem;
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 500;
   text-decoration: none;
   transition:
-    color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .links a:hover,
 .login:hover {
-  color: var(--cp-yellow);
-  transform: translate(-1px, -1px);
+  background: var(--color-surface-strong);
+  color: var(--color-text);
 }
 
+/* Aktivní sekce: jemně podsvícená pilulka místo změny barvy textu. */
 .links a.is-active {
-  color: var(--cp-yellow);
+  background: var(--color-surface-strong);
+  color: var(--color-accent-soft);
 }
 
 .divider {
   display: none;
   width: 1px;
   height: 1.5rem;
-  background: var(--cp-line);
+  background: var(--color-border);
 }
 
 .login {
   display: none;
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 /* Přihlášený uživatel je viditelnější než výzva k přihlášení. */
 .login.account {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 /*
@@ -242,7 +242,7 @@ function target(hash: string): string {
   display: block;
   width: 20px;
   height: 2px;
-  background: var(--cp-text);
+  background: var(--color-text);
   transition: transform var(--dur-fast) var(--ease);
 }
 
@@ -280,13 +280,15 @@ function target(hash: string): string {
   flex-direction: column;
   justify-content: center;
   padding: var(--space-8) var(--gutter) var(--space-4);
-  background: var(--cp-black);
+  background: rgb(11 11 14 / 0.72);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
 }
 
 .overlay li {
-  border-bottom: 1px solid var(--cp-line);
+  border-bottom: 1px solid var(--color-border);
   opacity: 0;
-  animation: boot 180ms var(--ease) forwards;
+  animation: slide-in 220ms var(--ease) forwards;
   animation-delay: calc(var(--i) * 45ms);
 }
 
@@ -295,21 +297,19 @@ function target(hash: string): string {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) 0;
-  color: var(--cp-text);
-  font-family: var(--font-display);
+  color: var(--color-text);
   font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 650;
+  letter-spacing: -0.02em;
   text-decoration: none;
 }
 
 .overlay .index {
-  color: var(--cp-cyan);
+  color: var(--color-accent);
 }
 
 .overlay-login a {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .overlay-foot {
@@ -319,10 +319,10 @@ function target(hash: string): string {
   align-items: center;
   justify-content: space-between;
   margin-top: var(--space-4);
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
-@keyframes boot {
+@keyframes slide-in {
   from {
     opacity: 0;
     transform: translateX(-12px);
@@ -339,11 +339,11 @@ function target(hash: string): string {
  */
 @media (--tablet) {
   .bar {
-    gap: var(--space-2);
+    gap: var(--space-1);
   }
 
   .links {
-    gap: var(--space-2);
+    gap: 0;
   }
 
   .links,
@@ -358,9 +358,12 @@ function target(hash: string): string {
 }
 
 @media (--notebook) {
-  .bar,
+  .bar {
+    gap: var(--space-2);
+  }
+
   .links {
-    gap: var(--space-3);
+    gap: 0.25rem;
   }
 }
 

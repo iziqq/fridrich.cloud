@@ -1,19 +1,5 @@
-/* Design systém je sdílený s produktovými aplikacemi. */
-@import '@fridrich/design';
-
 /*
- * Verzálkové nadpisy jsou podpis cyberpunkového vzhledu, ne obecné pravidlo –
- * proto žijí tady, ne ve sdíleném resetu, který používá i IziWeddy.
+ * Design systém je sdílený s produktovými aplikacemi – vzhled portálu (téma
+ * Glass, tmavá + oranžová) je celý v @fridrich/design, tady se jen načte.
  */
-h1,
-h2,
-h3,
-h4 {
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-h3 {
-  letter-spacing: 0.06em;
-}
+@import '@fridrich/design';

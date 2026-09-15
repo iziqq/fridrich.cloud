@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CyberButton from '@/components/CyberButton.vue';
+import AppButton from '@/components/AppButton.vue';
 import { useI18n } from 'vue-i18n';
 import { hero } from '@/content/site';
 
@@ -7,32 +7,27 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <section class="hero scanlines noise" aria-labelledby="hero-title">
-    <div class="grid-layer" aria-hidden="true"></div>
+  <section class="hero" aria-labelledby="hero-title">
+    <!-- Záře za nadpisem – sklo panelu níž má co rozostřit. -->
+    <div class="halo" aria-hidden="true"></div>
 
     <div class="container inner">
       <p class="mono eyebrow">{{ hero.eyebrow }}</p>
 
-      <h1 id="hero-title" class="title">
-        <span class="glitch is-visible" :data-text="hero.title">{{ hero.title }}</span>
-      </h1>
+      <h1 id="hero-title" class="title">{{ hero.title }}</h1>
 
-      <p class="subtitle">{{ t('portal.hero.subtitle') }}</p>
+      <p class="subtitle text-gradient">{{ t('portal.hero.subtitle') }}</p>
       <p class="lead">{{ t('portal.hero.lead') }}</p>
 
       <div class="actions">
-        <CyberButton href="#kontakt">{{ t('portal.hero.primaryAction') }}</CyberButton>
-        <CyberButton href="#vyvoj" variant="ghost">{{ t('portal.hero.secondaryAction') }}</CyberButton>
+        <AppButton href="#kontakt">{{ t('portal.hero.primaryAction') }}</AppButton>
+        <AppButton href="#vyvoj" variant="ghost">{{ t('portal.hero.secondaryAction') }}</AppButton>
       </div>
 
-      <ul class="stack mono" :aria-label="t('portal.hero.stackLabel')">
+      <ul class="stack glass" :aria-label="t('portal.hero.stackLabel')">
         <li v-for="tech in hero.stack" :key="tech">{{ tech }}</li>
       </ul>
     </div>
-
-    <!-- HUD rohové značky -->
-    <span class="corner tl" aria-hidden="true"></span>
-    <span class="corner br" aria-hidden="true"></span>
   </section>
 </template>
 
@@ -46,14 +41,16 @@ const { t } = useI18n();
   overflow: hidden;
 }
 
-.grid-layer {
+.halo {
   position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, var(--cp-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--cp-line) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black, transparent 75%);
+  top: 18%;
+  left: 50%;
+  width: min(70rem, 140vw);
+  aspect-ratio: 2 / 1;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgb(255 122 26 / 0.28), transparent);
+  filter: blur(40px);
+  pointer-events: none;
 }
 
 .inner {
@@ -61,27 +58,30 @@ const { t } = useI18n();
 }
 
 .eyebrow {
-  color: var(--cp-cyan);
+  color: var(--color-muted);
 }
 
 .title {
-  margin-block: var(--space-2) 0;
+  margin-top: var(--space-2);
+  font-size: clamp(2.75rem, 1.4rem + 7vw, 6rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
 }
 
 .subtitle {
   margin-top: var(--space-1);
-  color: var(--cp-yellow);
-  font-family: var(--font-display);
-  font-size: clamp(1.25rem, 0.9rem + 1.8vw, 2rem);
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-size: clamp(1.5rem, 1rem + 2.4vw, 2.75rem);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .lead {
   margin-top: var(--space-3);
   max-width: 46ch;
-  color: var(--cp-muted);
+  color: var(--color-muted);
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
 }
 
 .actions {
@@ -91,38 +91,18 @@ const { t } = useI18n();
   margin-top: var(--space-4);
 }
 
+/* Technologie jako jedna skleněná lišta – na mobilu se zalomí do řádků. */
 .stack {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 0.5rem 1.25rem;
+  width: fit-content;
+  max-width: 100%;
   margin-top: var(--space-6);
-  color: var(--cp-muted);
-}
-
-.stack li:not(:last-child)::after {
-  content: ' ·';
-  color: var(--cp-line);
-}
-
-.corner {
-  position: absolute;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 1px solid var(--cp-yellow);
-  opacity: 0.5;
-}
-
-.corner.tl {
-  top: 5.5rem;
-  left: var(--gutter);
-  border-right: 0;
-  border-bottom: 0;
-}
-
-.corner.br {
-  right: var(--gutter);
-  bottom: var(--space-4);
-  border-top: 0;
-  border-left: 0;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-lg);
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 </style>

@@ -8,8 +8,8 @@ import {
   SubmitContactMessageRequest,
   submitContactMessage,
 } from '@/contact/endpoints/submitContactMessage.endpoint';
-import CyberButton from '@/components/CyberButton.vue';
-import GlitchHeading from '@/components/GlitchHeading.vue';
+import AppButton from '@/components/AppButton.vue';
+import SectionHeading from '@/components/SectionHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { site } from '@/content/site';
 import { useReveal } from '@/composables/useReveal';
@@ -65,20 +65,20 @@ async function submit(): Promise<void> {
   <section id="kontakt" class="section" aria-labelledby="kontakt-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
       <SectionLabel :text="t('portal.contact.label')" />
-      <GlitchHeading :text="t('portal.contact.title')" :level="2" />
+      <SectionHeading :text="t('portal.contact.title')" :level="2" />
       <span id="kontakt-title" class="visually-hidden">{{ t('portal.contact.title') }}</span>
       <p class="lead">{{ t('portal.contact.lead') }}</p>
 
       <!-- Formulář ukládá jméno, e-mail a IP – bez zásad ochrany osobních údajů zůstává jen e-mail. -->
-      <div v-if="!PERSONAL_DATA_COLLECTION_ENABLED" class="mail bevel">
+      <div v-if="!PERSONAL_DATA_COLLECTION_ENABLED" class="mail glass">
         <p class="mono heading">{{ t('portal.contact.directHeading') }}</p>
         <a class="mail-address" :href="`mailto:${site.email}`">{{ site.email }}</a>
-        <CyberButton :href="`mailto:${site.email}`">{{ t('portal.contact.writeEmail') }}</CyberButton>
+        <AppButton :href="`mailto:${site.email}`">{{ t('portal.contact.writeEmail') }}</AppButton>
         <!-- TODO: doplnit odkazy na LinkedIn a GitHub -->
       </div>
 
       <div v-else class="layout">
-        <form class="form bevel" novalidate @submit.prevent="submit">
+        <form class="form glass" novalidate @submit.prevent="submit">
           <div class="field">
             <label for="contact-name">{{ t('portal.contact.form.name') }}</label>
             <input
@@ -90,7 +90,7 @@ async function submit(): Promise<void> {
               :aria-invalid="Boolean(errors['name'])"
               :aria-describedby="errors['name'] ? 'contact-name-error' : undefined"
             />
-            <p v-if="errors['name']" id="contact-name-error" class="error mono">
+            <p v-if="errors['name']" id="contact-name-error" class="error">
               {{ translateMessage(errors['name']) }}
             </p>
           </div>
@@ -107,7 +107,7 @@ async function submit(): Promise<void> {
               :aria-invalid="Boolean(errors['email'])"
               :aria-describedby="errors['email'] ? 'contact-email-error' : undefined"
             />
-            <p v-if="errors['email']" id="contact-email-error" class="error mono">
+            <p v-if="errors['email']" id="contact-email-error" class="error">
               {{ translateMessage(errors['email']) }}
             </p>
           </div>
@@ -122,7 +122,7 @@ async function submit(): Promise<void> {
               :aria-invalid="Boolean(errors['message'])"
               :aria-describedby="errors['message'] ? 'contact-message-error' : undefined"
             ></textarea>
-            <p v-if="errors['message']" id="contact-message-error" class="error mono">
+            <p v-if="errors['message']" id="contact-message-error" class="error">
               {{ translateMessage(errors['message']) }}
             </p>
           </div>
@@ -133,13 +133,13 @@ async function submit(): Promise<void> {
             <input id="contact-website" v-model="form.website" type="text" tabindex="-1" autocomplete="off" />
           </div>
 
-          <CyberButton type="submit" :disabled="status === 'sending'">
+          <AppButton type="submit" :disabled="status === 'sending'">
             {{ status === 'sending' ? t('portal.contact.form.submitting') : t('portal.contact.form.submit') }}
-          </CyberButton>
+          </AppButton>
 
           <p
             v-if="status !== 'idle'"
-            class="status mono"
+            class="status"
             :class="status"
             role="status"
             aria-live="polite"
@@ -179,7 +179,7 @@ async function submit(): Promise<void> {
 
 .lead {
   margin-top: var(--space-2);
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .layout {
@@ -193,39 +193,41 @@ async function submit(): Promise<void> {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .field label {
   display: block;
   margin-bottom: 0.35rem;
-  color: var(--cp-muted);
+  color: var(--color-muted);
   font-family: var(--font-mono);
   font-size: var(--text-label);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 input,
 textarea {
   width: 100%;
   min-height: 2.75rem;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid var(--cp-line);
-  background: var(--cp-black);
-  color: var(--cp-text);
-  transition: border-color var(--dur-fast) var(--ease);
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 0.28);
+  color: var(--color-text);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
 }
 
 input:focus,
 textarea:focus {
-  border-color: var(--cp-yellow);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
 }
 
 input[aria-invalid='true'],
 textarea[aria-invalid='true'] {
-  border-color: var(--cp-magenta);
+  border-color: var(--color-danger);
 }
 
 textarea {
@@ -234,7 +236,7 @@ textarea {
 
 .error {
   margin-top: 0.35rem;
-  color: var(--cp-magenta);
+  color: var(--color-danger);
 }
 
 .honeypot {
@@ -246,28 +248,28 @@ textarea {
 }
 
 .status.sent {
-  color: var(--cp-green);
+  color: var(--color-success);
 }
 
 .status.error {
-  color: var(--cp-magenta);
+  color: var(--color-danger);
 }
 
 .status.sending {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .consent {
-  color: var(--cp-muted);
+  color: var(--color-muted);
   font-size: 0.8125rem;
 }
 
 .consent a {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .heading {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .direct li {
@@ -282,14 +284,14 @@ textarea {
   max-width: 40rem;
   margin-top: var(--space-4);
   padding: var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .mail-address {
   /* Dlouhá adresa se na 360 px musí zalomit, ne vytlačit stránku do strany. */
   overflow-wrap: anywhere;
-  color: var(--cp-text);
+  color: var(--color-text);
   font-family: var(--font-display);
   font-size: var(--text-h3);
   font-weight: 600;
@@ -300,5 +302,10 @@ textarea {
     grid-template-columns: 1.6fr 1fr;
     gap: var(--space-8);
   }
+}
+
+.field .error,
+.status {
+  font-size: 0.875rem;
 }
 </style>

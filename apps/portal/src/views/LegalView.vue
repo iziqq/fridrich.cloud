@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
-import GlitchHeading from '@/components/GlitchHeading.vue';
+import SectionHeading from '@/components/SectionHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { privacyPolicy, termsOfService } from '@/content/legal';
 import { currentLocale } from '@/i18n';
@@ -41,14 +41,14 @@ const other = computed(() =>
 <template>
   <article class="page">
     <div class="container">
-      <p v-if="czechOnly" class="notice bevel-sm">{{ t('portal.legal.czechOnly') }}</p>
+      <p v-if="czechOnly" class="notice glass">{{ t('portal.legal.czechOnly') }}</p>
 
       <SectionLabel :text="doc.label" lang="cs" />
-      <GlitchHeading :text="doc.title" :level="1" lang="cs" />
+      <SectionHeading :text="doc.title" :level="1" lang="cs" />
       <p class="mono effective">{{ t('portal.legal.effectiveFrom', { date: effectiveDate }) }}</p>
       <p class="lead" lang="cs">{{ doc.lead }}</p>
 
-      <nav class="toc bevel-sm" :aria-label="t('portal.legal.tocLabel')">
+      <nav class="toc glass" :aria-label="t('portal.legal.tocLabel')">
         <p class="mono toc-title">{{ t('portal.legal.tocTitle') }}</p>
         <ol lang="cs">
           <li v-for="section in doc.sections" :key="section.id">
@@ -112,21 +112,20 @@ const other = computed(() =>
   max-width: 70ch;
   margin-bottom: var(--space-4);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--cp-yellow);
-  background: var(--cp-panel);
-  color: var(--cp-text);
+  border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+  color: var(--color-text);
 }
 
 .effective {
   margin-top: var(--space-2);
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .lead,
 .section p,
 .list {
   max-width: 70ch;
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .lead {
@@ -136,12 +135,12 @@ const other = computed(() =>
 .toc {
   margin-top: var(--space-4);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .toc-title {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .toc ol {
@@ -155,13 +154,13 @@ const other = computed(() =>
   display: inline-flex;
   align-items: center;
   min-height: var(--touch-target);
-  color: var(--cp-text);
+  color: var(--color-text);
   text-decoration: none;
 }
 
 .toc a:hover,
 .link:hover {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .section {
@@ -183,7 +182,7 @@ const other = computed(() =>
   display: grid;
   gap: var(--space-1);
   padding-left: 1.25rem;
-  list-style: square;
+  list-style: disc;
 }
 
 /* --- Tabulka: mobil jako karty --- */
@@ -206,13 +205,13 @@ const other = computed(() =>
 .table tr {
   margin-bottom: var(--space-2);
   padding: var(--space-2);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .table td {
   padding-block: 0.35rem;
-  color: var(--cp-muted);
+  color: var(--color-muted);
   /* Dlouhé odkazy na paragrafy se musí zalomit, ne vytlačit stránku do strany. */
   overflow-wrap: anywhere;
 }
@@ -220,15 +219,13 @@ const other = computed(() =>
 .table td::before {
   content: attr(data-label);
   display: block;
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
   font-family: var(--font-mono);
   font-size: var(--text-label);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .table td:first-child {
-  color: var(--cp-text);
+  color: var(--color-text);
   font-weight: 600;
 }
 
@@ -284,7 +281,7 @@ const other = computed(() =>
   .table td {
     display: table-cell;
     padding: var(--space-2);
-    border: 1px solid var(--cp-line);
+    border: 1px solid var(--color-border);
     text-align: left;
     vertical-align: top;
     overflow-wrap: break-word;
@@ -292,12 +289,10 @@ const other = computed(() =>
   }
 
   .table th {
-    background: var(--cp-panel);
-    color: var(--cp-cyan);
+    background: var(--color-surface);
+    color: var(--color-accent-soft);
     font-family: var(--font-mono);
     font-size: var(--text-label);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
   }
 
   .table td::before {

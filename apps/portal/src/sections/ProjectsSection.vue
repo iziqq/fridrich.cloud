@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import GlitchHeading from '@/components/GlitchHeading.vue';
+import SectionHeading from '@/components/SectionHeading.vue';
 import ProjectCard from '@/components/ProjectCard.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { useI18n } from 'vue-i18n';
@@ -14,7 +14,7 @@ const { el, visible } = useReveal();
   <section id="projekty" class="section" aria-labelledby="projekty-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
       <SectionLabel :text="t('portal.projects.label')" />
-      <GlitchHeading :text="t('portal.projects.title')" :level="2" />
+      <SectionHeading :text="t('portal.projects.title')" :level="2" />
       <span id="projekty-title" class="visually-hidden">{{ t('portal.projects.title') }}</span>
       <p class="lead">{{ t('portal.projects.lead') }}</p>
 
@@ -32,7 +32,7 @@ const { el, visible } = useReveal();
 
 .lead {
   margin-top: var(--space-2);
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .grid {

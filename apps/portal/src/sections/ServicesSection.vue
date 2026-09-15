@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import GlitchHeading from '@/components/GlitchHeading.vue';
+import SectionHeading from '@/components/SectionHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { useI18n } from 'vue-i18n';
 import { services, type StackTag } from '@/content/site';
@@ -18,14 +18,14 @@ function tagLabel(tag: StackTag): string {
   <section id="sluzby" class="section" aria-labelledby="sluzby-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
       <SectionLabel :text="t('portal.services.label')" />
-      <GlitchHeading :text="t('portal.services.title')" :level="2" />
+      <SectionHeading :text="t('portal.services.title')" :level="2" />
       <span id="sluzby-title" class="visually-hidden">{{ t('portal.services.title') }}</span>
 
       <ul class="grid">
-        <li v-for="service in services" :key="service.id" class="card bevel-tl">
+        <li v-for="service in services" :key="service.id" class="card glass">
           <h3>{{ t(`portal.services.items.${service.id}.title`) }}</h3>
           <p>{{ t(`portal.services.items.${service.id}.description`) }}</p>
-          <ul class="stack mono">
+          <ul class="stack">
             <li v-for="tag in service.stack" :key="typeof tag === 'string' ? tag : tag.topic">
               {{ tagLabel(tag) }}
             </li>
@@ -52,8 +52,8 @@ function tagLabel(tag: StackTag): string {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   transition:
     border-color var(--dur-fast) var(--ease),
     background-color var(--dur-fast) var(--ease),
@@ -61,18 +61,18 @@ function tagLabel(tag: StackTag): string {
 }
 
 .card:hover {
-  border-color: var(--cp-yellow);
-  background: var(--cp-panel-hi);
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-strong);
   transform: translateY(-2px);
 }
 
 .card h3 {
-  color: var(--cp-yellow);
+  font-size: 1.25rem;
 }
 
 .card p {
   flex: 1;
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .stack {
@@ -82,10 +82,15 @@ function tagLabel(tag: StackTag): string {
   margin-top: auto;
 }
 
+/* Technologie jako skleněné pilulky – drobné, tlumené, ať nepřebíjí nadpis. */
 .stack li {
-  padding: 0.2rem 0.6rem;
-  border: 1px solid var(--cp-line);
-  color: var(--cp-cyan);
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
 @media (--tablet) {

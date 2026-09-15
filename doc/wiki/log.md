@@ -265,3 +265,28 @@ Source: owner's report – the deploy step fails with `An unknown exception has 
 - Workflow: new step **Deployment token** strips whitespace, masks the value, exports `SWA_CLI_DEPLOYMENT_TOKEN` and warns
   when something was stripped; deploy steps no longer read the raw secret.
 - Touched pages: `operations/deployment.md` (root cause), `decisions.md` (decision, open question 17 updated).
+
+## [2026-09-15] change | Address removed from the footer
+
+- Owner's request: the footer bottom line shows only name and IČO (`portal.footer.identification`, cs + en).
+  The registered address stays in the privacy policy and terms (`content/legal.ts`).
+- Touched pages: `domains/portal.md`, `architecture/personalData.md`.
+
+## [2026-09-15] ingest | Portal redesign – Glass (dark + orange) instead of cyberpunk
+
+Source: [raw/2026-09-15-glassDesign.md](../raw/2026-09-15-glassDesign.md)
+
+- `packages/design`: `theme-cyberpunk.css` removed, new `theme-glass.css` (semantic tokens, radii, blur, orange page glows),
+  `effects.css` rewritten (`.glass`, `.accent-glow`, `.text-gradient`, `.reveal`, reduced motion/transparency and
+  no-`backdrop-filter` fallbacks), fonts Rajdhani/Chakra Petch/JetBrains Mono replaced by Inter; `.mono` label restyled.
+- Portal: `CyberButton` → `AppButton` (orange / glass pill), `GlitchHeading` → `SectionHeading`, new `SectionLabel`,
+  glass pill navigation and blurred mobile menu, new hero; all `--cp-*` colours → `--color-*`, bevel/scanline/noise/glitch
+  classes → `.glass`; uppercase headings and wide tracking removed; chips, status badges, step markers, inputs and
+  the delete button rounded; sentence messages no longer use the uppercase label style.
+- Texts: HUD prefixes removed from catalogs and templates (`// 01 — O MNĚ` → `O mně`, `> odesláno` → `Odesláno`),
+  legal document labels too; `index.html` theme colour and favicon orange.
+- API e-mail layout moved to the same palette (rounded card, orange pill button).
+- Verified in headless Chrome: home sections at 1440 px, hero/process/login at 360 px, legal page, account with the
+  delete confirmation – no horizontal overflow.
+- Touched pages: `domains/portal.md` (binding rules, new *Design: Glass* section, accessibility), `architecture/monorepo.md`,
+  `decisions.md`, `index.md`; raw source listed in `doc/raw/README.md`.

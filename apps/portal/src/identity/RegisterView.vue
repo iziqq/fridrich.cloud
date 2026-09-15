@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
 import AuthField from '@/components/AuthField.vue';
-import CyberButton from '@/components/CyberButton.vue';
+import AppButton from '@/components/AppButton.vue';
 import { ApiError } from '@/api/http';
 import { translateMessage } from '@/i18n';
 import { register } from './endpoints/register.endpoint';
@@ -64,7 +64,7 @@ async function submit(): Promise<void> {
       takže z ní nejde zjistit, kdo je registrovaný.
     -->
     <div v-if="done" class="done">
-      <p class="mono ok">&gt; {{ translateMessage(done) }}</p>
+      <p class="ok">{{ translateMessage(done) }}</p>
       <i18n-t keypath="identity.register.doneInfo" tag="p">
         <template #link>
           <RouterLink to="/prihlaseni">{{ t('identity.register.doneInfoLink') }}</RouterLink>
@@ -103,7 +103,7 @@ async function submit(): Promise<void> {
             </template>
           </i18n-t>
         </label>
-        <p v-if="termsError" id="register-terms-error" class="error mono">{{ termsError }}</p>
+        <p v-if="termsError" id="register-terms-error" class="error">{{ termsError }}</p>
         <i18n-t keypath="identity.register.privacyInfo" tag="p" class="info">
           <template #link>
             <RouterLink to="/ochrana-osobnich-udaju" target="_blank">{{ t('identity.register.privacyInfoLink') }}</RouterLink>
@@ -111,11 +111,11 @@ async function submit(): Promise<void> {
         </i18n-t>
       </div>
 
-      <p v-if="generalError" class="error mono" role="alert">&gt; {{ translateMessage(generalError) }}</p>
+      <p v-if="generalError" class="error" role="alert">{{ translateMessage(generalError) }}</p>
 
-      <CyberButton type="submit" :disabled="busy">
+      <AppButton type="submit" :disabled="busy">
         {{ busy ? t('identity.register.submitting') : t('identity.register.submit') }}
-      </CyberButton>
+      </AppButton>
     </form>
 
     <template #footer>
@@ -137,7 +137,7 @@ form,
 }
 
 .error {
-  color: var(--cp-magenta);
+  color: var(--color-danger);
 }
 
 .terms {
@@ -158,23 +158,23 @@ form,
   flex: none;
   width: 1.25rem;
   height: 1.25rem;
-  accent-color: var(--cp-yellow);
+  accent-color: var(--color-accent);
 }
 
 .terms a {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .info {
-  color: var(--cp-muted);
+  color: var(--color-muted);
   font-size: 0.8125rem;
 }
 
 .ok {
-  color: var(--cp-green);
+  color: var(--color-success);
 }
 
 .done p:not(.ok) {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 </style>

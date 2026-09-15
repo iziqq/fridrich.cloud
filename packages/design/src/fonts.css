@@ -1,21 +1,17 @@
 /*
  * Fonty jsou self-hostované přes @fontsource – žádné volání na fonts.google.com
- * (GDPR) a žádný skok layoutu při načtení (doc/portal.md, kap. 4.2).
+ * (GDPR) a žádný skok layoutu při načtení.
  *
- * Importují se jen subsety latin a latin-ext. Latin-ext nese českou diakritiku
- * (ř, ě, ů, č…), zbytek subsetů (devanagari, thajština, vietnamština) by jen
- * nafoukl build o písma, která web nikdy nevykreslí.
+ * Inter – neutrální bezpatkové písmo blízké systémovému písmu Applu, dobře
+ * čitelné v malých velikostech i ve velkých nadpisech. Importují se jen subsety
+ * latin a latin-ext (česká diakritika) a řezy, které web opravdu používá.
  */
 
-@import '@fontsource/rajdhani/latin-600.css';
-@import '@fontsource/rajdhani/latin-ext-600.css';
-@import '@fontsource/rajdhani/latin-700.css';
-@import '@fontsource/rajdhani/latin-ext-700.css';
-
-@import '@fontsource/chakra-petch/latin-400.css';
-@import '@fontsource/chakra-petch/latin-ext-400.css';
-@import '@fontsource/chakra-petch/latin-500.css';
-@import '@fontsource/chakra-petch/latin-ext-500.css';
-
-@import '@fontsource/jetbrains-mono/latin-400.css';
-@import '@fontsource/jetbrains-mono/latin-ext-400.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-ext-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-ext-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-ext-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/inter/latin-ext-700.css';

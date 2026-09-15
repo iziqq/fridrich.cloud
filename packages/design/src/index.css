@@ -1,6 +1,6 @@
-/* Kompletní vzhled portálu: struktura + cyberpunkové téma + efekty. */
+/* Kompletní vzhled portálu: struktura + téma Glass + efekty. */
 @import './fonts.css';
 @import './primitives.css';
-@import './theme-cyberpunk.css';
+@import './theme-glass.css';
 @import './base.css';
 @import './effects.css';

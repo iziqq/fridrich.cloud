@@ -9,7 +9,7 @@ import type { Catalog } from '@fridrich/shared';
 export const identityCs = {
   email: 'E-mail',
   login: {
-    label: '// Přihlášení',
+    label: 'Přihlášení',
     title: 'Přihlásit se',
     emailLead: 'Zadejte e-mail a pošleme na něj {length}místný kód. Heslo nepotřebujete – žádné u nás nemáte.',
     sendCode: 'Poslat kód',
@@ -25,7 +25,7 @@ export const identityCs = {
     registerLink: 'Zaregistrujte se',
   },
   register: {
-    label: '// Registrace',
+    label: 'Registrace',
     title: 'Vytvořit účet',
     doneInfo: 'Otevřete odkaz v e-mailu – účet se aktivuje a rovnou vás přihlásíme. Příště se přihlásíte {link}.',
     doneInfoLink: 'kódem na e-mail',
@@ -42,7 +42,7 @@ export const identityCs = {
     loginLink: 'Přihlaste se',
   },
   verifyEmail: {
-    label: '// Aktivace účtu',
+    label: 'Aktivace účtu',
     title: 'Aktivace účtu',
     working: 'ověřuji',
     done: 'účet aktivován',
@@ -54,7 +54,7 @@ export const identityCs = {
     backToLogin: 'Zpět na přihlášení',
   },
   account: {
-    label: '// Můj účet',
+    label: 'Můj účet',
     fallbackName: 'Účet',
     status: 'Stav',
     emailVerified: 'E-mail ověřen',
@@ -65,7 +65,7 @@ export const identityCs = {
     signingOut: 'Odhlašuji…',
     backToWeb: '← Zpět na web',
     deleted: {
-      label: '// Účet smazán',
+      label: 'Účet smazán',
       title: 'Účet je smazaný',
       info: 'Účet i data v aplikacích jsme smazali. Potvrzení odešlo na {email}.',
     },
@@ -90,7 +90,7 @@ export const identityCs = {
 export const identityEn: Catalog<typeof identityCs> = {
   email: 'E-mail',
   login: {
-    label: '// Sign in',
+    label: 'Sign in',
     title: 'Sign in',
     emailLead: 'Enter your e-mail and we will send you a {length}-digit code. No password needed – you do not have one with us.',
     sendCode: 'Send code',
@@ -106,7 +106,7 @@ export const identityEn: Catalog<typeof identityCs> = {
     registerLink: 'Sign up',
   },
   register: {
-    label: '// Sign up',
+    label: 'Sign up',
     title: 'Create account',
     doneInfo: 'Open the link in the e-mail – your account will be activated and you will be signed in right away. Next time, sign in {link}.',
     doneInfoLink: 'with a code sent to your e-mail',
@@ -123,7 +123,7 @@ export const identityEn: Catalog<typeof identityCs> = {
     loginLink: 'Sign in',
   },
   verifyEmail: {
-    label: '// Account activation',
+    label: 'Account activation',
     title: 'Account activation',
     working: 'verifying',
     done: 'account activated',
@@ -135,7 +135,7 @@ export const identityEn: Catalog<typeof identityCs> = {
     backToLogin: 'Back to sign in',
   },
   account: {
-    label: '// My account',
+    label: 'My account',
     fallbackName: 'Account',
     status: 'Status',
     emailVerified: 'E-mail verified',
@@ -146,7 +146,7 @@ export const identityEn: Catalog<typeof identityCs> = {
     signingOut: 'Signing out…',
     backToWeb: '← Back to the website',
     deleted: {
-      label: '// Account deleted',
+      label: 'Account deleted',
       title: 'Account deleted',
       info: 'We have deleted your account and your app data. A confirmation was sent to {email}.',
     },

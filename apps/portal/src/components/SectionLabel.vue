@@ -7,19 +7,25 @@ defineProps<{ text: string }>();
 </template>
 
 <style scoped>
+/* Štítek nad nadpisem sekce – malá skleněná pilulka s oranžovou tečkou. */
 .section-label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 0.5rem;
   margin-bottom: var(--space-2);
-  color: var(--cp-cyan);
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-accent-soft);
 }
 
-.section-label::after {
+.section-label::before {
   content: '';
-  flex: 1;
-  height: 1px;
-  max-width: 8rem;
-  background: linear-gradient(to right, var(--cp-cyan), transparent);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 10px var(--color-accent-glow);
 }
 </style>

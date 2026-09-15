@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
 import AuthField from '@/components/AuthField.vue';
-import CyberButton from '@/components/CyberButton.vue';
+import AppButton from '@/components/AppButton.vue';
 import { ApiError } from '@/api/http';
 import { translateMessage } from '@/i18n';
 import { useAuthStore } from './auth.store';
@@ -120,11 +120,11 @@ function changeEmail(): void {
 
       <AuthField v-model="email" :label="t('identity.email')" type="email" autocomplete="email" />
 
-      <p v-if="error" class="error mono" role="alert">&gt; {{ translateMessage(error) }}</p>
+      <p v-if="error" class="error" role="alert">{{ translateMessage(error) }}</p>
 
-      <CyberButton type="submit" :disabled="busy">
+      <AppButton type="submit" :disabled="busy">
         {{ busy ? t('identity.login.sending') : t('identity.login.sendCode') }}
-      </CyberButton>
+      </AppButton>
     </form>
 
     <form v-else novalidate @submit.prevent="submitCode">
@@ -144,11 +144,11 @@ function changeEmail(): void {
         code
       />
 
-      <p v-if="error" class="error mono" role="alert">&gt; {{ translateMessage(error) }}</p>
+      <p v-if="error" class="error" role="alert">{{ translateMessage(error) }}</p>
 
-      <CyberButton type="submit" :disabled="busy">
+      <AppButton type="submit" :disabled="busy">
         {{ busy ? t('identity.login.signingIn') : t('identity.login.signIn') }}
-      </CyberButton>
+      </AppButton>
 
       <button type="button" class="link mono" @click="changeEmail">
         &lt; {{ t('identity.login.changeEmail') }}
@@ -173,16 +173,16 @@ form {
 }
 
 .lead {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .lead strong {
-  color: var(--cp-text);
+  color: var(--color-text);
   word-break: break-all;
 }
 
 .error {
-  color: var(--cp-magenta);
+  color: var(--color-danger);
 }
 
 .link {
@@ -190,11 +190,11 @@ form {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--cp-muted);
+  color: var(--color-muted);
   cursor: pointer;
 }
 
 .link:hover {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 </style>

@@ -9,6 +9,7 @@ sources:
   - raw/2026-09-15-gdprNoDataCollection.md
   - raw/2026-09-15-legalDocumentsAndRetention.md
   - raw/2026-09-15-translations.md
+  - raw/2026-09-15-glassDesign.md
   - raw/iziweddySpec.md (ch. 12), raw/portalSpec.md (ch. 11)
   - history: doc/architecture.md (Open questions, Answered)
 updated: 2026-09-15
@@ -24,6 +25,7 @@ updated: 2026-09-15
 
 | Date | Decision | Why | Detail |
 |---|---|---|---|
+| 2026-09-15 | **Portal design "Glass" (dark + orange) replaces cyberpunk** – frosted glass surfaces, orange glows, Inter, rounded shapes and pills; components `AppButton`/`SectionHeading` replace `CyberButton`/`GlitchHeading`; e-mails use the same palette | Owner found cyberpunk too generic. Tokens stay semantic (`--color-*`), so IziWeddy's theme is untouched; glass has solid fallbacks for reduced transparency and browsers without `backdrop-filter`. Supersedes the design system of `portalSpec.md`. | [raw/2026-09-15-glassDesign.md](../raw/2026-09-15-glassDesign.md), [portal.md](domains/portal.md#design-glass) |
 | 2026-09-15 | **Workflow strips whitespace from the deployment token and uses StaticSitesClient `latest`** | A trailing newline in the secret broke the `Authorization` header; only the newer client reports the real exception instead of "unknown exception" | [deployment.md](operations/deployment.md#deployment-failure-an-unknown-exception-has-occurred) |
 | 2026-09-15 | **Node 22 for the API runtime, CI and bundle** (was 20) | Azure Functions dropped Node 20 on 2026-04-30; a retired `apiRuntime` is a candidate cause of the failing deployment and would stop the API anyway | [deployment.md](operations/deployment.md#deployment-failure-an-unknown-exception-has-occurred) |
 | 2026-09-15 | **UI in Czech and English with vue-i18n**; switcher + `localStorage`, default by browser, no language in URLs; legal documents Czech only | Owner's choice. Keeping URLs avoids touching routes, e-mail links and the sitemap; the trade-off is that only Czech is indexed. | [raw/2026-09-15-translations.md](../raw/2026-09-15-translations.md), [i18n.md](architecture/i18n.md) |

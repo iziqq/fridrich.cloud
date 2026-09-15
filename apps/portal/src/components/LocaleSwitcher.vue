@@ -53,7 +53,6 @@ function choose(locale: Locale): void {
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
   cursor: pointer;
   transition: color var(--dur-fast) var(--ease);
 }

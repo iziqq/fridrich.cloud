@@ -3,8 +3,8 @@ import { INACTIVE_ACCOUNT_RETENTION_DAYS } from '@fridrich/shared';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
-import CyberButton from '@/components/CyberButton.vue';
-import GlitchHeading from '@/components/GlitchHeading.vue';
+import AppButton from '@/components/AppButton.vue';
+import SectionHeading from '@/components/SectionHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { ApiError } from '@/api/http';
 import { projects } from '@/content/site';
@@ -51,9 +51,9 @@ async function confirmDelete(): Promise<void> {
     <!-- Po smazání účtu už uživatel není přihlášený – zbývá jen potvrzení. -->
     <div v-if="deleteStep === 'deleted'" class="container">
       <SectionLabel :text="t('identity.account.deleted.label')" />
-      <GlitchHeading :text="t('identity.account.deleted.title')" :level="1" />
-      <p class="mono ok done" role="status">
-        &gt; {{ t('identity.account.deleted.info', { email: deletedEmail }) }}
+      <SectionHeading :text="t('identity.account.deleted.title')" :level="1" />
+      <p class="ok done" role="status">
+        {{ t('identity.account.deleted.info', { email: deletedEmail }) }}
       </p>
       <div class="actions">
         <RouterLink to="/" class="back mono">{{ t('identity.account.backToWeb') }}</RouterLink>
@@ -62,9 +62,9 @@ async function confirmDelete(): Promise<void> {
 
     <div v-else class="container">
       <SectionLabel :text="t('identity.account.label')" />
-      <GlitchHeading :text="auth.user?.displayName ?? t('identity.account.fallbackName')" :level="1" />
+      <SectionHeading :text="auth.user?.displayName ?? t('identity.account.fallbackName')" :level="1" />
 
-      <dl class="details bevel-sm">
+      <dl class="details glass">
         <div>
           <dt class="mono">{{ t('identity.email') }}</dt>
           <dd>{{ auth.user?.email }}</dd>
@@ -80,7 +80,7 @@ async function confirmDelete(): Promise<void> {
       <!-- Rozcestník do produktů – jeden účet platí na všech subdoménách. -->
       <h2 class="apps-title">{{ t('identity.account.appsTitle') }}</h2>
       <ul class="apps">
-        <li v-for="project in projects.items" :key="project.id" class="app bevel-sm">
+        <li v-for="project in projects.items" :key="project.id" class="app glass">
           <div>
             <p class="name">{{ project.name }}</p>
             <p class="mono tagline">{{ t(`portal.projects.items.${project.id}.tagline`) }}</p>
@@ -91,14 +91,14 @@ async function confirmDelete(): Promise<void> {
       </ul>
 
       <div class="actions">
-        <CyberButton variant="ghost" :disabled="busy" @click="signOut">
+        <AppButton variant="ghost" :disabled="busy" @click="signOut">
           {{ busy ? t('identity.account.signingOut') : t('identity.account.signOut') }}
-        </CyberButton>
+        </AppButton>
         <RouterLink to="/" class="back mono">{{ t('identity.account.backToWeb') }}</RouterLink>
       </div>
 
       <!-- Právo na výmaz (čl. 17 GDPR) – uživatel si účet smaže sám, bez žádosti e-mailem. -->
-      <section class="danger bevel-sm" aria-labelledby="delete-title">
+      <section class="danger glass" aria-labelledby="delete-title">
         <h2 id="delete-title" class="danger-title">{{ t('identity.account.delete.title') }}</h2>
         <p>{{ t('identity.account.delete.description') }}</p>
         <i18n-t keypath="identity.account.delete.retention" tag="p" class="note">
@@ -118,8 +118,8 @@ async function confirmDelete(): Promise<void> {
         </button>
 
         <div v-else class="confirm" role="group" :aria-label="t('identity.account.delete.confirmGroup')">
-          <p class="mono warn">&gt; {{ t('identity.account.delete.confirm', { email: auth.user?.email }) }}</p>
-          <p v-if="deleteError" class="mono error" role="alert">&gt; {{ translateMessage(deleteError) }}</p>
+          <p class="warn">{{ t('identity.account.delete.confirm', { email: auth.user?.email }) }}</p>
+          <p v-if="deleteError" class="error" role="alert">{{ translateMessage(deleteError) }}</p>
           <div class="confirm-actions">
             <button
               type="button"
@@ -129,13 +129,13 @@ async function confirmDelete(): Promise<void> {
             >
               {{ deleteStep === 'deleting' ? t('identity.account.delete.deleting') : t('identity.account.delete.confirmButton') }}
             </button>
-            <CyberButton
+            <AppButton
               variant="ghost"
               :disabled="deleteStep === 'deleting'"
               @click="deleteStep = 'idle'"
             >
               {{ t('identity.account.delete.cancel') }}
-            </CyberButton>
+            </AppButton>
           </div>
         </div>
       </section>
@@ -153,12 +153,12 @@ async function confirmDelete(): Promise<void> {
   gap: var(--space-2);
   margin-top: var(--space-4);
   padding: var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 dt {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 dd {
@@ -167,15 +167,15 @@ dd {
 }
 
 .ok {
-  color: var(--cp-green);
+  color: var(--color-success);
 }
 
 .warn {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .error {
-  color: var(--cp-magenta);
+  color: var(--color-danger);
 }
 
 .done {
@@ -200,33 +200,29 @@ dd {
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .name {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .tagline {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .open {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
   font-family: var(--font-display);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   text-decoration: none;
 }
 
 .soon {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .actions {
@@ -238,12 +234,12 @@ dd {
 }
 
 .back {
-  color: var(--cp-muted);
+  color: var(--color-muted);
   text-decoration: none;
 }
 
 .back:hover {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 /* --- Nebezpečná zóna: magenta = chyba a nevratná akce, žlutá zůstává jen pro hlavní CTA --- */
@@ -254,17 +250,17 @@ dd {
   max-width: 44rem;
   margin-top: var(--space-8);
   padding: var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--cp-magenta) 45%, var(--cp-line));
-  background: var(--cp-panel);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+  background: var(--color-surface);
 }
 
 .danger-title {
-  color: var(--cp-magenta);
+  color: var(--color-danger);
   font-size: var(--text-h3);
 }
 
 .danger p {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .danger .note {
@@ -272,20 +268,18 @@ dd {
 }
 
 .danger a {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .danger-button {
   justify-self: start;
   min-height: var(--touch-target);
   padding: 0.6rem 1.25rem;
-  border: 1px solid var(--cp-magenta);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--cp-magenta);
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--color-danger);
+  font-weight: 600;
   cursor: pointer;
   transition:
     background var(--dur-fast) var(--ease),
@@ -293,8 +287,8 @@ dd {
 }
 
 .danger-button:hover:not(:disabled) {
-  background: var(--cp-magenta);
-  color: var(--cp-black);
+  background: var(--color-danger);
+  color: var(--color-bg);
 }
 
 .danger-button:disabled {
@@ -308,7 +302,7 @@ dd {
 }
 
 .confirm .warn {
-  color: var(--cp-text);
+  color: var(--color-text);
   overflow-wrap: anywhere;
 }
 

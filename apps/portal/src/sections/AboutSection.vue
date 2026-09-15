@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import GlitchHeading from '@/components/GlitchHeading.vue';
+import SectionHeading from '@/components/SectionHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { useI18n } from 'vue-i18n';
 import { about } from '@/content/site';
@@ -13,7 +13,7 @@ const { el, visible } = useReveal();
   <section id="o-mne" class="section" aria-labelledby="o-mne-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
       <SectionLabel :text="t('portal.about.label')" />
-      <GlitchHeading :text="t('portal.about.title')" :level="2" />
+      <SectionHeading :text="t('portal.about.title')" :level="2" />
       <span id="o-mne-title" class="visually-hidden">{{ t('portal.about.title') }}</span>
 
       <div class="body">
@@ -22,8 +22,8 @@ const { el, visible } = useReveal();
         </div>
 
         <ul class="stats">
-          <li v-for="stat in about.stats" :key="stat.id" class="stat bevel-sm">
-            <span class="value text-glow-yellow">
+          <li v-for="stat in about.stats" :key="stat.id" class="stat glass">
+            <span class="value text-gradient">
               {{ stat.value }}<span v-if="stat.suffix" class="suffix">{{ stat.suffix }}</span>
             </span>
             <span class="mono label">{{ t(`portal.about.stats.${stat.id}`) }}</span>
@@ -64,37 +64,35 @@ const { el, visible } = useReveal();
 
 .stat {
   padding: var(--space-2);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .value {
   display: block;
-  color: var(--cp-yellow);
+  color: var(--color-accent);
   font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
   line-height: 1.1;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .suffix {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .label {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .sectors {
   margin-top: var(--space-6);
   padding-top: var(--space-3);
-  border-top: 1px solid var(--cp-line);
+  border-top: 1px solid var(--color-border);
 }
 
 .sectors-label {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .sector-list {
@@ -105,17 +103,15 @@ const { el, visible } = useReveal();
 }
 
 .sector-list li {
-  color: var(--cp-muted);
+  color: var(--color-muted);
   font-family: var(--font-display);
   font-size: 1.125rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
   transition: color var(--dur-fast) var(--ease);
 }
 
 .sector-list li:hover {
-  color: var(--cp-text);
+  color: var(--color-text);
 }
 
 @media (--notebook) {

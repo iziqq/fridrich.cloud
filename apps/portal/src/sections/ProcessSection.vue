@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import CyberButton from '@/components/CyberButton.vue';
-import GlitchHeading from '@/components/GlitchHeading.vue';
+import AppButton from '@/components/AppButton.vue';
+import SectionHeading from '@/components/SectionHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { useI18n } from 'vue-i18n';
 import { processSteps } from '@/content/site';
@@ -14,7 +14,7 @@ const { el, visible } = useReveal();
   <section id="vyvoj" class="section" aria-labelledby="vyvoj-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
       <SectionLabel :text="t('portal.process.label')" />
-      <GlitchHeading :text="t('portal.process.title')" :level="2" />
+      <SectionHeading :text="t('portal.process.title')" :level="2" />
       <span id="vyvoj-title" class="visually-hidden">{{ t('portal.process.title') }}</span>
       <p class="lead">{{ t('portal.process.lead') }}</p>
 
@@ -30,7 +30,7 @@ const { el, visible } = useReveal();
             <span class="mono number">{{ step.number }}</span>
           </div>
 
-          <div class="content bevel-sm">
+          <div class="content glass">
             <h3>{{ t(`portal.process.steps.${step.id}.title`) }}</h3>
             <p>{{ t(`portal.process.steps.${step.id}.description`) }}</p>
             <p class="output mono">
@@ -44,7 +44,7 @@ const { el, visible } = useReveal();
       <p class="note">{{ t('portal.process.note') }}</p>
 
       <div class="cta">
-        <CyberButton href="#kontakt">{{ t('portal.process.cta') }}</CyberButton>
+        <AppButton href="#kontakt">{{ t('portal.process.cta') }}</AppButton>
       </div>
     </div>
   </section>
@@ -54,12 +54,12 @@ const { el, visible } = useReveal();
 .section {
   padding-block: var(--section-gap);
   background:
-    radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in srgb, var(--cp-cyan) 6%, transparent), transparent);
+    radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in srgb, var(--color-accent-soft) 6%, transparent), transparent);
 }
 
 .lead {
   margin-top: var(--space-2);
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 /* --- Mobil: svislá osa --- */
@@ -77,7 +77,7 @@ const { el, visible } = useReveal();
   bottom: 0;
   left: 1.125rem;
   width: 1px;
-  background: linear-gradient(to bottom, var(--cp-yellow), var(--cp-cyan));
+  background: linear-gradient(to bottom, var(--color-accent), var(--color-accent-soft));
   opacity: 0.4;
 }
 
@@ -98,51 +98,53 @@ const { el, visible } = useReveal();
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  border: 1px solid var(--cp-yellow);
-  background: var(--cp-black);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
+  border-radius: 50%;
+  background: var(--color-bg);
+  box-shadow: 0 0 18px -4px var(--color-accent-glow);
 }
 
 .number {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
   font-size: 0.8125rem;
 }
 
 .content {
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   transition: border-color var(--dur-fast) var(--ease);
 }
 
 .step:hover .content {
-  border-color: var(--cp-cyan);
+  border-color: var(--color-accent-soft);
 }
 
 .content h3 {
-  color: var(--cp-text);
+  color: var(--color-text);
 }
 
 .content p {
   margin-top: var(--space-1);
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .output {
   margin-top: var(--space-2);
   padding-top: var(--space-1);
-  border-top: 1px solid var(--cp-line);
-  color: var(--cp-cyan);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-accent-soft);
 }
 
 .output-key {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .note {
   margin-top: var(--space-4);
   padding-left: var(--space-2);
-  border-left: 2px solid var(--cp-yellow);
-  color: var(--cp-muted);
+  border-left: 2px solid var(--color-accent);
+  color: var(--color-muted);
 }
 
 .cta {
@@ -181,7 +183,7 @@ const { el, visible } = useReveal();
     right: calc(var(--space-2) * -1);
     left: 2.25rem;
     height: 1px;
-    background: linear-gradient(to right, var(--cp-yellow), var(--cp-cyan));
+    background: linear-gradient(to right, var(--color-accent), var(--color-accent-soft));
     opacity: 0.4;
   }
 

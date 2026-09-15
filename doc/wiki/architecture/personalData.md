@@ -43,7 +43,7 @@ Not collected: analytics, tracking, third-party embeds, fonts from a CDN – so 
 - Rendered by `views/LegalView.vue` (table of contents, tables become cards on mobile).
   Linked from the footer, the registration form and the contact form notice.
 - **Controller:** Libor Fridrich, sole trader, IČO 08005788, Nová 182, 273 51 Velké Přítočno,
-  not a VAT payer (from ARES; held in `site` in `content/site.ts`). Shown in the footer too.
+  not a VAT payer (from ARES; held in `site` in `content/site.ts`). Name and IČO are also in the footer; the address only in the legal documents.
 - **Processors named:** Microsoft Ireland Operations Ltd. (Azure hosting + Cosmos DB),
   Google Ireland Ltd. (Gmail); transfers outside the EEA via the EU-U.S. Data Privacy Framework / SCCs.
 - **Legal bases:** contract (Art. 6(1)(b)) for the account, IziWeddy and replying to an enquiry;

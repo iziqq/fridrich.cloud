@@ -9,7 +9,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <article class="project bevel">
+  <article class="project glass">
     <div class="head">
       <div>
         <h3>{{ project.name }}</h3>
@@ -24,7 +24,7 @@ const { t } = useI18n();
 
     <p class="description">{{ t(`portal.projects.items.${project.id}.description`) }}</p>
 
-    <ul class="stack mono">
+    <ul class="stack">
       <li v-for="tech in project.stack" :key="tech">{{ tech }}</li>
     </ul>
 
@@ -43,15 +43,15 @@ const { t } = useI18n();
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--cp-line);
-  background: var(--cp-panel);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   transition:
     border-color var(--dur-fast) var(--ease),
     transform var(--dur-fast) var(--ease);
 }
 
 .project:hover {
-  border-color: var(--cp-yellow);
+  border-color: var(--color-border-strong);
   transform: translateY(-2px);
 }
 
@@ -64,33 +64,46 @@ const { t } = useI18n();
 }
 
 h3 {
-  color: var(--cp-yellow);
   font-size: 1.5rem;
 }
 
 .tagline {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
+/* Stav jako pilulka s barevnou tečkou – barva i text, ne jen barva. */
 .status {
-  padding: 0.25rem 0.65rem;
-  border: 1px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .status.development {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .status.planned {
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .status.live {
-  color: var(--cp-green);
+  color: var(--color-success);
 }
 
 .description {
-  color: var(--cp-muted);
+  color: var(--color-muted);
 }
 
 .stack {
@@ -99,10 +112,15 @@ h3 {
   gap: var(--space-1);
 }
 
+/* Technologie jako skleněné pilulky – drobné, tlumené, ať nepřebíjí nadpis. */
 .stack li {
-  padding: 0.2rem 0.6rem;
-  border: 1px solid var(--cp-line);
-  color: var(--cp-cyan);
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
 .actions {
@@ -116,19 +134,17 @@ h3 {
   display: inline-flex;
   align-items: center;
   min-height: 2.75rem;
-  color: var(--cp-text);
+  color: var(--color-text);
   font-family: var(--font-display);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   text-decoration: none;
 }
 
 .link:hover {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .link.primary {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 </style>

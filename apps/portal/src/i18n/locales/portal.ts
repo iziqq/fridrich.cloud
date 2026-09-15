@@ -35,7 +35,7 @@ export const portalCs = {
     stackLabel: 'Technologie',
   },
   about: {
-    label: '// 01 — O MNĚ',
+    label: 'O mně',
     title: 'Deset let u toho, co běží v produkci',
     paragraphs: [
       'Jsem full stack vývojář. Píšu frontend, backend i databázovou vrstvu – nepředávám práci na půl cesty a nečekám, až ji někdo dokončí za mě.',
@@ -47,7 +47,7 @@ export const portalCs = {
       sectors: 'odvětví',
       fullStack: 'frontend · backend · cloud',
     },
-    sectorsLabel: '// Odvětví, ve kterých jsem pracoval',
+    sectorsLabel: 'Odvětví, ve kterých jsem pracoval',
     sectors: {
       manufacturing: 'Průmyslová výroba',
       automotive: 'Automotive',
@@ -56,7 +56,7 @@ export const portalCs = {
     },
   },
   services: {
-    label: '// 02 — SLUŽBY',
+    label: 'Služby',
     title: 'Co pro vás udělám',
     items: {
       webApps: {
@@ -87,7 +87,7 @@ export const portalCs = {
     },
   },
   process: {
-    label: '// 03 — VÝVOJ',
+    label: 'Vývoj',
     title: 'Jak spolupráce probíhá',
     lead: 'Šest kroků. Víte dopředu, co se bude dít a co z každého kroku vzejde.',
     outputLabel: 'Výstup:',
@@ -133,7 +133,7 @@ export const portalCs = {
     cta: 'Začneme prvním krokem',
   },
   projects: {
-    label: '// 04 — PROJEKTY',
+    label: 'Projekty',
     title: 'Vlastní produkty',
     lead: 'Aplikace, které stavím pod značkou fridrich.cloud.',
     detail: 'Detail projektu',
@@ -160,10 +160,10 @@ export const portalCs = {
     },
   },
   contact: {
-    label: '// 05 — KONTAKT',
+    label: 'Kontakt',
     title: 'Máte projekt?',
     lead: 'Napište mi, co potřebujete vyřešit. Ozvu se a domluvíme si první schůzku.',
-    directHeading: '// Přímý kontakt',
+    directHeading: 'Přímý kontakt',
     writeEmail: 'Napsat e-mail',
     form: {
       name: 'Jméno',
@@ -174,9 +174,9 @@ export const portalCs = {
       submitting: 'Odesílám…',
     },
     status: {
-      sending: '> odesílám zprávu…',
-      sent: '> odesláno. Ozvu se co nejdřív.',
-      error: '> odeslání se nepodařilo. Zkuste to prosím znovu nebo napište přímo na e-mail.',
+      sending: 'Odesílám zprávu…',
+      sent: 'Odesláno. Ozvu se co nejdřív.',
+      error: 'Odeslání se nepodařilo. Zkuste to prosím znovu nebo napište přímo na e-mail.',
     },
     consent: {
       text: 'Údaje použiji jen k odpovědi na vaši poptávku a zprávu smažu nejpozději po roce. Více v {link}.',
@@ -185,22 +185,22 @@ export const portalCs = {
   },
   footer: {
     productsLabel: 'Produkty',
-    productsHeading: '// Produkty',
-    contactHeading: '// Kontakt',
+    productsHeading: 'Produkty',
+    contactHeading: 'Kontakt',
     privacy: 'Ochrana osobních údajů',
     terms: 'Obchodní podmínky',
-    identification: '© {year} {name} · IČO {ico} · {address}',
+    identification: '© {year} {name} · IČO {ico}',
   },
   notFound: {
-    label: '// Chyba 404',
+    label: 'Chyba 404',
     title: 'Stránka nenalezena',
-    lead: '> požadovaná adresa neexistuje',
+    lead: 'Požadovaná adresa neexistuje.',
     back: '← Zpět na úvod',
   },
   legal: {
     effectiveFrom: 'Účinné od {date}',
     tocLabel: 'Obsah dokumentu',
-    tocTitle: '// Obsah',
+    tocTitle: 'Obsah',
     privacy: 'Zásady ochrany osobních údajů',
     terms: 'Obchodní podmínky',
     back: '← Zpět na web',
@@ -235,7 +235,7 @@ export const portalEn: Catalog<typeof portalCs> = {
     stackLabel: 'Technologies',
   },
   about: {
-    label: '// 01 — ABOUT',
+    label: 'About',
     title: 'Ten years of building what runs in production',
     paragraphs: [
       'I am a full stack developer. I write the frontend, the backend and the database layer – I don’t hand over half-finished work and wait for someone else to complete it.',
@@ -247,7 +247,7 @@ export const portalEn: Catalog<typeof portalCs> = {
       sectors: 'industries',
       fullStack: 'frontend · backend · cloud',
     },
-    sectorsLabel: '// Industries I have worked in',
+    sectorsLabel: 'Industries I have worked in',
     sectors: {
       manufacturing: 'Industrial manufacturing',
       automotive: 'Automotive',
@@ -256,7 +256,7 @@ export const portalEn: Catalog<typeof portalCs> = {
     },
   },
   services: {
-    label: '// 02 — SERVICES',
+    label: 'Services',
     title: 'What I can do for you',
     items: {
       webApps: {
@@ -287,7 +287,7 @@ export const portalEn: Catalog<typeof portalCs> = {
     },
   },
   process: {
-    label: '// 03 — PROCESS',
+    label: 'Process',
     title: 'How we work together',
     lead: 'Six steps. You know in advance what will happen and what each step delivers.',
     outputLabel: 'Output:',
@@ -333,7 +333,7 @@ export const portalEn: Catalog<typeof portalCs> = {
     cta: 'Let’s start with step one',
   },
   projects: {
-    label: '// 04 — PROJECTS',
+    label: 'Projects',
     title: 'Own products',
     lead: 'Applications I build under the fridrich.cloud brand.',
     detail: 'Project details',
@@ -360,10 +360,10 @@ export const portalEn: Catalog<typeof portalCs> = {
     },
   },
   contact: {
-    label: '// 05 — CONTACT',
+    label: 'Contact',
     title: 'Have a project?',
     lead: 'Tell me what you need to solve. I will get back to you and we will arrange a first meeting.',
-    directHeading: '// Direct contact',
+    directHeading: 'Direct contact',
     writeEmail: 'Send an e-mail',
     form: {
       name: 'Name',
@@ -374,9 +374,9 @@ export const portalEn: Catalog<typeof portalCs> = {
       submitting: 'Sending…',
     },
     status: {
-      sending: '> sending message…',
-      sent: '> sent. I will get back to you as soon as possible.',
-      error: '> sending failed. Please try again or write to me directly by e-mail.',
+      sending: 'Sending message…',
+      sent: 'Sent. I will get back to you as soon as possible.',
+      error: 'Sending failed. Please try again or write to me directly by e-mail.',
     },
     consent: {
       text: 'I will use your details only to reply to your enquiry and will delete the message within one year at the latest. More in the {link}.',
@@ -385,22 +385,22 @@ export const portalEn: Catalog<typeof portalCs> = {
   },
   footer: {
     productsLabel: 'Products',
-    productsHeading: '// Products',
-    contactHeading: '// Contact',
+    productsHeading: 'Products',
+    contactHeading: 'Contact',
     privacy: 'Privacy policy',
     terms: 'Terms of service',
-    identification: '© {year} {name} · Company ID (IČO) {ico} · {address}',
+    identification: '© {year} {name} · Company ID (IČO) {ico}',
   },
   notFound: {
-    label: '// Error 404',
+    label: 'Error 404',
     title: 'Page not found',
-    lead: '> the requested address does not exist',
+    lead: 'The requested address does not exist.',
     back: '← Back to home',
   },
   legal: {
     effectiveFrom: 'Effective from {date}',
     tocLabel: 'Table of contents',
-    tocTitle: '// Contents',
+    tocTitle: 'Contents',
     privacy: 'Privacy policy',
     terms: 'Terms of service',
     back: '← Back to website',

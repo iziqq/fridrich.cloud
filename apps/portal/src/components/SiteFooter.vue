@@ -34,10 +34,13 @@ const year = new Date().getFullYear();
       </div>
     </div>
 
-    <!-- Identifikace podnikatele musí být na webu vidět (§ 435 občanského zákoníku). -->
+    <!--
+      Identifikace podnikatele (§ 435 občanského zákoníku): jméno a IČO v patičce,
+      sídlo je v zásadách ochrany osobních údajů a obchodních podmínkách.
+    -->
     <div class="container bottom">
       <p class="mono">
-        {{ t('portal.footer.identification', { year, name: site.name, ico: site.ico, address: site.address }) }}
+        {{ t('portal.footer.identification', { year, name: site.name, ico: site.ico }) }}
       </p>
       <p class="mono">{{ site.domain }}</p>
     </div>
@@ -47,9 +50,9 @@ const year = new Date().getFullYear();
 <style scoped>
 .site-footer {
   margin-top: var(--section-gap);
-  border-top: 1px solid var(--cp-line);
+  border-top: 1px solid var(--color-border);
   padding-block: var(--space-6) var(--space-4);
-  background: var(--cp-panel);
+  background: var(--color-surface);
 }
 
 .inner {
@@ -61,17 +64,15 @@ const year = new Date().getFullYear();
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .claim {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .heading {
   margin-bottom: var(--space-1);
-  color: var(--cp-cyan);
+  color: var(--color-accent-soft);
 }
 
 .inner li {
@@ -79,12 +80,12 @@ const year = new Date().getFullYear();
 }
 
 .inner a {
-  color: var(--cp-muted);
+  color: var(--color-muted);
   text-decoration: none;
 }
 
 .inner a:hover {
-  color: var(--cp-yellow);
+  color: var(--color-accent);
 }
 
 .bottom {
@@ -94,12 +95,12 @@ const year = new Date().getFullYear();
   justify-content: space-between;
   margin-top: var(--space-6);
   padding-top: var(--space-3);
-  border-top: 1px solid var(--cp-line);
-  color: var(--cp-muted);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
 }
 
 .bottom a {
-  color: var(--cp-muted);
+  color: var(--color-muted);
   text-decoration: none;
 }
 

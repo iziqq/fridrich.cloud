@@ -110,10 +110,12 @@ ol {
   padding-inline: var(--gutter);
 }
 
+/* Drobný popisek (eyebrow, štítek) – malé verzálky s prostrkáním. */
 .mono {
   font-family: var(--font-mono);
   font-size: var(--text-label);
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -134,6 +136,7 @@ ol {
   left: var(--space-2);
   z-index: 100;
   padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-pill, 0);
   background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-display);

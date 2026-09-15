@@ -21,67 +21,80 @@ const internal = computed(() => props.href?.startsWith('/') && !props.href.start
 
 <template>
   <!-- Odkaz i tlačítko sdílí vzhled, ale zůstávají správným prvkem kvůli klávesnici. -->
-  <RouterLink v-if="href && internal" :to="href" class="cyber-btn bevel-sm" :class="variant">
+  <RouterLink v-if="href && internal" :to="href" class="app-btn" :class="variant">
     <span><slot /></span>
   </RouterLink>
-  <a v-else-if="href" :href="href" class="cyber-btn bevel-sm" :class="variant">
+  <a v-else-if="href" :href="href" class="app-btn" :class="variant">
     <span><slot /></span>
   </a>
-  <button v-else class="cyber-btn bevel-sm" :class="variant" :type="type" :disabled="disabled">
+  <button v-else class="app-btn" :class="variant" :type="type" :disabled="disabled">
     <span><slot /></span>
   </button>
 </template>
 
 <style scoped>
-.cyber-btn {
+.app-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  min-height: 2.75rem;
-  min-width: 2.75rem;
-  padding: 0.75rem 1.75rem;
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  padding: 0.7rem 1.5rem;
   border: 1px solid transparent;
+  border-radius: var(--radius-pill);
   background: transparent;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: -0.005em;
   text-decoration: none;
   cursor: pointer;
   transition:
     background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-base) var(--ease),
     color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease),
-    filter var(--dur-fast) var(--ease);
+    transform var(--dur-fast) var(--ease);
 }
 
-.cyber-btn:disabled {
+.app-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
+.app-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Hlavní akce: oranžová pilulka se světlem na horní hraně a jemnou září. */
 .primary {
-  background: var(--cp-yellow);
-  color: var(--cp-black);
+  background: linear-gradient(180deg, var(--color-accent-strong), var(--color-accent));
+  color: var(--color-on-accent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 10px 30px -12px var(--color-accent-glow);
 }
 
-/* drop-shadow respektuje clip-path, box-shadow by se ořízl spolu s tvarem. */
 .primary:hover:not(:disabled) {
-  color: var(--cp-black);
-  transform: translate(-2px, -2px);
-  filter: drop-shadow(4px 4px 0 var(--cp-cyan));
+  color: var(--color-on-accent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 14px 38px -10px var(--color-accent-glow);
 }
 
+/* Vedlejší akce: skleněná pilulka. */
 .ghost {
-  border-color: var(--cp-line);
-  color: var(--cp-text);
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 .ghost:hover:not(:disabled) {
-  border-color: var(--cp-yellow);
-  color: var(--cp-yellow);
-  transform: translate(-2px, -2px);
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-strong);
+  color: var(--color-text);
 }
 </style>
