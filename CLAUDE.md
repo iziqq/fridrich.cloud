@@ -40,10 +40,10 @@ a persistent, interlinked wiki up to date.
 **All documentation is written in English** – wiki pages, raw sources, READMEs,
 this file. When the user gives input in Czech (a brief, a spec, a decision),
 store it in English: a faithful translation in `doc/raw/`, English prose in the
-wiki. Keep talking to the user in their language. Product content stays Czech:
-UI texts, validation messages in schemas, e-mail templates, routes such as
-`/prihlaseni`; when documentation quotes a Czech UI string, add the English
-meaning in parentheses – `Návrh (Draft)`.
+wiki. Keep talking to the user in their language. Product content is Czech and
+English (see rules 28–32): Czech is the source catalog, routes such as
+`/prihlaseni` and the legal documents stay Czech only; when documentation quotes
+a Czech UI string, add the English meaning in parentheses – `Návrh (Draft)`.
 
 Key files: `doc/wiki/index.md` (catalog of every page with a one-line summary
 and date) and `doc/wiki/log.md` (append-only chronology).
@@ -129,10 +129,10 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 ### Types and validation – Valibot
 
 11. **Every data type crossing the wire or coming from a user is derived from a Valibot schema** (`v.InferOutput` / `v.InferInput`). Do not hand-write interfaces for API data. Import as `import * as v from 'valibot'`.
-12. Building blocks (field rules with Czech user-facing messages, entity and input schemas, enums with labels) live in the shared kernel; endpoint files compose them.
+12. Building blocks (field rules with message **keys**, entity and input schemas, enums, cs/en message catalogs) live in the shared kernel; endpoint files compose them.
 13. Normalisation (trim, lowercase, rounding) belongs to schemas; defaults and state-dependent rules (access, one-time use, attempt counters) belong to the domain.
 14. Domain methods accept **parsed, typed input** (`GuestInput`), never `unknown`. Value objects that are invariants on their own (`EmailAddress`) re-validate with the same schema.
-15. Validation errors are `[{ field: 'dot.path', message }]` produced by `issuesToDetails`; the frontend reads them via `ApiError.fieldErrors`.
+15. Validation errors are `[{ field: 'dot.path', message }]` produced by `issuesToDetails`, where `message` is a message key; the frontend reads them via `ApiError.fieldErrors` and shows them with `translateMessage`.
 
 ### Backend layers
 
@@ -157,6 +157,14 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 
     Never write a width in px in `@media`; if a component does not fit between breakpoints, fix the component (`minmax(0, 1fr)`, `flex-wrap`, `clamp()`), do not add a breakpoint. No horizontal scrolling at any width, touch targets at least 44 × 44 px, wide tables become card lists on mobile, content width is capped on notebook. Before finishing a frontend change, check the screen at 360, 768 and 1024 px. Details: `doc/wiki/architecture/frontend.md#responsive-layout-and-breakpoints`.
 
+### Translations (i18n)
+
+28. **No user-facing text in code.** Every visible string, `aria-label`, `title`, `placeholder` and `alt` in the portal goes through vue-i18n (`const { t } = useI18n()`); catalogs are `apps/portal/src/i18n/locales/<area>.ts`. Stores and plain TS return keys, components translate. Details: `doc/wiki/architecture/i18n.md`.
+29. **Czech catalog is the source, English is typed from it** – `export const xEn: Catalog<typeof xCs>`. Every new key is added to both languages in the same change (typecheck fails otherwise). Czech plurals have four variants, English three; escape `@ { } |` in texts.
+30. **Shared schemas and the API return message keys, never sentences.** Messages live in the subdomain file's `cs`/`en` catalog in `packages/*-shared`; schemas use the generated keys (`identityKeys.emailInvalid`, `guestsKeys.status[status]`). `DomainError` messages and `MessageResponse.message` are keys; the portal shows them with `translateMessage(key)`.
+31. **E-mails are translated on the API** (`application/identity/emails.ts`, cs and en): e-mails of the current action use the request language (`requestLocale`, header `Accept-Language` sent by `callEndpoint`), scheduler e-mails use `User.locale`.
+32. **Stays Czech:** routes and anchors, legal documents (`content/legal.ts`), code comments, the contact-form e-mail to the owner. Dates and currency are formatted with `currentLocale`.
+
 ### Personal data (GDPR)
 
 25. **Personal data only as the privacy policy describes it.** The policy and terms live in `apps/portal/src/content/legal.ts`; retention periods and document versions are constants in `packages/shared/src/privacy.ts` used by both apps. Any change to what is collected, why, where or for how long must update the policy table in the same change and bump `PRIVACY_POLICY_VERSION` (terms: `TERMS_VERSION`).
@@ -168,7 +176,7 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 - Prefer readable, explicit code over clever shortcuts.
 - Refactor within a single method/object rather than splitting into many small helpers, unless asked.
 - Keep files self-contained and easy to scan; the shared kernel has one file per subdomain.
-- User-facing texts (UI, validation messages, e-mails) are in Czech. Existing code comments are in Czech; comments explain *why*.
+- User-facing texts (UI, validation messages, e-mails) exist in Czech and English via message catalogs – never hard-coded. Code comments are in Czech; comments explain *why*.
 
 ## Commands
 
@@ -204,6 +212,7 @@ Before finishing a task run `npm run typecheck && npm run test && npm run build`
 - Do not hand-write TypeScript interfaces for API data – derive them from Valibot schemas.
 - Do not call `fetch`/`callEndpoint` outside frontend endpoint files.
 - Do not create abstract classes to share behaviour between domain objects.
+- Do not hard-code user-facing text in components, stores, schemas or API responses, and do not add a key to only one language.
 - Do not add a form, endpoint or screen that collects personal data outside the `PERSONAL_DATA_COLLECTION_ENABLED` switch or without updating the privacy policy, and do not flip the switch without the owner.
 - Do not build desktop-only layouts, write px widths in `@media` or add breakpoints beyond `--tablet` and `--notebook`.
 - Do not edit files in `doc/raw/` (except storing a new source in English).

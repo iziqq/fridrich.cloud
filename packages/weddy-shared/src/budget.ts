@@ -75,8 +75,11 @@ export function calculateBudget(items: readonly PlanningItem[]): BudgetSummary {
   return summary;
 }
 
-/** Formátuje částku v CZK (bez desetinných míst). */
-export function formatCurrency(amount: number, locale = 'cs-CZ'): string {
+/**
+ * Formátuje částku v CZK (bez desetinných míst).
+ * `locale` je jazyk rozhraní (`cs`, `en`) – měna zůstává koruna, mění se jen zápis.
+ */
+export function formatCurrency(amount: number, locale = 'cs'): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'CZK',

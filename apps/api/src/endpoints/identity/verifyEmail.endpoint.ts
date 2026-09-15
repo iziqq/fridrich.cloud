@@ -1,14 +1,15 @@
-import { UserSchema } from '@fridrich/shared';
+import { identityKeys, UserSchema } from '@fridrich/shared';
 import * as v from 'valibot';
 import { verifyEmail } from '../../application/identity/verifyEmail.js';
 import { sessionCookie } from '../../http/cookies.js';
 import { defineEndpoint } from '../../http/endpoint.js';
+import { requestLocale } from '../../http/responses.js';
 import { identityDeps } from '../../infrastructure/container.js';
 
 /** `POST /api/auth/verify-email` – aktivace účtu z odkazu v e-mailu; rovnou přihlásí. */
 
 export const VerifyEmailRequest = v.object({
-  token: v.pipe(v.string('Chybí ověřovací token'), v.nonEmpty('Chybí ověřovací token')),
+  token: v.pipe(v.string(identityKeys.tokenMissing), v.nonEmpty(identityKeys.tokenMissing)),
 });
 export type VerifyEmailRequest = v.InferOutput<typeof VerifyEmailRequest>;
 
@@ -22,8 +23,8 @@ export const verifyEmailEndpoint = defineEndpoint({
   access: 'public',
   body: VerifyEmailRequest,
   response: VerifyEmailResponse,
-  async handle({ body }) {
-    const result = await verifyEmail(identityDeps(), body);
+  async handle({ body, request }) {
+    const result = await verifyEmail(identityDeps(), { ...body, locale: requestLocale(request) });
 
     return {
       status: 200,

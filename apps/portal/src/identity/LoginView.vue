@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
 import AuthField from '@/components/AuthField.vue';
 import CyberButton from '@/components/CyberButton.vue';
 import { ApiError } from '@/api/http';
+import { translateMessage } from '@/i18n';
 import { useAuthStore } from './auth.store';
 import { requestLoginCode } from './endpoints/requestLoginCode.endpoint';
 
+const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
@@ -18,6 +21,7 @@ const step = ref<'email' | 'code'>('email');
 
 const email = ref('');
 const code = ref('');
+/** Klíč hlášky – překládá se až při vykreslení, ať se přepne i se změnou jazyka. */
 const error = ref('');
 const busy = ref(false);
 const codeField = useTemplateRef<InstanceType<typeof AuthField>>('codeField');
@@ -64,7 +68,7 @@ async function requestCode(): Promise<void> {
     error.value =
       cause instanceof ApiError
         ? (cause.fieldErrors['email'] ?? cause.message)
-        : 'Nepodařilo se odeslat kód. Zkuste to znovu.';
+        : 'identity.login.sendFailed';
   } finally {
     busy.value = false;
   }
@@ -92,7 +96,7 @@ async function submitCode(): Promise<void> {
     error.value =
       cause instanceof ApiError
         ? (cause.fieldErrors['code'] ?? cause.message)
-        : 'Přihlášení selhalo. Zkuste to prosím znovu.';
+        : 'identity.login.signInFailed';
     code.value = '';
   } finally {
     busy.value = false;
@@ -108,51 +112,55 @@ function changeEmail(): void {
 </script>
 
 <template>
-  <AuthCard label="// Přihlášení" title="Přihlásit se">
+  <AuthCard :label="t('identity.login.label')" :title="t('identity.login.title')">
     <form v-if="step === 'email'" novalidate @submit.prevent="requestCode">
       <p class="lead">
-        Zadejte e-mail a pošleme na něj {{ LOGIN_CODE_LENGTH }}místný kód. Heslo
-        nepotřebujete – žádné u nás nemáte.
+        {{ t('identity.login.emailLead', { length: LOGIN_CODE_LENGTH }) }}
       </p>
 
-      <AuthField v-model="email" label="E-mail" type="email" autocomplete="email" />
+      <AuthField v-model="email" :label="t('identity.email')" type="email" autocomplete="email" />
 
-      <p v-if="error" class="error mono" role="alert">&gt; {{ error }}</p>
+      <p v-if="error" class="error mono" role="alert">&gt; {{ translateMessage(error) }}</p>
 
       <CyberButton type="submit" :disabled="busy">
-        {{ busy ? 'Odesílám…' : 'Poslat kód' }}
+        {{ busy ? t('identity.login.sending') : t('identity.login.sendCode') }}
       </CyberButton>
     </form>
 
     <form v-else novalidate @submit.prevent="submitCode">
-      <p class="lead">
-        Pokud je účet na <strong>{{ maskedEmail }}</strong> založený, přišel na něj
-        kód. Platí 10 minut.
-      </p>
+      <i18n-t keypath="identity.login.codeLead" tag="p" class="lead">
+        <template #email>
+          <strong>{{ maskedEmail }}</strong>
+        </template>
+      </i18n-t>
 
       <AuthField
         ref="codeField"
         v-model="code"
-        label="Kód z e-mailu"
+        :label="t('identity.login.codeLabel')"
         autocomplete="one-time-code"
         inputmode="numeric"
         :maxlength="LOGIN_CODE_LENGTH"
         code
       />
 
-      <p v-if="error" class="error mono" role="alert">&gt; {{ error }}</p>
+      <p v-if="error" class="error mono" role="alert">&gt; {{ translateMessage(error) }}</p>
 
       <CyberButton type="submit" :disabled="busy">
-        {{ busy ? 'Přihlašuji…' : 'Přihlásit se' }}
+        {{ busy ? t('identity.login.signingIn') : t('identity.login.signIn') }}
       </CyberButton>
 
       <button type="button" class="link mono" @click="changeEmail">
-        &lt; zadat jiný e-mail
+        &lt; {{ t('identity.login.changeEmail') }}
       </button>
     </form>
 
     <template #footer>
-      <p>Ještě nemáte účet? <RouterLink to="/registrace">Zaregistrujte se</RouterLink></p>
+      <i18n-t keypath="identity.login.noAccount" tag="p">
+        <template #link>
+          <RouterLink to="/registrace">{{ t('identity.login.registerLink') }}</RouterLink>
+        </template>
+      </i18n-t>
     </template>
   </AuthCard>
 </template>

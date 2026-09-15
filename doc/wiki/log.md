@@ -188,3 +188,36 @@ Source: [raw/2026-09-15-legalDocumentsAndRetention.md](../raw/2026-09-15-legalDo
 - Touched pages: `architecture/{personalData,domains,endpoints,frontend,dataCosmos}.md`,
   `domains/{identity,contact,portal,weddy,weddyWedding}.md`, `operations/deployment.md`,
   `overview.md`, `decisions.md` (5 decisions; open questions 13–14 closed, 15–16 added), `index.md`.
+
+## [2026-09-15] ingest | Translations – Czech and English with vue-i18n
+
+Source: [raw/2026-09-15-translations.md](../raw/2026-09-15-translations.md)
+
+- Answers: cs + en; switcher with localStorage and browser default, no language in URLs;
+  schemas, API messages and e-mails translated; legal documents Czech only.
+- **Shared kernel:** `i18n.ts` (`LOCALES`, `resolveLocale`, `Catalog<T>`, `messageKeys`), cs/en
+  catalogs next to the schemas in every subdomain file, aggregated in `messages.ts`
+  (`shared.*`, `weddyShared.*`). Schemas use keys; `*_LABELS` maps replaced by
+  `guestsKeys`/`planningKeys`; `AcceptTermsSchema` moved to `identity.ts`;
+  `formatCurrency(amount, locale)`; the birth-year message no longer contains the current year.
+- **API:** `DomainError` defaults, domain errors, `MessageResponse` and HTTP errors return keys;
+  `requestLocale` from `Accept-Language`; `User.locale` stored at registration and by
+  `startSession`/`resolveSession`; `emails.ts` rewritten with cs/en texts (scheduler e-mails by
+  `User.locale`). New `test/i18n.test.ts`; tests 117 → 127.
+- **Portal:** vue-i18n 11 (`src/i18n/index.ts`: detection, Czech plural rule, `setLocale`,
+  `currentLocale`, `translateMessage`), catalogs `locales/{app,portal,identity,weddy,weddyGuests,weddyPlanning}.ts`,
+  `LocaleSwitcher.vue` in the portal nav, mobile menu and IziWeddy headers, `callEndpoint` sends
+  `Accept-Language`. All components converted (four parallel sub-agents by area); `content/site.ts`
+  keeps only structural data. The legal page shows an English notice that the document is Czech only.
+- Fixes found on the way: `StatusBadge` showed the guest label "Přijal" (Accepted) for approved planning
+  items – new required `kind` prop; the planning intro said "Osm oblastí" (eight areas) although there
+  are 11 – now `{n}` from `PLANNING_CATEGORIES`; Czech plurals corrected ("Před 1 dnem", "2 položky nemají").
+- Privacy policy: account data now lists the UI language; section 3 mentions `localStorage.fc_locale`.
+- Verified: typecheck, 127 tests, build; headless Chrome with mocked `/api` – 12 pages (portal,
+  identity, IziWeddy, legal, 404) in cs and en at 360 and 1024 px, sign-in and registration also signed out:
+  no untranslated Czech in English (except the intentional "IČO" gloss), no raw keys, no vue-i18n
+  warnings, no horizontal overflow; switching sets `<html lang>`, localStorage and `Accept-Language: en`.
+- `CLAUDE.md`: Language section, rules 12 and 15, new section *Translations (i18n)* (rules 28–32),
+  code conventions and "What not to do".
+- New page `architecture/i18n.md`; touched `architecture/{valibot,frontend,personalData}.md`,
+  `domains/{identity,portal,weddy}.md`, `overview.md`, `decisions.md` (3 decisions, open question 3 answered), `index.md`.

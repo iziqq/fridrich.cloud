@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{ title: string }>();
 const open = defineModel<boolean>('open', { required: true });
+
+const { t } = useI18n();
 
 const panel = ref<HTMLElement | null>(null);
 let lastFocused: HTMLElement | null = null;
@@ -71,7 +74,7 @@ function onKeydown(event: KeyboardEvent): void {
           <span class="grip" aria-hidden="true"></span>
           <h2>{{ props.title }}</h2>
           <button type="button" class="close" @click="close">
-            <span class="visually-hidden">Zavřít</span>
+            <span class="visually-hidden">{{ t('weddy.components.bottomSheet.close') }}</span>
             <span aria-hidden="true">✕</span>
           </button>
         </header>

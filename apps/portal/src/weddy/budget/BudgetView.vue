@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import {
   PLANNING_CATEGORIES,
-  PLANNING_CATEGORY_LABELS,
   calculateBudget,
   formatCurrency,
+  planningKeys,
   type BudgetSummary,
 } from '@fridrich/weddy-shared';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
+import { currentLocale, translateMessage } from '@/i18n';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import { weddyPath } from '@/weddy/routes';
 import { getBudget } from './endpoints/getBudget.endpoint';
 
+const { t } = useI18n();
 const route = useRoute();
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
@@ -61,55 +64,57 @@ function share(amount: number): string {
 <template>
   <div>
     <LoadingBlock v-if="loading && !summary" />
-    <ErrorBlock v-else-if="error" :message="error" />
+    <ErrorBlock v-else-if="error" :message="translateMessage(error)" />
 
     <template v-else>
       <section class="total card">
-        <p class="label">Celkem</p>
-        <p class="amount">{{ formatCurrency(budget.total) }}</p>
+        <p class="label">{{ t('weddy.budget.total') }}</p>
+        <p class="amount">{{ formatCurrency(budget.total, currentLocale) }}</p>
 
-        <div class="bar" role="img" :aria-label="`Schváleno ${share(budget.accepted)} z celkové částky`">
+        <div class="bar" role="img" :aria-label="t('weddy.budget.acceptedShare', { share: share(budget.accepted) })">
           <span class="fill accepted" :style="{ width: share(budget.accepted) }"></span>
           <span class="fill draft" :style="{ width: share(budget.draft) }"></span>
         </div>
 
         <dl class="split">
           <div>
-            <dt><span class="dot accepted"></span> Schváleno</dt>
-            <dd>{{ formatCurrency(budget.accepted) }}</dd>
+            <dt><span class="dot accepted"></span> {{ t('weddy.budget.accepted') }}</dt>
+            <dd>{{ formatCurrency(budget.accepted, currentLocale) }}</dd>
           </div>
           <div>
-            <dt><span class="dot draft"></span> Návrhy</dt>
-            <dd>{{ formatCurrency(budget.draft) }}</dd>
+            <dt><span class="dot draft"></span> {{ t('weddy.budget.drafts') }}</dt>
+            <dd>{{ formatCurrency(budget.draft, currentLocale) }}</dd>
           </div>
         </dl>
       </section>
 
       <p v-if="budget.itemsWithoutPrice > 0" class="notice">
-        {{ budget.itemsWithoutPrice }}
-        {{ budget.itemsWithoutPrice === 1 ? 'položka nemá' : 'položek nemá' }}
-        vyplněnou cenu, takže součet nemusí být úplný.
+        {{ t('weddy.budget.itemsWithoutPrice', budget.itemsWithoutPrice) }}
       </p>
 
-      <h2>Rozpis podle sekcí</h2>
+      <h2>{{ t('weddy.budget.byCategory') }}</h2>
 
       <p v-if="usedCategories.length === 0" class="empty">
-        Zatím tu není žádná položka s cenou.
-        <RouterLink :to="weddyPath(`/weddings/${weddingId}/planning`)">Přejít na plánování</RouterLink>
+        {{ t('weddy.budget.empty') }}
+        <RouterLink :to="weddyPath(`/weddings/${weddingId}/planning`)">{{ t('weddy.budget.goToPlanning') }}</RouterLink>
       </p>
 
       <ul v-else class="rows">
         <li v-for="category in usedCategories" :key="category" class="row card">
           <RouterLink :to="weddyPath(`/weddings/${weddingId}/planning/${category}`)" class="link">
-            <span class="name">{{ PLANNING_CATEGORY_LABELS[category] }}</span>
+            <span class="name">{{ t(planningKeys.category[category]) }}</span>
             <span class="values">
-              <span class="sum">{{ formatCurrency(budget.byCategory[category].total) }}</span>
+              <span class="sum">{{ formatCurrency(budget.byCategory[category].total, currentLocale) }}</span>
               <span class="detail">
                 <template v-if="budget.byCategory[category].accepted > 0">
-                  schváleno {{ formatCurrency(budget.byCategory[category].accepted) }}
+                  {{
+                    t('weddy.budget.categoryAccepted', {
+                      amount: formatCurrency(budget.byCategory[category].accepted, currentLocale),
+                    })
+                  }}
                 </template>
                 <template v-if="budget.byCategory[category].itemsWithoutPrice > 0">
-                  · {{ budget.byCategory[category].itemsWithoutPrice }} bez ceny
+                  · {{ t('weddy.budget.withoutPrice', { count: budget.byCategory[category].itemsWithoutPrice }) }}
                 </template>
               </span>
             </span>

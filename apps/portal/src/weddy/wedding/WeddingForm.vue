@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { Wedding, WeddingInput } from '@fridrich/weddy-shared';
 import { reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ApiError } from '@/api/http';
+import { currentLocale, translateMessage } from '@/i18n';
 import FormField from '@/weddy/components/FormField.vue';
 
 const props = defineProps<{
@@ -12,6 +14,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ saved: [Wedding] }>();
+
+const { t } = useI18n();
 
 /** Formulář pracuje s řetězci; převod na čísla řeší až odesílání. */
 function personForm(person: Wedding['groom'] | undefined) {
@@ -30,10 +34,19 @@ const weddingDate = ref(props.wedding?.weddingDate ?? '');
 const groom = personForm(props.wedding?.groom);
 const bride = personForm(props.wedding?.bride);
 
+/*
+ * Chyby se drží jako klíče hlášek a překládají se až při vykreslení,
+ * aby po přepnutí jazyka nezůstaly v původním jazyce.
+ */
 const errors = ref<Record<string, string>>({});
 const generalError = ref('');
 const busy = ref(false);
-const savedAt = ref('');
+const savedAt = ref<Date | null>(null);
+
+function fieldError(field: string): string | undefined {
+  const key = errors.value[field];
+  return key ? translateMessage(key) : undefined;
+}
 
 function toPerson(form: ReturnType<typeof personForm>) {
   return {
@@ -59,14 +72,14 @@ async function submit(): Promise<void> {
       bride: toPerson(bride),
     });
 
-    savedAt.value = new Date().toLocaleTimeString('cs-CZ');
+    savedAt.value = new Date();
     emit('saved', wedding);
   } catch (cause) {
     if (cause instanceof ApiError && cause.details.length > 0) {
       errors.value = cause.fieldErrors;
     } else {
       generalError.value =
-        cause instanceof ApiError ? cause.message : 'Uložení se nepodařilo.';
+        cause instanceof ApiError ? cause.message : 'weddy.weddingForm.saveFailed';
     }
   } finally {
     busy.value = false;
@@ -77,67 +90,69 @@ async function submit(): Promise<void> {
 <template>
   <form class="form" novalidate @submit.prevent="submit">
     <section class="card block">
-      <h2>Svatba</h2>
-      <FormField v-model="title" label="Název svatby" required :error="errors['title']" />
+      <h2>{{ t('weddy.weddingForm.wedding') }}</h2>
+      <FormField v-model="title" :label="t('weddy.weddingForm.title')" required :error="fieldError('title')" />
       <FormField
         v-model="weddingDate"
-        label="Datum svatby"
+        :label="t('weddy.weddingForm.date')"
         type="date"
-        :error="errors['weddingDate']"
+        :error="fieldError('weddingDate')"
       />
     </section>
 
-    <section v-for="side in [{ key: 'groom', form: groom, heading: 'Ženich' }, { key: 'bride', form: bride, heading: 'Nevěsta' }]" :key="side.key" class="card block">
+    <section v-for="side in [{ key: 'groom', form: groom, heading: t('weddy.weddingForm.groom') }, { key: 'bride', form: bride, heading: t('weddy.weddingForm.bride') }]" :key="side.key" class="card block">
       <h2>{{ side.heading }}</h2>
 
       <div class="row">
         <FormField
           v-model="side.form.firstName"
-          label="Jméno"
+          :label="t('weddy.weddingForm.firstName')"
           required
-          :error="errors[`${side.key}.firstName`]"
+          :error="fieldError(`${side.key}.firstName`)"
         />
         <FormField
           v-model="side.form.lastName"
-          label="Příjmení"
+          :label="t('weddy.weddingForm.lastName')"
           required
-          :error="errors[`${side.key}.lastName`]"
+          :error="fieldError(`${side.key}.lastName`)"
         />
       </div>
 
       <FormField
         v-model="side.form.birthYear"
-        label="Rok narození"
+        :label="t('weddy.weddingForm.birthYear')"
         numeric
-        :error="errors[`${side.key}.birthYear`]"
+        :error="fieldError(`${side.key}.birthYear`)"
       />
       <FormField
         v-model="side.form.email"
-        label="E-mail"
+        :label="t('weddy.weddingForm.email')"
         type="email"
-        :error="errors[`${side.key}.email`]"
+        :error="fieldError(`${side.key}.email`)"
       />
       <FormField
         v-model="side.form.phone"
-        label="Telefon"
+        :label="t('weddy.weddingForm.phone')"
         type="tel"
-        :error="errors[`${side.key}.phone`]"
+        :error="fieldError(`${side.key}.phone`)"
       />
       <FormField
         v-model="side.form.note"
-        label="Poznámka"
+        :label="t('weddy.weddingForm.note')"
         textarea
-        :error="errors[`${side.key}.note`]"
+        :error="fieldError(`${side.key}.note`)"
       />
     </section>
 
-    <p v-if="generalError" class="general-error" role="alert">{{ generalError }}</p>
+    <p v-if="generalError" class="general-error" role="alert">{{ translateMessage(generalError) }}</p>
 
     <div class="actions">
       <button type="submit" class="btn btn-primary" :disabled="busy">
-        {{ busy ? 'Ukládám…' : submitLabel }}
+        {{ busy ? t('weddy.weddingForm.saving') : submitLabel }}
       </button>
-      <p v-if="savedAt" class="saved" role="status">Uloženo v {{ savedAt }}</p>
+      <p v-if="savedAt" class="saved" role="status">
+        {{ t('weddy.weddingForm.savedAt', { time: savedAt.toLocaleTimeString(currentLocale) }) }}
+      </p>
     </div>
   </form>
 </template>

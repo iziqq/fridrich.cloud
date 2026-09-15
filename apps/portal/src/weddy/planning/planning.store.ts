@@ -59,6 +59,7 @@ export const usePlanningStore = defineStore('planning', () => {
       items.value = await listPlanningItems(weddingId);
       loadedWeddingId.value = weddingId;
     } catch (cause) {
+      // Klíč hlášky z API – přeloží ho obrazovka (`translateMessage`).
       error.value = (cause as Error).message;
     } finally {
       loading.value = false;

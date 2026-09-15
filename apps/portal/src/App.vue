@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterView, useRoute } from 'vue-router';
 import SiteFooter from '@/components/SiteFooter.vue';
 import SiteNav from '@/components/SiteNav.vue';
 
 const route = useRoute();
+const { t } = useI18n();
 
 /*
  * Produkty kreslí vlastní hlavičku i spodní navigaci, takže obal portálu
@@ -19,7 +21,7 @@ const bare = computed(() => route.meta.bare === true);
   <RouterView v-if="bare" />
 
   <template v-else>
-    <a class="skip-link" href="#obsah">Přeskočit na obsah</a>
+    <a class="skip-link" href="#obsah">{{ t('app.skipToContent') }}</a>
     <SiteNav />
 
     <main id="obsah">

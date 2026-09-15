@@ -25,9 +25,10 @@ function emptyFilters(): GuestFilters {
 /** Podle čeho se seznam řadí. Není to filtr – „Zrušit filtry" volbu nechá být. */
 export type GuestSort = 'lastName' | 'firstName';
 
-export const GUEST_SORT_LABELS: Record<GuestSort, string> = {
-  lastName: 'Příjmení',
-  firstName: 'Jméno',
+/** Klíče popisků řazení – store nepřekládá, text doplní komponenta přes `t()`. */
+export const GUEST_SORT_LABEL_KEYS: Record<GuestSort, string> = {
+  lastName: 'weddy.guests.sort.lastName',
+  firstName: 'weddy.guests.sort.firstName',
 };
 
 /**
@@ -134,6 +135,7 @@ export const useGuestsStore = defineStore('guests', () => {
       guests.value = response.guests;
       loadedWeddingId.value = weddingId;
     } catch (cause) {
+      // Klíč hlášky z API – přeloží ho obrazovka (`translateMessage`).
       error.value = (cause as Error).message;
     } finally {
       loading.value = false;

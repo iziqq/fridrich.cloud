@@ -1,5 +1,3 @@
-import * as v from 'valibot';
-
 /**
  * Osobní údaje (GDPR) – vypínač sběru, verze právních dokumentů a lhůty uchování.
  *
@@ -32,9 +30,3 @@ export const INACTIVE_ACCOUNT_RETENTION_DAYS = 365;
 
 /** Tolik dní před smazáním neaktivního účtu přijde upozornění e-mailem. */
 export const INACTIVE_ACCOUNT_WARNING_DAYS = 30;
-
-/** Souhlas s obchodními podmínkami při registraci – bez něj účet nevznikne. */
-export const AcceptTermsSchema = v.literal(
-  true,
-  'Pro založení účtu je potřeba souhlasit s obchodními podmínkami',
-);

@@ -1,33 +1,56 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
-import { formatLegalDate, privacyPolicy, termsOfService } from '@/content/legal';
+import { privacyPolicy, termsOfService } from '@/content/legal';
+import { currentLocale } from '@/i18n';
 
 const props = defineProps<{ document: 'privacy' | 'terms' }>();
 
+const { t } = useI18n();
+
 const doc = computed(() => (props.document === 'privacy' ? privacyPolicy : termsOfService));
+
+/*
+ * Právní dokumenty jsou jen česky – závazné znění je jedno a překlad by mohl
+ * slibovat něco jiného. Přeložený je jen obal stránky; v angličtině navíc
+ * upozornění, že text je česky.
+ */
+const czechOnly = computed(() => currentLocale.value !== 'cs');
+
+/** Datum účinnosti podle jazyka rozhraní – česky `15. 9. 2026`, anglicky `September 15, 2026`. */
+const effectiveDate = computed(() => {
+  const [year, month, day] = doc.value.version.split('-').map(Number);
+  return new Intl.DateTimeFormat(currentLocale.value, {
+    day: 'numeric',
+    month: currentLocale.value === 'cs' ? 'numeric' : 'long',
+    year: 'numeric',
+  }).format(new Date(year ?? 0, (month ?? 1) - 1, day ?? 1));
+});
 
 /** Druhý dokument – oba na sebe odkazují, čtenář je obvykle chce vidět spolu. */
 const other = computed(() =>
   props.document === 'privacy'
-    ? { to: '/obchodni-podminky', label: 'Obchodní podmínky' }
-    : { to: '/ochrana-osobnich-udaju', label: 'Zásady ochrany osobních údajů' },
+    ? { to: '/obchodni-podminky', label: t('portal.legal.terms') }
+    : { to: '/ochrana-osobnich-udaju', label: t('portal.legal.privacy') },
 );
 </script>
 
 <template>
   <article class="page">
     <div class="container">
-      <SectionLabel :text="doc.label" />
-      <GlitchHeading :text="doc.title" :level="1" />
-      <p class="mono effective">Účinné od {{ formatLegalDate(doc.version) }}</p>
-      <p class="lead">{{ doc.lead }}</p>
+      <p v-if="czechOnly" class="notice bevel-sm">{{ t('portal.legal.czechOnly') }}</p>
 
-      <nav class="toc bevel-sm" aria-label="Obsah dokumentu">
-        <p class="mono toc-title">// Obsah</p>
-        <ol>
+      <SectionLabel :text="doc.label" lang="cs" />
+      <GlitchHeading :text="doc.title" :level="1" lang="cs" />
+      <p class="mono effective">{{ t('portal.legal.effectiveFrom', { date: effectiveDate }) }}</p>
+      <p class="lead" lang="cs">{{ doc.lead }}</p>
+
+      <nav class="toc bevel-sm" :aria-label="t('portal.legal.tocLabel')">
+        <p class="mono toc-title">{{ t('portal.legal.tocTitle') }}</p>
+        <ol lang="cs">
           <li v-for="section in doc.sections" :key="section.id">
             <a :href="`#${section.id}`">{{ section.title }}</a>
           </li>
@@ -39,6 +62,7 @@ const other = computed(() =>
         :id="section.id"
         :key="section.id"
         class="section"
+        lang="cs"
       >
         <h2>{{ section.title }}</h2>
 
@@ -73,7 +97,7 @@ const other = computed(() =>
 
       <div class="actions">
         <RouterLink :to="other.to" class="mono link">→ {{ other.label }}</RouterLink>
-        <RouterLink to="/" class="mono link">← Zpět na web</RouterLink>
+        <RouterLink to="/" class="mono link">{{ t('portal.legal.back') }}</RouterLink>
       </div>
     </div>
   </article>
@@ -82,6 +106,15 @@ const other = computed(() =>
 <style scoped>
 .page {
   padding-block: 10rem var(--section-gap);
+}
+
+.notice {
+  max-width: 70ch;
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--cp-yellow);
+  background: var(--cp-panel);
+  color: var(--cp-text);
 }
 
 .effective {

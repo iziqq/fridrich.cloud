@@ -1,19 +1,26 @@
 <script setup lang="ts">
 import {
-  GUEST_STATUS_LABELS,
-  PLANNING_ITEM_STATUS_LABELS,
+  guestsKeys,
+  planningKeys,
   type GuestStatus,
   type PlanningItemStatus,
 } from '@fridrich/weddy-shared';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-const props = defineProps<{ status: GuestStatus | PlanningItemStatus }>();
+/*
+ * `kind` je povinný: host i položka mají stav `accepted`, ale host „Přijal" a položka
+ * „Schváleno" – podle samotné hodnoty stavu je rozlišit nejde.
+ */
+const props = defineProps<
+  { kind: 'guest'; status: GuestStatus } | { kind: 'planning'; status: PlanningItemStatus }
+>();
 
-// Stav se rozlisuje barvou i textem, ne jen barvou (doc/wiki/domains/weddy.md).
-const label = computed(
-  () =>
-    GUEST_STATUS_LABELS[props.status as GuestStatus] ??
-    PLANNING_ITEM_STATUS_LABELS[props.status as PlanningItemStatus],
+const { t } = useI18n();
+
+// Stav se rozlišuje barvou i textem, ne jen barvou (doc/wiki/domains/weddy.md).
+const label = computed(() =>
+  t(props.kind === 'guest' ? guestsKeys.status[props.status] : planningKeys.status[props.status]),
 );
 </script>
 

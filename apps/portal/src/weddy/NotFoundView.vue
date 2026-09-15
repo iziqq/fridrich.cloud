@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import { weddyPath } from '@/weddy/routes';
+
+const { t } = useI18n();
 </script>
 
 <template>
   <main id="obsah" class="container page">
-    <h1>Stránka nenalezena</h1>
-    <p>Tahle adresa v plánovači neexistuje.</p>
-    <RouterLink :to="weddyPath()" class="btn btn-primary">Zpět na přehled</RouterLink>
+    <h1>{{ t('weddy.notFound.title') }}</h1>
+    <p>{{ t('weddy.notFound.text') }}</p>
+    <RouterLink :to="weddyPath()" class="btn btn-primary">{{ t('weddy.notFound.back') }}</RouterLink>
   </main>
 </template>
 

@@ -2,13 +2,14 @@ import {
   AcceptTermsSchema,
   AccountEmailSchema,
   DisplayNameSchema,
+  identityKeys,
   MessageResponseSchema,
 } from '@fridrich/shared';
 import * as v from 'valibot';
 import { registerUser } from '../../application/identity/registerUser.js';
 import { getConfig } from '../../config.js';
 import { defineEndpoint } from '../../http/endpoint.js';
-import { clientIp } from '../../http/responses.js';
+import { clientIp, requestLocale } from '../../http/responses.js';
 import { identityDeps } from '../../infrastructure/container.js';
 
 /** `POST /api/auth/register` – registrace jménem a e-mailem, bez hesla. */
@@ -35,13 +36,14 @@ export const registerEndpoint = defineEndpoint({
       ...body,
       sourceIp: clientIp(request),
       appUrl: getConfig().appUrl,
+      locale: requestLocale(request),
     });
 
     // Odpověď je stejná, ať účet vznikl, nebo byl e-mail už obsazený –
     // jinak by šlo formulářem zjišťovat, kdo je registrovaný.
     return {
       status: 202,
-      body: { message: 'Poslali jsme vám e-mail. Otevřením odkazu účet aktivujete.' },
+      body: { message: identityKeys.registerSent },
     };
   },
 });

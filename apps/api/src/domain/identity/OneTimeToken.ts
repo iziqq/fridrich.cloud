@@ -1,3 +1,4 @@
+import { identityKeys } from '@fridrich/shared';
 import type { Clock } from '../shared/Clock.js';
 import { DomainError } from '../shared/DomainError.js';
 
@@ -80,7 +81,7 @@ export class OneTimeToken {
    */
   consume(clock: Clock): void {
     if (this.isUsed() || this.isExpired(clock)) {
-      throw DomainError.field('token', 'Odkaz už není platný. Vyžádejte si nový.');
+      throw DomainError.field('token', identityKeys.linkInvalid);
     }
 
     this.usedAtValue = clock.now().toISOString();

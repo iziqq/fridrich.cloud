@@ -1,4 +1,4 @@
-import { ContactMessageInputSchema, MessageResponseSchema } from '@fridrich/shared';
+import { contactKeys, ContactMessageInputSchema, MessageResponseSchema } from '@fridrich/shared';
 import * as v from 'valibot';
 import { submitContactMessage } from '../../application/contact/submitContactMessage.js';
 import { defineEndpoint } from '../../http/endpoint.js';
@@ -27,6 +27,6 @@ export const submitContactMessageEndpoint = defineEndpoint({
   response: SubmitContactMessageResponse,
   async handle({ body, request }) {
     await submitContactMessage(contactDeps(), { message: body, sourceIp: clientIp(request) });
-    return { status: 202, body: { message: 'Zpráva byla odeslána.' } };
+    return { status: 202, body: { message: contactKeys.sent } };
   },
 });

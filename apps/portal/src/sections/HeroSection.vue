@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import CyberButton from '@/components/CyberButton.vue';
+import { useI18n } from 'vue-i18n';
 import { hero } from '@/content/site';
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -14,15 +17,15 @@ import { hero } from '@/content/site';
         <span class="glitch is-visible" :data-text="hero.title">{{ hero.title }}</span>
       </h1>
 
-      <p class="subtitle">{{ hero.subtitle }}</p>
-      <p class="lead">{{ hero.lead }}</p>
+      <p class="subtitle">{{ t('portal.hero.subtitle') }}</p>
+      <p class="lead">{{ t('portal.hero.lead') }}</p>
 
       <div class="actions">
-        <CyberButton href="#kontakt">Mám projekt</CyberButton>
-        <CyberButton href="#vyvoj" variant="ghost">Jak pracuji</CyberButton>
+        <CyberButton href="#kontakt">{{ t('portal.hero.primaryAction') }}</CyberButton>
+        <CyberButton href="#vyvoj" variant="ghost">{{ t('portal.hero.secondaryAction') }}</CyberButton>
       </div>
 
-      <ul class="stack mono" aria-label="Technologie">
+      <ul class="stack mono" :aria-label="t('portal.hero.stackLabel')">
         <li v-for="tech in hero.stack" :key="tech">{{ tech }}</li>
       </ul>
     </div>

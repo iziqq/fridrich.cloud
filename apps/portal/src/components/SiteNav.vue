@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import { navItems, site } from '@/content/site';
 import { useActiveSection } from '@/composables/useActiveSection';
 import { useAuthStore } from '@/identity/auth.store';
 
 const route = useRoute();
+const { t } = useI18n();
 const auth = useAuthStore();
 
 const menuOpen = ref(false);
@@ -57,8 +60,8 @@ function target(hash: string): string {
 
 <template>
   <header class="site-nav" :class="{ 'is-hidden': hidden }">
-    <nav class="bar bevel-sm" aria-label="Hlavní navigace">
-      <RouterLink to="/" class="logo" aria-label="Domů">
+    <nav class="bar bevel-sm" :aria-label="t('portal.nav.label')">
+      <RouterLink to="/" class="logo" :aria-label="t('portal.nav.home')">
         <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
           <path
             d="M4 4h10v3H7v6h6v3H7v12H4V4Zm14 0h3v19h7v3h-10V4Z"
@@ -70,7 +73,7 @@ function target(hash: string): string {
       <ul class="links">
         <li v-for="item in navItems" :key="item.hash">
           <a :href="target(item.hash)" :class="{ 'is-active': isActive(item.hash) }">
-            {{ item.label }}
+            {{ t(`portal.nav.items.${item.id}`) }}
           </a>
         </li>
       </ul>
@@ -81,8 +84,11 @@ function target(hash: string): string {
         <RouterLink v-if="auth.isAuthenticated" to="/ucet" class="login account">
           {{ auth.user?.displayName }}
         </RouterLink>
-        <RouterLink v-else to="/prihlaseni" class="login">Přihlásit se</RouterLink>
+        <RouterLink v-else to="/prihlaseni" class="login">{{ t('portal.nav.login') }}</RouterLink>
       </template>
+
+      <!-- Jazyk jde přepnout na každé šířce – na mobilu sedí vedle tlačítka menu. -->
+      <LocaleSwitcher class="bar-locale" />
 
       <button
         class="toggle"
@@ -91,7 +97,7 @@ function target(hash: string): string {
         aria-controls="mobile-menu"
         @click="menuOpen = !menuOpen"
       >
-        <span class="visually-hidden">{{ menuOpen ? 'Zavřít menu' : 'Otevřít menu' }}</span>
+        <span class="visually-hidden">{{ menuOpen ? t('portal.nav.closeMenu') : t('portal.nav.openMenu') }}</span>
         <span class="bars" :class="{ 'is-open': menuOpen }" aria-hidden="true"></span>
       </button>
     </nav>
@@ -102,7 +108,7 @@ function target(hash: string): string {
         <li v-for="(item, index) in navItems" :key="item.hash" :style="{ '--i': index }">
           <a :href="target(item.hash)" @click="menuOpen = false">
             <span class="mono index">{{ String(index + 1).padStart(2, '0') }}</span>
-            {{ item.label }}
+            {{ t(`portal.nav.items.${item.id}`) }}
           </a>
         </li>
         <li
@@ -113,10 +119,13 @@ function target(hash: string): string {
           <RouterLink v-if="auth.isAuthenticated" to="/ucet">
             {{ auth.user?.displayName }}
           </RouterLink>
-          <RouterLink v-else to="/prihlaseni">Přihlásit se</RouterLink>
+          <RouterLink v-else to="/prihlaseni">{{ t('portal.nav.login') }}</RouterLink>
         </li>
       </ul>
-      <p class="mono overlay-foot">{{ site.domain }}</p>
+      <div class="overlay-foot">
+        <LocaleSwitcher />
+        <p class="mono">{{ site.domain }}</p>
+      </div>
     </div>
   </header>
 </template>
@@ -208,12 +217,20 @@ function target(hash: string): string {
   color: var(--cp-yellow);
 }
 
+/*
+ * Na mobilu jsou odkazy skryté, takže přepínač s tlačítkem menu odsune doprava
+ * sám přepínač. Od tabletu místo zabírají odkazy (`flex: 1`) a okraj vyjde nulový.
+ */
+.bar-locale {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .toggle {
   display: grid;
   place-items: center;
   min-width: 2.75rem;
   min-height: 2.75rem;
-  margin-left: auto;
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -296,6 +313,11 @@ function target(hash: string): string {
 }
 
 .overlay-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
   margin-top: var(--space-4);
   color: var(--cp-muted);
 }
@@ -311,7 +333,19 @@ function target(hash: string): string {
   }
 }
 
+/*
+ * Na tabletu se do lišty vejde pět odkazů, přihlášení i přepínač jazyka jen
+ * s menšími mezerami – s plnými by na 768 px přetekla. Plné mezery až od notebooku.
+ */
 @media (--tablet) {
+  .bar {
+    gap: var(--space-2);
+  }
+
+  .links {
+    gap: var(--space-2);
+  }
+
   .links,
   .divider,
   .login {
@@ -320,6 +354,13 @@ function target(hash: string): string {
 
   .toggle {
     display: none;
+  }
+}
+
+@media (--notebook) {
+  .bar,
+  .links {
+    gap: var(--space-3);
   }
 }
 

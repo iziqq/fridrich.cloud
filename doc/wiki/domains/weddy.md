@@ -24,7 +24,7 @@ updated: 2026-09-15
 | **Currency** | CZK |
 | **Platform** | mobile-first, works on desktop too |
 | **Status** | ✅ done; stores personal data of the couple and guests under the privacy policy – data deleted with the wedding or the account ([personalData.md](../architecture/personalData.md)) |
-| **UI language** | Czech |
+| **UI language** | Czech and English (switcher in the dashboard and wedding headers) – [i18n.md](../architecture/i18n.md) |
 
 ## Subdomains
 
@@ -74,7 +74,7 @@ navigation** with four tabs: 💑 Snoubenci (Couple) · 👥 Hosté (Guests) ·
 - Touch targets at least **44 × 44 px**.
 - Primary action as a **floating action button (FAB)** bottom right.
 - Forms as a **bottom sheet** (`BottomSheet.vue`) or full screen.
-- Status always shown by **colour and text** (`StatusBadge.vue`).
+- Status always shown by **colour and text** (`StatusBadge.vue`, `kind="guest" | "planning"` – both have `accepted` with different labels).
 - Numeric fields use `inputmode="numeric"`.
 - Product styles only under the `.weddy` class – see [frontend.md](../architecture/frontend.md#routing-and-product-look).
 

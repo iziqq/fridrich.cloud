@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
+
+const { t } = useI18n();
 </script>
 
 <template>
   <section class="page">
     <div class="container">
-      <SectionLabel text="// Chyba 404" />
-      <GlitchHeading text="Stránka nenalezena" :level="1" />
-      <p class="lead mono">&gt; požadovaná adresa neexistuje</p>
-      <RouterLink to="/" class="back mono">← Zpět na úvod</RouterLink>
+      <SectionLabel :text="t('portal.notFound.label')" />
+      <GlitchHeading :text="t('portal.notFound.title')" :level="1" />
+      <p class="lead mono">{{ t('portal.notFound.lead') }}</p>
+      <RouterLink to="/" class="back mono">{{ t('portal.notFound.back') }}</RouterLink>
     </div>
   </section>
 </template>

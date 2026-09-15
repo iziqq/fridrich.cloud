@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import { INACTIVE_ACCOUNT_RETENTION_DAYS } from '@fridrich/shared';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
 import CyberButton from '@/components/CyberButton.vue';
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { ApiError } from '@/api/http';
 import { projects } from '@/content/site';
+import { translateMessage } from '@/i18n';
 import { useAuthStore } from './auth.store';
 
+const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
 const busy = ref(false);
 
 /** Smazání je nevratné, takže má dva kroky: tlačítko a potom výslovné potvrzení. */
 const deleteStep = ref<'idle' | 'confirm' | 'deleting' | 'deleted'>('idle');
+/** Klíč hlášky – překládá se až při vykreslení. */
 const deleteError = ref('');
 /** Adresa se po smazání z store vytratí – potvrzení ji ale ještě ukazuje. */
 const deletedEmail = ref('');
@@ -37,7 +41,7 @@ async function confirmDelete(): Promise<void> {
   } catch (cause) {
     deleteStep.value = 'confirm';
     deleteError.value =
-      cause instanceof ApiError ? cause.message : 'Účet se nepodařilo smazat. Zkuste to prosím znovu.';
+      cause instanceof ApiError ? cause.message : 'identity.account.delete.failed';
   }
 }
 </script>
@@ -46,66 +50,63 @@ async function confirmDelete(): Promise<void> {
   <section class="page">
     <!-- Po smazání účtu už uživatel není přihlášený – zbývá jen potvrzení. -->
     <div v-if="deleteStep === 'deleted'" class="container">
-      <SectionLabel text="// Účet smazán" />
-      <GlitchHeading text="Účet je smazaný" :level="1" />
+      <SectionLabel :text="t('identity.account.deleted.label')" />
+      <GlitchHeading :text="t('identity.account.deleted.title')" :level="1" />
       <p class="mono ok done" role="status">
-        &gt; Účet i data v aplikacích jsme smazali. Potvrzení odešlo na {{ deletedEmail }}.
+        &gt; {{ t('identity.account.deleted.info', { email: deletedEmail }) }}
       </p>
       <div class="actions">
-        <RouterLink to="/" class="back mono">← Zpět na web</RouterLink>
+        <RouterLink to="/" class="back mono">{{ t('identity.account.backToWeb') }}</RouterLink>
       </div>
     </div>
 
     <div v-else class="container">
-      <SectionLabel text="// Můj účet" />
-      <GlitchHeading :text="auth.user?.displayName ?? 'Účet'" :level="1" />
+      <SectionLabel :text="t('identity.account.label')" />
+      <GlitchHeading :text="auth.user?.displayName ?? t('identity.account.fallbackName')" :level="1" />
 
       <dl class="details bevel-sm">
         <div>
-          <dt class="mono">E-mail</dt>
+          <dt class="mono">{{ t('identity.email') }}</dt>
           <dd>{{ auth.user?.email }}</dd>
         </div>
         <div>
-          <dt class="mono">Stav</dt>
+          <dt class="mono">{{ t('identity.account.status') }}</dt>
           <dd :class="auth.user?.emailVerified ? 'ok' : 'warn'">
-            {{ auth.user?.emailVerified ? 'E-mail ověřen' : 'E-mail zatím neověřen' }}
+            {{ auth.user?.emailVerified ? t('identity.account.emailVerified') : t('identity.account.emailNotVerified') }}
           </dd>
         </div>
       </dl>
 
       <!-- Rozcestník do produktů – jeden účet platí na všech subdoménách. -->
-      <h2 class="apps-title">Aplikace</h2>
+      <h2 class="apps-title">{{ t('identity.account.appsTitle') }}</h2>
       <ul class="apps">
         <li v-for="project in projects.items" :key="project.id" class="app bevel-sm">
           <div>
             <p class="name">{{ project.name }}</p>
-            <p class="mono tagline">{{ project.tagline }}</p>
+            <p class="mono tagline">{{ t(`portal.projects.items.${project.id}.tagline`) }}</p>
           </div>
-          <a v-if="project.url" :href="project.url" class="open">Otevřít ↗</a>
-          <span v-else class="mono soon">{{ project.statusLabel }}</span>
+          <a v-if="project.url" :href="project.url" class="open">{{ t('identity.account.openApp') }}</a>
+          <span v-else class="mono soon">{{ t(`portal.projects.status.${project.status}`) }}</span>
         </li>
       </ul>
 
       <div class="actions">
         <CyberButton variant="ghost" :disabled="busy" @click="signOut">
-          {{ busy ? 'Odhlašuji…' : 'Odhlásit se' }}
+          {{ busy ? t('identity.account.signingOut') : t('identity.account.signOut') }}
         </CyberButton>
-        <RouterLink to="/" class="back mono">← Zpět na web</RouterLink>
+        <RouterLink to="/" class="back mono">{{ t('identity.account.backToWeb') }}</RouterLink>
       </div>
 
       <!-- Právo na výmaz (čl. 17 GDPR) – uživatel si účet smaže sám, bez žádosti e-mailem. -->
       <section class="danger bevel-sm" aria-labelledby="delete-title">
-        <h2 id="delete-title" class="danger-title">Smazat účet</h2>
-        <p>
-          Smaže se účet, přihlášení a všechna plánování v IziWeddy, která patří jen vám –
-          včetně hostů a příprav. Ze sdíleného plánování budete odebráni a ostatním zůstane.
-          Smazání je okamžité a nevratné.
-        </p>
-        <p class="note">
-          Účet, do kterého se {{ INACTIVE_ACCOUNT_RETENTION_DAYS }} dní nepřihlásíte, smažeme
-          automaticky – měsíc předem vás upozorníme e-mailem. Podrobnosti v
-          <RouterLink to="/ochrana-osobnich-udaju">zásadách ochrany osobních údajů</RouterLink>.
-        </p>
+        <h2 id="delete-title" class="danger-title">{{ t('identity.account.delete.title') }}</h2>
+        <p>{{ t('identity.account.delete.description') }}</p>
+        <i18n-t keypath="identity.account.delete.retention" tag="p" class="note">
+          <template #days>{{ INACTIVE_ACCOUNT_RETENTION_DAYS }}</template>
+          <template #link>
+            <RouterLink to="/ochrana-osobnich-udaju">{{ t('identity.account.delete.retentionLink') }}</RouterLink>
+          </template>
+        </i18n-t>
 
         <button
           v-if="deleteStep === 'idle'"
@@ -113,12 +114,12 @@ async function confirmDelete(): Promise<void> {
           class="danger-button"
           @click="deleteStep = 'confirm'"
         >
-          Smazat účet
+          {{ t('identity.account.delete.button') }}
         </button>
 
-        <div v-else class="confirm" role="group" aria-label="Potvrzení smazání účtu">
-          <p class="mono warn">&gt; Opravdu smazat účet {{ auth.user?.email }} natrvalo?</p>
-          <p v-if="deleteError" class="mono error" role="alert">&gt; {{ deleteError }}</p>
+        <div v-else class="confirm" role="group" :aria-label="t('identity.account.delete.confirmGroup')">
+          <p class="mono warn">&gt; {{ t('identity.account.delete.confirm', { email: auth.user?.email }) }}</p>
+          <p v-if="deleteError" class="mono error" role="alert">&gt; {{ translateMessage(deleteError) }}</p>
           <div class="confirm-actions">
             <button
               type="button"
@@ -126,14 +127,14 @@ async function confirmDelete(): Promise<void> {
               :disabled="deleteStep === 'deleting'"
               @click="confirmDelete"
             >
-              {{ deleteStep === 'deleting' ? 'Mažu účet…' : 'Ano, smazat natrvalo' }}
+              {{ deleteStep === 'deleting' ? t('identity.account.delete.deleting') : t('identity.account.delete.confirmButton') }}
             </button>
             <CyberButton
               variant="ghost"
               :disabled="deleteStep === 'deleting'"
               @click="deleteStep = 'idle'"
             >
-              Zrušit
+              {{ t('identity.account.delete.cancel') }}
             </CyberButton>
           </div>
         </div>

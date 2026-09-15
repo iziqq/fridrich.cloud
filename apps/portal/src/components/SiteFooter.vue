@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import { projects, site } from '@/content/site';
 
+const { t } = useI18n();
 const year = new Date().getFullYear();
 </script>
 
@@ -10,11 +12,11 @@ const year = new Date().getFullYear();
     <div class="container inner">
       <div>
         <p class="brand">{{ site.name }}</p>
-        <p class="mono claim">{{ site.tagline }}</p>
+        <p class="mono claim">{{ t('portal.site.tagline') }}</p>
       </div>
 
-      <nav aria-label="Produkty">
-        <p class="mono heading">// Produkty</p>
+      <nav :aria-label="t('portal.footer.productsLabel')">
+        <p class="mono heading">{{ t('portal.footer.productsHeading') }}</p>
         <ul>
           <li v-for="project in projects.items" :key="project.id">
             <RouterLink :to="`/projekty/${project.id}`">{{ project.name }}</RouterLink>
@@ -23,18 +25,20 @@ const year = new Date().getFullYear();
       </nav>
 
       <div>
-        <p class="mono heading">// Kontakt</p>
+        <p class="mono heading">{{ t('portal.footer.contactHeading') }}</p>
         <ul>
           <li><a :href="`mailto:${site.email}`">{{ site.email }}</a></li>
-          <li><RouterLink to="/ochrana-osobnich-udaju">Ochrana osobních údajů</RouterLink></li>
-          <li><RouterLink to="/obchodni-podminky">Obchodní podmínky</RouterLink></li>
+          <li><RouterLink to="/ochrana-osobnich-udaju">{{ t('portal.footer.privacy') }}</RouterLink></li>
+          <li><RouterLink to="/obchodni-podminky">{{ t('portal.footer.terms') }}</RouterLink></li>
         </ul>
       </div>
     </div>
 
     <!-- Identifikace podnikatele musí být na webu vidět (§ 435 občanského zákoníku). -->
     <div class="container bottom">
-      <p class="mono">© {{ year }} {{ site.name }} · IČO {{ site.ico }} · {{ site.address }}</p>
+      <p class="mono">
+        {{ t('portal.footer.identification', { year, name: site.name, ico: site.ico, address: site.address }) }}
+      </p>
       <p class="mono">{{ site.domain }}</p>
     </div>
   </footer>

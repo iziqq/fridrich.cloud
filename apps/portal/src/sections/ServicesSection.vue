@@ -1,25 +1,34 @@
 <script setup lang="ts">
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
-import { services } from '@/content/site';
+import { useI18n } from 'vue-i18n';
+import { services, type StackTag } from '@/content/site';
 import { useReveal } from '@/composables/useReveal';
 
+const { t } = useI18n();
 const { el, visible } = useReveal();
+
+/** Název technologie zůstává, téma se přeloží. */
+function tagLabel(tag: StackTag): string {
+  return typeof tag === 'string' ? tag : t(`portal.services.topics.${tag.topic}`);
+}
 </script>
 
 <template>
   <section id="sluzby" class="section" aria-labelledby="sluzby-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
-      <SectionLabel :text="services.label" />
-      <GlitchHeading :text="services.title" :level="2" />
-      <span id="sluzby-title" class="visually-hidden">{{ services.title }}</span>
+      <SectionLabel :text="t('portal.services.label')" />
+      <GlitchHeading :text="t('portal.services.title')" :level="2" />
+      <span id="sluzby-title" class="visually-hidden">{{ t('portal.services.title') }}</span>
 
       <ul class="grid">
-        <li v-for="service in services.items" :key="service.id" class="card bevel-tl">
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
+        <li v-for="service in services" :key="service.id" class="card bevel-tl">
+          <h3>{{ t(`portal.services.items.${service.id}.title`) }}</h3>
+          <p>{{ t(`portal.services.items.${service.id}.description`) }}</p>
           <ul class="stack mono">
-            <li v-for="tech in service.stack" :key="tech">{{ tech }}</li>
+            <li v-for="tag in service.stack" :key="typeof tag === 'string' ? tag : tag.topic">
+              {{ tagLabel(tag) }}
+            </li>
           </ul>
         </li>
       </ul>

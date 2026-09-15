@@ -25,6 +25,7 @@ async function register(deps: IdentityTestContext, email = EMAIL): Promise<void>
     acceptTerms: true,
     sourceIp: IP,
     appUrl: APP_URL,
+    locale: 'cs',
   });
 }
 
@@ -46,7 +47,7 @@ function codeFromLastEmail(deps: IdentityTestContext): string {
 /** Registrace + vyžádání kódu; vrací kód, který uživateli přišel. */
 async function registerAndRequestCode(deps: IdentityTestContext): Promise<string> {
   await register(deps);
-  await requestLoginCode(deps, { email: EMAIL, sourceIp: IP });
+  await requestLoginCode(deps, { email: EMAIL, sourceIp: IP, locale: 'cs' });
   return codeFromLastEmail(deps);
 }
 
@@ -87,6 +88,7 @@ describe('registrace', () => {
       acceptTerms: true,
       sourceIp: '10.0.0.2',
       appUrl: APP_URL,
+      locale: 'cs',
     });
 
     assert.equal(result, undefined);
@@ -103,6 +105,7 @@ describe('registrace', () => {
       acceptTerms: true,
       sourceIp: '10.0.0.2',
       appUrl: APP_URL,
+      locale: 'cs',
     });
 
     assert.match(deps.email.last?.subject ?? '', /už existuje/);
@@ -120,6 +123,7 @@ describe('registrace', () => {
         acceptTerms: true,
         sourceIp: IP,
         appUrl: APP_URL,
+        locale: 'cs',
       }),
       isDomainError,
     );
@@ -135,6 +139,7 @@ describe('registrace', () => {
         acceptTerms: false,
         sourceIp: IP,
         appUrl: APP_URL,
+        locale: 'cs',
       }),
       (error) => isDomainError(error) && error.details[0]?.field === 'acceptTerms',
     );
@@ -166,7 +171,7 @@ describe('aktivace účtu odkazem', () => {
     const deps = identityTestDeps();
     await register(deps);
 
-    const result = await verifyEmail(deps, { token: tokenFromLastEmail(deps) });
+    const result = await verifyEmail(deps, { token: tokenFromLastEmail(deps), locale: 'cs' });
 
     assert.equal(result.user.emailVerified, true);
     assert.ok(result.sessionToken);
@@ -178,8 +183,8 @@ describe('aktivace účtu odkazem', () => {
     await register(deps);
     const token = tokenFromLastEmail(deps);
 
-    await verifyEmail(deps, { token });
-    await assert.rejects(verifyEmail(deps, { token }), isDomainError);
+    await verifyEmail(deps, { token, locale: 'cs' });
+    await assert.rejects(verifyEmail(deps, { token, locale: 'cs' }), isDomainError);
   });
 
   it('token po 24 hodinách vyprší', async () => {
@@ -188,7 +193,7 @@ describe('aktivace účtu odkazem', () => {
     const token = tokenFromLastEmail(deps);
 
     deps.clock.advance(25 * 60 * 60 * 1000);
-    await assert.rejects(verifyEmail(deps, { token }), isDomainError);
+    await assert.rejects(verifyEmail(deps, { token, locale: 'cs' }), isDomainError);
   });
 });
 
@@ -197,7 +202,7 @@ describe('přihlášení kódem – vyžádání', () => {
     const deps = identityTestDeps();
     await register(deps);
 
-    await requestLoginCode(deps, { email: EMAIL, sourceIp: IP });
+    await requestLoginCode(deps, { email: EMAIL, sourceIp: IP, locale: 'cs' });
 
     assert.match(deps.email.last?.subject ?? '', /přihlašovací kód/);
     assert.match(codeFromLastEmail(deps), /^\d{6}$/);
@@ -207,7 +212,7 @@ describe('přihlášení kódem – vyžádání', () => {
   it('neznámou adresu nijak neodliší', async () => {
     const deps = identityTestDeps();
 
-    await requestLoginCode(deps, { email: 'nikdo@example.com', sourceIp: IP });
+    await requestLoginCode(deps, { email: 'nikdo@example.com', sourceIp: IP, locale: 'cs' });
 
     assert.equal(deps.email.sent.length, 0);
     assert.equal(deps.loginCodes.items.size, 0);
@@ -217,11 +222,11 @@ describe('přihlášení kódem – vyžádání', () => {
     const deps = identityTestDeps();
     const firstCode = await registerAndRequestCode(deps);
 
-    await requestLoginCode(deps, { email: EMAIL, sourceIp: IP });
+    await requestLoginCode(deps, { email: EMAIL, sourceIp: IP, locale: 'cs' });
     assert.equal(deps.loginCodes.items.size, 1);
 
     await assert.rejects(
-      verifyLoginCode(deps, { email: EMAIL, code: firstCode, sourceIp: IP }),
+      verifyLoginCode(deps, { email: EMAIL, code: firstCode, sourceIp: IP, locale: 'cs' }),
       isDomainError,
     );
   });
@@ -239,7 +244,7 @@ describe('přihlášení kódem – vyžádání', () => {
     deps.rateLimiter.blockEverything = true;
 
     await assert.rejects(
-      requestLoginCode(deps, { email: EMAIL, sourceIp: IP }),
+      requestLoginCode(deps, { email: EMAIL, sourceIp: IP, locale: 'cs' }),
       (error) => isDomainError(error) && error.kind === 'tooManyRequests',
     );
   });
@@ -250,7 +255,7 @@ describe('přihlášení kódem – ověření', () => {
     const deps = identityTestDeps();
     const code = await registerAndRequestCode(deps);
 
-    const result = await verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP });
+    const result = await verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP, locale: 'cs' });
 
     assert.equal(result.user.email, EMAIL);
     assert.ok(result.sessionToken);
@@ -262,7 +267,7 @@ describe('přihlášení kódem – ověření', () => {
     const code = await registerAndRequestCode(deps);
 
     const spaced = `${code.slice(0, 3)} ${code.slice(3)}`;
-    const result = await verifyLoginCode(deps, { email: EMAIL, code: spaced, sourceIp: IP });
+    const result = await verifyLoginCode(deps, { email: EMAIL, code: spaced, sourceIp: IP, locale: 'cs' });
 
     assert.ok(result.sessionToken);
   });
@@ -271,7 +276,7 @@ describe('přihlášení kódem – ověření', () => {
     const deps = identityTestDeps();
     const code = await registerAndRequestCode(deps);
 
-    const result = await verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP });
+    const result = await verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP, locale: 'cs' });
 
     assert.equal(result.user.emailVerified, true);
   });
@@ -280,10 +285,10 @@ describe('přihlášení kódem – ověření', () => {
     const deps = identityTestDeps();
     const code = await registerAndRequestCode(deps);
 
-    await verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP });
+    await verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP, locale: 'cs' });
 
     await assert.rejects(
-      verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP }),
+      verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP, locale: 'cs' }),
       isDomainError,
     );
   });
@@ -296,12 +301,14 @@ describe('přihlášení kódem – ověření', () => {
       email: EMAIL,
       code: '999999',
       sourceIp: IP,
+      locale: 'cs',
     }).catch((error: unknown) => error);
 
     const unknownUser = await verifyLoginCode(deps, {
       email: 'nikdo@example.com',
       code: '999999',
       sourceIp: IP,
+      locale: 'cs',
     }).catch((error: unknown) => error);
 
     assert.ok(isDomainError(wrongCode) && isDomainError(unknownUser));
@@ -314,13 +321,13 @@ describe('přihlášení kódem – ověření', () => {
 
     for (let attempt = 0; attempt < LOGIN_CODE_MAX_ATTEMPTS; attempt += 1) {
       await assert.rejects(
-        verifyLoginCode(deps, { email: EMAIL, code: '000000', sourceIp: IP }),
+        verifyLoginCode(deps, { email: EMAIL, code: '000000', sourceIp: IP, locale: 'cs' }),
         isDomainError,
       );
     }
 
     await assert.rejects(
-      verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP }),
+      verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP, locale: 'cs' }),
       isDomainError,
     );
     assert.equal(deps.sessions.items.size, 0);
@@ -333,7 +340,7 @@ describe('přihlášení kódem – ověření', () => {
     deps.clock.advance(LOGIN_CODE_LIFETIME_MS + 1000);
 
     await assert.rejects(
-      verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP }),
+      verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP, locale: 'cs' }),
       isDomainError,
     );
   });
@@ -342,10 +349,10 @@ describe('přihlášení kódem – ověření', () => {
     const deps = identityTestDeps();
     await register(deps);
     const token = tokenFromLastEmail(deps);
-    await requestLoginCode(deps, { email: EMAIL, sourceIp: IP });
+    await requestLoginCode(deps, { email: EMAIL, sourceIp: IP, locale: 'cs' });
 
     await assert.rejects(
-      verifyLoginCode(deps, { email: EMAIL, code: token, sourceIp: IP }),
+      verifyLoginCode(deps, { email: EMAIL, code: token, sourceIp: IP, locale: 'cs' }),
       isDomainError,
     );
   });
@@ -356,7 +363,7 @@ describe('přihlášení kódem – ověření', () => {
     deps.rateLimiter.blockEverything = true;
 
     await assert.rejects(
-      verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP }),
+      verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP, locale: 'cs' }),
       (error) => isDomainError(error) && error.kind === 'tooManyRequests',
     );
   });
@@ -364,9 +371,9 @@ describe('přihlášení kódem – ověření', () => {
 
 describe('session', () => {
   async function login(deps: IdentityTestContext, sourceIp = IP): Promise<string> {
-    await requestLoginCode(deps, { email: EMAIL, sourceIp });
+    await requestLoginCode(deps, { email: EMAIL, sourceIp, locale: 'cs' });
     const code = codeFromLastEmail(deps);
-    const result = await verifyLoginCode(deps, { email: EMAIL, code, sourceIp });
+    const result = await verifyLoginCode(deps, { email: EMAIL, code, sourceIp, locale: 'cs' });
     return result.sessionToken;
   }
 

@@ -1,8 +1,10 @@
 import {
+  messageKeys,
   optionalEmailText,
   optionalIsoDate,
   optionalText,
   requiredText,
+  type Catalog,
 } from '@fridrich/shared';
 import * as v from 'valibot';
 
@@ -20,6 +22,46 @@ const PHONE_MAX = 40;
 const NOTE_MAX = 2000;
 const MIN_BIRTH_YEAR = 1900;
 
+const cs = {
+  firstNameRequired: 'Vyplňte jméno',
+  firstNameTooLong: `Jméno může mít nejvýše ${NAME_MAX} znaků`,
+  lastNameRequired: 'Vyplňte příjmení',
+  lastNameTooLong: `Příjmení může mít nejvýše ${NAME_MAX} znaků`,
+  birthYearInvalid: `Rok narození musí být mezi ${MIN_BIRTH_YEAR} a letošním rokem`,
+  emailInvalid: 'Zadejte platný e-mail',
+  phoneTooLong: 'Telefon je příliš dlouhý',
+  noteTooLong: 'Poznámka je příliš dlouhá',
+  personRequired: 'Vyplňte údaje snoubence',
+  titleRequired: 'Vyplňte název svatby',
+  titleTooLong: `Název může mít nejvýše ${TITLE_MAX} znaků`,
+  dateInvalid: 'Datum musí být ve formátu RRRR-MM-DD',
+  notFound: 'Plánování neexistuje',
+  forbidden: 'K tomuto plánování nemáte přístup',
+  lastOwner: 'Posledního vlastníka nejde odebrat – plánování je potřeba smazat',
+};
+
+const en: Catalog<typeof cs> = {
+  firstNameRequired: 'Please enter the first name',
+  firstNameTooLong: `The first name can have at most ${NAME_MAX} characters`,
+  lastNameRequired: 'Please enter the last name',
+  lastNameTooLong: `The last name can have at most ${NAME_MAX} characters`,
+  birthYearInvalid: `The year of birth must be between ${MIN_BIRTH_YEAR} and this year`,
+  emailInvalid: 'Please enter a valid e-mail',
+  phoneTooLong: 'The phone number is too long',
+  noteTooLong: 'The note is too long',
+  personRequired: 'Please fill in the details of the partner',
+  titleRequired: 'Please enter the name of the wedding',
+  titleTooLong: `The name can have at most ${TITLE_MAX} characters`,
+  dateInvalid: 'The date must be in the YYYY-MM-DD format',
+  notFound: 'The wedding plan does not exist',
+  forbidden: 'You do not have access to this wedding plan',
+  lastOwner: 'The last owner cannot be removed – the wedding plan has to be deleted',
+};
+
+/** Hlášky subdomény `wedding` – jmenný prostor `weddyShared.wedding`. */
+export const weddingMessages = { cs, en };
+export const weddingKeys = messageKeys(cs, 'weddyShared.wedding');
+
 /* --- Snoubenec --- */
 
 export const PersonSchema = v.object({
@@ -32,32 +74,24 @@ export const PersonSchema = v.object({
 });
 export type Person = v.InferOutput<typeof PersonSchema>;
 
-function birthYearMessage(): string {
-  return `Rok narození musí být mezi ${MIN_BIRTH_YEAR} a ${new Date().getUTCFullYear()}`;
-}
-
 /** Údaje snoubence z formuláře. Rok narození nesmí být v budoucnu. */
 export const PersonInputSchema = v.object(
   {
-    firstName: requiredText('Vyplňte jméno', NAME_MAX, `Jméno může mít nejvýše ${NAME_MAX} znaků`),
-    lastName: requiredText(
-      'Vyplňte příjmení',
-      NAME_MAX,
-      `Příjmení může mít nejvýše ${NAME_MAX} znaků`,
-    ),
+    firstName: requiredText(weddingKeys.firstNameRequired, NAME_MAX, weddingKeys.firstNameTooLong),
+    lastName: requiredText(weddingKeys.lastNameRequired, NAME_MAX, weddingKeys.lastNameTooLong),
     birthYear: v.optional(
       v.pipe(
-        v.number(birthYearMessage),
-        v.integer(birthYearMessage),
-        v.minValue(MIN_BIRTH_YEAR, birthYearMessage),
-        v.check((year) => year <= new Date().getUTCFullYear(), birthYearMessage),
+        v.number(weddingKeys.birthYearInvalid),
+        v.integer(weddingKeys.birthYearInvalid),
+        v.minValue(MIN_BIRTH_YEAR, weddingKeys.birthYearInvalid),
+        v.check((year) => year <= new Date().getUTCFullYear(), weddingKeys.birthYearInvalid),
       ),
     ),
-    email: optionalEmailText('Zadejte platný e-mail'),
-    phone: optionalText(PHONE_MAX, 'Telefon je příliš dlouhý'),
-    note: optionalText(NOTE_MAX, 'Poznámka je příliš dlouhá'),
+    email: optionalEmailText(weddingKeys.emailInvalid),
+    phone: optionalText(PHONE_MAX, weddingKeys.phoneTooLong),
+    note: optionalText(NOTE_MAX, weddingKeys.noteTooLong),
   },
-  'Vyplňte údaje snoubence',
+  weddingKeys.personRequired,
 );
 export type PersonInput = v.InferOutput<typeof PersonInputSchema>;
 
@@ -77,12 +111,8 @@ export type Wedding = v.InferOutput<typeof WeddingSchema>;
 
 /** Vstup pro založení i úpravu svatby – název, datum a oba snoubenci. */
 export const WeddingInputSchema = v.object({
-  title: requiredText(
-    'Vyplňte název svatby',
-    TITLE_MAX,
-    `Název může mít nejvýše ${TITLE_MAX} znaků`,
-  ),
-  weddingDate: optionalIsoDate('Datum musí být ve formátu RRRR-MM-DD'),
+  title: requiredText(weddingKeys.titleRequired, TITLE_MAX, weddingKeys.titleTooLong),
+  weddingDate: optionalIsoDate(weddingKeys.dateInvalid),
   groom: PersonInputSchema,
   bride: PersonInputSchema,
 });

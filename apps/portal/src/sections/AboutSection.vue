@@ -1,38 +1,40 @@
 <script setup lang="ts">
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
+import { useI18n } from 'vue-i18n';
 import { about } from '@/content/site';
 import { useReveal } from '@/composables/useReveal';
 
+const { t, tm, rt } = useI18n();
 const { el, visible } = useReveal();
 </script>
 
 <template>
   <section id="o-mne" class="section" aria-labelledby="o-mne-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
-      <SectionLabel :text="about.label" />
-      <GlitchHeading :text="about.title" :level="2" />
-      <span id="o-mne-title" class="visually-hidden">{{ about.title }}</span>
+      <SectionLabel :text="t('portal.about.label')" />
+      <GlitchHeading :text="t('portal.about.title')" :level="2" />
+      <span id="o-mne-title" class="visually-hidden">{{ t('portal.about.title') }}</span>
 
       <div class="body">
         <div class="text">
-          <p v-for="(paragraph, index) in about.paragraphs" :key="index">{{ paragraph }}</p>
+          <p v-for="(paragraph, index) in tm('portal.about.paragraphs')" :key="index">{{ rt(paragraph) }}</p>
         </div>
 
         <ul class="stats">
-          <li v-for="stat in about.stats" :key="stat.label" class="stat bevel-sm">
+          <li v-for="stat in about.stats" :key="stat.id" class="stat bevel-sm">
             <span class="value text-glow-yellow">
               {{ stat.value }}<span v-if="stat.suffix" class="suffix">{{ stat.suffix }}</span>
             </span>
-            <span class="mono label">{{ stat.label }}</span>
+            <span class="mono label">{{ t(`portal.about.stats.${stat.id}`) }}</span>
           </li>
         </ul>
       </div>
 
       <div class="sectors">
-        <p class="mono sectors-label">{{ about.sectorsLabel }}</p>
+        <p class="mono sectors-label">{{ t('portal.about.sectorsLabel') }}</p>
         <ul class="sector-list">
-          <li v-for="sector in about.sectors" :key="sector">{{ sector }}</li>
+          <li v-for="sector in about.sectors" :key="sector">{{ t(`portal.about.sectors.${sector}`) }}</li>
         </ul>
       </div>
     </div>

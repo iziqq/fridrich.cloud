@@ -1,4 +1,4 @@
-import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
+import { identityKeys, LOGIN_CODE_LENGTH } from '@fridrich/shared';
 import type { Clock } from '../shared/Clock.js';
 import { DomainError } from '../shared/DomainError.js';
 import type { TokenGenerator } from './ports.js';
@@ -115,7 +115,7 @@ export class LoginCode {
   }
 
   private static rejected(): DomainError {
-    return DomainError.field('code', 'Kód není platný. Vyžádejte si nový.');
+    return DomainError.field('code', identityKeys.codeInvalid);
   }
 
   toState(): LoginCodeState {

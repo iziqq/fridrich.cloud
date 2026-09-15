@@ -1,4 +1,4 @@
-import { optionalText, requiredText } from '@fridrich/shared';
+import { messageKeys, optionalText, requiredText, type Catalog } from '@fridrich/shared';
 import * as v from 'valibot';
 
 /*
@@ -14,6 +14,54 @@ const NOTE_MAX = 2000;
 const FAMILY_NAME_MAX = 100;
 const FAMILY_MEMBERS_MAX = 30;
 
+/*
+ * Popisky výčtů jsou v katalogu pod stejnými klíči jako hodnoty výčtu –
+ * frontend je čte `t(guestsKeys.status[guest.status])`.
+ */
+const cs = {
+  side: { groom: 'Ženich', bride: 'Nevěsta' },
+  ageGroup: { adult: 'Dospělý', child: 'Dítě' },
+  status: { draft: 'Návrh', requested: 'Pozván', accepted: 'Přijal', rejected: 'Odmítl' },
+  sideRequired: 'Vyberte, na čí straně host je',
+  familySideRequired: 'Vyberte, na čí straně rodina je',
+  ageGroupInvalid: 'Neplatná věková skupina',
+  statusInvalid: 'Neplatný stav hosta',
+  firstNameRequired: 'Vyplňte jméno',
+  nameTooLong: `Pole může mít nejvýše ${NAME_MAX} znaků`,
+  noteTooLong: 'Poznámka je příliš dlouhá',
+  memberIdInvalid: 'Neplatný identifikátor člena',
+  familyNameRequired: 'Vyplňte název rodiny',
+  familyNameTooLong: `Název může mít nejvýše ${FAMILY_NAME_MAX} znaků`,
+  membersRequired: 'Přidejte alespoň jednoho člena rodiny',
+  membersTooMany: `Rodina může mít nejvýše ${FAMILY_MEMBERS_MAX} členů`,
+  guestNotFound: 'Host neexistuje',
+  familyNotFound: 'Rodina neexistuje',
+};
+
+const en: Catalog<typeof cs> = {
+  side: { groom: 'Groom', bride: 'Bride' },
+  ageGroup: { adult: 'Adult', child: 'Child' },
+  status: { draft: 'Draft', requested: 'Invited', accepted: 'Accepted', rejected: 'Declined' },
+  sideRequired: 'Choose whose side the guest is on',
+  familySideRequired: 'Choose whose side the family is on',
+  ageGroupInvalid: 'Invalid age group',
+  statusInvalid: 'Invalid guest status',
+  firstNameRequired: 'Please enter the first name',
+  nameTooLong: `The field can have at most ${NAME_MAX} characters`,
+  noteTooLong: 'The note is too long',
+  memberIdInvalid: 'Invalid member identifier',
+  familyNameRequired: 'Please enter the family name',
+  familyNameTooLong: `The name can have at most ${FAMILY_NAME_MAX} characters`,
+  membersRequired: 'Add at least one family member',
+  membersTooMany: `A family can have at most ${FAMILY_MEMBERS_MAX} members`,
+  guestNotFound: 'The guest does not exist',
+  familyNotFound: 'The family does not exist',
+};
+
+/** Hlášky a popisky subdomény `guests` – jmenný prostor `weddyShared.guests`. */
+export const guestsMessages = { cs, en };
+export const guestsKeys = messageKeys(cs, 'weddyShared.guests');
+
 /* --- Výčty --- */
 
 export const GUEST_SIDES = ['groom', 'bride'] as const;
@@ -21,33 +69,16 @@ export const AGE_GROUPS = ['adult', 'child'] as const;
 export const GUEST_STATUSES = ['draft', 'requested', 'accepted', 'rejected'] as const;
 
 /** Strana hosta – ke komu host patří. */
-export const GuestSideSchema = v.picklist(GUEST_SIDES, 'Vyberte, na čí straně host je');
+export const GuestSideSchema = v.picklist(GUEST_SIDES, guestsKeys.sideRequired);
 export type GuestSide = v.InferOutput<typeof GuestSideSchema>;
 
 /** Věková skupina hosta. */
-export const AgeGroupSchema = v.picklist(AGE_GROUPS, 'Neplatná věková skupina');
+export const AgeGroupSchema = v.picklist(AGE_GROUPS, guestsKeys.ageGroupInvalid);
 export type AgeGroup = v.InferOutput<typeof AgeGroupSchema>;
 
 /** Stav pozvánky. Přechody se nevynucují – uživatel musí jít opravit překlep. */
-export const GuestStatusSchema = v.picklist(GUEST_STATUSES, 'Neplatný stav hosta');
+export const GuestStatusSchema = v.picklist(GUEST_STATUSES, guestsKeys.statusInvalid);
 export type GuestStatus = v.InferOutput<typeof GuestStatusSchema>;
-
-export const GUEST_SIDE_LABELS: Record<GuestSide, string> = {
-  groom: 'Ženich',
-  bride: 'Nevěsta',
-};
-
-export const AGE_GROUP_LABELS: Record<AgeGroup, string> = {
-  adult: 'Dospělý',
-  child: 'Dítě',
-};
-
-export const GUEST_STATUS_LABELS: Record<GuestStatus, string> = {
-  draft: 'Návrh',
-  requested: 'Pozván',
-  accepted: 'Přijal',
-  rejected: 'Odmítl',
-};
 
 /* --- Host --- */
 
@@ -82,12 +113,12 @@ export type Guest = v.InferOutput<typeof GuestSchema>;
  * hodnotu ale schéma nespolkne – to by schovalo chybu na frontendu.
  */
 export const GuestInputSchema = v.object({
-  firstName: requiredText('Vyplňte jméno', NAME_MAX, `Pole může mít nejvýše ${NAME_MAX} znaků`),
-  lastName: optionalText(NAME_MAX, `Pole může mít nejvýše ${NAME_MAX} znaků`),
+  firstName: requiredText(guestsKeys.firstNameRequired, NAME_MAX, guestsKeys.nameTooLong),
+  lastName: optionalText(NAME_MAX, guestsKeys.nameTooLong),
   side: GuestSideSchema,
   ageGroup: v.optional(AgeGroupSchema),
   status: v.optional(GuestStatusSchema),
-  note: optionalText(NOTE_MAX, 'Poznámka je příliš dlouhá'),
+  note: optionalText(NOTE_MAX, guestsKeys.noteTooLong),
 });
 export type GuestInput = v.InferOutput<typeof GuestInputSchema>;
 
@@ -95,12 +126,12 @@ export type GuestInput = v.InferOutput<typeof GuestInputSchema>;
 
 /** Člen rodiny. Bez `id` vznikne nový host, s `id` se upraví stávající. */
 export const FamilyMemberInputSchema = v.object({
-  id: optionalText(NAME_MAX, 'Neplatný identifikátor člena'),
-  firstName: requiredText('Vyplňte jméno', NAME_MAX, `Pole může mít nejvýše ${NAME_MAX} znaků`),
-  lastName: optionalText(NAME_MAX, `Pole může mít nejvýše ${NAME_MAX} znaků`),
+  id: optionalText(NAME_MAX, guestsKeys.memberIdInvalid),
+  firstName: requiredText(guestsKeys.firstNameRequired, NAME_MAX, guestsKeys.nameTooLong),
+  lastName: optionalText(NAME_MAX, guestsKeys.nameTooLong),
   ageGroup: v.optional(AgeGroupSchema),
   status: v.optional(GuestStatusSchema),
-  note: optionalText(NOTE_MAX, 'Poznámka je příliš dlouhá'),
+  note: optionalText(NOTE_MAX, guestsKeys.noteTooLong),
 });
 export type FamilyMemberInput = v.InferOutput<typeof FamilyMemberInputSchema>;
 
@@ -111,16 +142,12 @@ export type FamilyMemberInput = v.InferOutput<typeof FamilyMemberInputSchema>;
  * Seznam členů je při úpravě úplný – kdo v něm chybí, přestává být hostem.
  */
 export const FamilyInputSchema = v.object({
-  name: requiredText(
-    'Vyplňte název rodiny',
-    FAMILY_NAME_MAX,
-    `Název může mít nejvýše ${FAMILY_NAME_MAX} znaků`,
-  ),
-  side: v.picklist(GUEST_SIDES, 'Vyberte, na čí straně rodina je'),
+  name: requiredText(guestsKeys.familyNameRequired, FAMILY_NAME_MAX, guestsKeys.familyNameTooLong),
+  side: v.picklist(GUEST_SIDES, guestsKeys.familySideRequired),
   members: v.pipe(
-    v.array(FamilyMemberInputSchema, 'Přidejte alespoň jednoho člena rodiny'),
-    v.minLength(1, 'Přidejte alespoň jednoho člena rodiny'),
-    v.maxLength(FAMILY_MEMBERS_MAX, `Rodina může mít nejvýše ${FAMILY_MEMBERS_MAX} členů`),
+    v.array(FamilyMemberInputSchema, guestsKeys.membersRequired),
+    v.minLength(1, guestsKeys.membersRequired),
+    v.maxLength(FAMILY_MEMBERS_MAX, guestsKeys.membersTooMany),
   ),
 });
 export type FamilyInput = v.InferOutput<typeof FamilyInputSchema>;

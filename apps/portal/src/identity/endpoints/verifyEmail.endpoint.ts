@@ -1,11 +1,11 @@
-import { UserSchema } from '@fridrich/shared';
+import { identityKeys, UserSchema } from '@fridrich/shared';
 import * as v from 'valibot';
 import { callEndpoint } from '@/api/http';
 
 /** `POST /api/auth/verify-email` – aktivace účtu z odkazu v e-mailu; rovnou přihlásí. */
 
 export const VerifyEmailRequest = v.object({
-  token: v.pipe(v.string('Chybí ověřovací token'), v.nonEmpty('Chybí ověřovací token')),
+  token: v.pipe(v.string(identityKeys.tokenMissing), v.nonEmpty(identityKeys.tokenMissing)),
 });
 export type VerifyEmailRequest = v.InferInput<typeof VerifyEmailRequest>;
 

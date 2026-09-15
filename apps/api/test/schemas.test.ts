@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { AcceptTermsSchema, ContactMessageInputSchema, issuesToDetails } from '@fridrich/shared';
+import {
+  AcceptTermsSchema,
+  commonKeys,
+  ContactMessageInputSchema,
+  identityKeys,
+  issuesToDetails,
+} from '@fridrich/shared';
 import {
   FamilyInputSchema,
   GuestInputSchema,
@@ -135,11 +141,11 @@ describe('PlanningItemInputSchema', () => {
 });
 
 describe('issuesToDetails', () => {
-  it('úplně chybějící klíč hlásí česky a u správného pole', () => {
+  it('úplně chybějící klíč hlásí obecným klíčem hlášky a u správného pole', () => {
     const result = v.safeParse(ContactMessageInputSchema, { email: 'jan@example.com' });
     const details = issuesToDetails(result.issues ?? []);
 
-    assert.deepEqual(details[0], { field: 'name', message: 'Vyplňte toto pole' });
+    assert.deepEqual(details[0], { field: 'name', message: commonKeys.fieldRequired });
   });
 });
 
@@ -155,11 +161,11 @@ describe('AcceptTermsSchema', () => {
     assert.equal(v.parse(AcceptTermsSchema, true), true);
   });
 
-  it('nezaškrtnutý souhlas odmítne s hláškou pro formulář', () => {
+  it('nezaškrtnutý souhlas odmítne s klíčem hlášky pro formulář', () => {
     const result = v.safeParse(v.object({ acceptTerms: AcceptTermsSchema }), { acceptTerms: false });
     assert.equal(result.success, false);
     assert.deepEqual(issuesToDetails(result.issues ?? []), [
-      { field: 'acceptTerms', message: 'Pro založení účtu je potřeba souhlasit s obchodními podmínkami' },
+      { field: 'acceptTerms', message: identityKeys.acceptTermsRequired },
     ]);
   });
 });

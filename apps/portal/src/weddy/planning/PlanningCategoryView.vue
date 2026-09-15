@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import type { PlanningCategory, PlanningItem } from '@fridrich/weddy-shared';
-import {
-  PLANNING_CATEGORY_LABELS,
-  PLANNING_ITEM_STATUS_LABELS,
-  PlanningCategorySchema,
-  formatCurrency,
-} from '@fridrich/weddy-shared';
+import { PlanningCategorySchema, formatCurrency, planningKeys } from '@fridrich/weddy-shared';
 import * as v from 'valibot';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
 import { ApiError } from '@/api/http';
+import { currentLocale, translateMessage } from '@/i18n';
 import BottomSheet from '@/weddy/components/BottomSheet.vue';
 import ChoiceField from '@/weddy/components/ChoiceField.vue';
 import EmptyState from '@/weddy/components/EmptyState.vue';
@@ -24,6 +21,12 @@ import { usePlanningStore } from './planning.store';
 
 const route = useRoute();
 const store = usePlanningStore();
+const { t } = useI18n();
+
+/** Částka se zapisuje podle jazyka rozhraní, měna zůstává koruna. */
+function money(amount: number): string {
+  return formatCurrency(amount, currentLocale.value);
+}
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 
@@ -48,6 +51,15 @@ const sheetOpen = ref(false);
 const editing = ref<PlanningItem | null>(null);
 const formErrors = ref<Record<string, string>>({});
 const saving = ref(false);
+
+/*
+ * Chyby formuláře se drží jako klíče katalogu a překládají se až při
+ * vykreslení – po přepnutí jazyka se tak přeloží i chyba, která už svítí.
+ */
+function errorText(field: string): string | undefined {
+  const key = formErrors.value[field];
+  return key ? translateMessage(key) : undefined;
+}
 
 const form = reactive({ name: '', url: '', price: '', status: 'draft' });
 
@@ -95,14 +107,14 @@ async function submit(): Promise<void> {
     formErrors.value =
       cause instanceof ApiError && cause.details.length > 0
         ? cause.fieldErrors
-        : { form: cause instanceof ApiError ? cause.message : 'Uložení se nepodařilo.' };
+        : { form: cause instanceof ApiError ? cause.message : 'weddy.planning.category.form.saveFailed' };
   } finally {
     saving.value = false;
   }
 }
 
 async function removeItem(item: PlanningItem): Promise<void> {
-  if (!window.confirm(`Opravdu smazat položku „${item.name}"?`)) return;
+  if (!window.confirm(t('weddy.planning.category.confirmDelete', { name: item.name }))) return;
 
   await store.remove(weddingId.value, item.id);
   if (editing.value?.id === item.id) sheetOpen.value = false;
@@ -117,39 +129,42 @@ async function toggleStatus(item: PlanningItem): Promise<void> {
   );
 }
 
-const statusOptions = [
-  { value: 'draft', label: PLANNING_ITEM_STATUS_LABELS.draft },
-  { value: 'accepted', label: PLANNING_ITEM_STATUS_LABELS.accepted },
-];
+// Volby jsou `computed`, aby se popisky přeložily i po přepnutí jazyka.
+const statusOptions = computed(() => [
+  { value: 'draft', label: t(planningKeys.status.draft) },
+  { value: 'accepted', label: t(planningKeys.status.accepted) },
+]);
 </script>
 
 <template>
   <div>
     <RouterLink :to="weddyPath(`/weddings/${weddingId}/planning`)" class="back">
-      ← Všechny sekce
+      {{ t('weddy.planning.category.back') }}
     </RouterLink>
 
-    <ErrorBlock v-if="!category" message="Tahle sekce neexistuje." />
+    <ErrorBlock v-if="!category" :message="t('weddy.planning.category.notFound')" />
 
     <template v-else>
-      <h2>{{ PLANNING_CATEGORY_LABELS[category] }}</h2>
+      <h2>{{ t(planningKeys.category[category]) }}</h2>
 
       <p v-if="totals && totals.total > 0" class="summary">
-        Celkem {{ formatCurrency(totals.total) }}
-        <span v-if="totals.accepted > 0"> · schváleno {{ formatCurrency(totals.accepted) }}</span>
+        {{ t('weddy.planning.category.summaryTotal', { amount: money(totals.total) }) }}
+        <span v-if="totals.accepted > 0">
+          · {{ t('weddy.planning.category.summaryAccepted', { amount: money(totals.accepted) }) }}
+        </span>
         <span v-if="totals.itemsWithoutPrice > 0" class="warn">
-          · {{ totals.itemsWithoutPrice }} bez ceny
+          · {{ t('weddy.planning.category.summaryWithoutPrice', { n: totals.itemsWithoutPrice }) }}
         </span>
       </p>
 
       <LoadingBlock v-if="store.loading && store.items.length === 0" />
-      <ErrorBlock v-else-if="store.error" :message="store.error" />
+      <ErrorBlock v-else-if="store.error" :message="translateMessage(store.error)" />
 
       <EmptyState
         v-else-if="items.length === 0"
         icon="📝"
-        title="Zatím žádné varianty"
-        description="Přidejte možnosti, o kterých uvažujete. Cenu můžete doplnit později."
+        :title="t('weddy.planning.category.emptyTitle')"
+        :description="t('weddy.planning.category.emptyDescription')"
       />
 
       <ul v-else class="items">
@@ -158,12 +173,12 @@ const statusOptions = [
             <p class="name">{{ item.name }}</p>
             <p class="meta">
               <a v-if="item.url" :href="item.url" target="_blank" rel="noopener noreferrer">
-                Odkaz na dodavatele ↗
+                {{ t('weddy.planning.category.vendorLink') }}
               </a>
-              <span v-else class="no-price">Bez odkazu</span>
+              <span v-else class="no-price">{{ t('weddy.planning.category.noLink') }}</span>
               ·
-              <span v-if="item.price !== undefined">{{ formatCurrency(item.price) }}</span>
-              <span v-else class="no-price">cena zatím není</span>
+              <span v-if="item.price !== undefined">{{ money(item.price) }}</span>
+              <span v-else class="no-price">{{ t('weddy.planning.category.noPrice') }}</span>
             </p>
           </div>
 
@@ -171,53 +186,72 @@ const statusOptions = [
             <button
               type="button"
               class="status-button"
-              :title="item.status === 'accepted' ? 'Vrátit mezi návrhy' : 'Schválit'"
+              :title="
+                item.status === 'accepted'
+                  ? t('weddy.planning.category.backToDraft')
+                  : t('weddy.planning.category.approve')
+              "
               @click="toggleStatus(item)"
             >
-              <StatusBadge :status="item.status" />
+              <StatusBadge kind="planning" :status="item.status" />
             </button>
 
             <button type="button" class="icon-button" @click="openEdit(item)">
-              <span class="visually-hidden">Upravit položku</span>
+              <span class="visually-hidden">{{ t('weddy.planning.category.editItem') }}</span>
               <span aria-hidden="true">✏️</span>
             </button>
 
             <button type="button" class="icon-button" @click="removeItem(item)">
-              <span class="visually-hidden">Smazat položku</span>
+              <span class="visually-hidden">{{ t('weddy.planning.category.deleteItem') }}</span>
               <span aria-hidden="true">🗑️</span>
             </button>
           </div>
         </li>
       </ul>
 
-      <FabButton label="Položka" @click="openCreate" />
+      <FabButton :label="t('weddy.planning.category.addItem')" @click="openCreate" />
 
       <BottomSheet
         v-model:open="sheetOpen"
-        :title="editing ? 'Upravit položku' : 'Nová položka'"
+        :title="
+          editing ? t('weddy.planning.category.editItem') : t('weddy.planning.category.newItem')
+        "
       >
         <form class="sheet-form" novalidate @submit.prevent="submit">
-          <FormField v-model="form.name" label="Název" required :error="formErrors['name']" />
+          <FormField
+            v-model="form.name"
+            :label="t('weddy.planning.category.form.name')"
+            required
+            :error="errorText('name')"
+          />
           <FormField
             v-model="form.url"
-            label="Odkaz na dodavatele"
+            :label="t('weddy.planning.category.form.url')"
             type="url"
-            placeholder="https://…"
-            :error="formErrors['url']"
+            :placeholder="t('weddy.planning.category.form.urlPlaceholder')"
+            :error="errorText('url')"
           />
           <FormField
             v-model="form.price"
-            label="Cena"
+            :label="t('weddy.planning.category.form.price')"
             numeric
-            hint="V korunách. Nechte prázdné, dokud cenu neznáte."
-            :error="formErrors['price']"
+            :hint="t('weddy.planning.category.form.priceHint')"
+            :error="errorText('price')"
           />
-          <ChoiceField v-model="form.status" label="Stav" :options="statusOptions" />
+          <ChoiceField
+            v-model="form.status"
+            :label="t('weddy.planning.category.form.status')"
+            :options="statusOptions"
+          />
 
-          <p v-if="formErrors['form']" class="form-error" role="alert">{{ formErrors['form'] }}</p>
+          <p v-if="formErrors['form']" class="form-error" role="alert">{{ errorText('form') }}</p>
 
           <button type="submit" class="btn btn-primary" :disabled="saving">
-            {{ saving ? 'Ukládám…' : 'Uložit' }}
+            {{
+              saving
+                ? t('weddy.planning.category.form.saving')
+                : t('weddy.planning.category.form.submit')
+            }}
           </button>
         </form>
       </BottomSheet>

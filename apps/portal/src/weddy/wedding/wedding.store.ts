@@ -12,6 +12,7 @@ export const useWeddingStore = defineStore('wedding', () => {
   const summaries = ref<WeddingSummary[]>([]);
   const current = ref<Wedding | null>(null);
   const loading = ref(false);
+  /** Klíč hlášky z API – store nepřekládá, obrazovka ho zobrazí přes `translateMessage`. */
   const error = ref<string | null>(null);
 
   async function loadList(): Promise<void> {

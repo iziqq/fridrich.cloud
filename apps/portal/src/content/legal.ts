@@ -83,7 +83,7 @@ export const privacyPolicy: LegalDocument = {
             ],
             [
               'Uživatelský účet',
-              'jméno, e-mail, datum registrace, stav ověření e-mailu, verze a datum souhlasu s obchodními podmínkami, datum poslední aktivity',
+              'jméno, e-mail, datum registrace, stav ověření e-mailu, verze a datum souhlasu s obchodními podmínkami, datum poslední aktivity, zvolený jazyk rozhraní',
               'Vedení účtu a poskytování služeb podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Záznam o souhlasu s podmínkami – oprávněný zájem na prokázání uzavření smlouvy (písm. f).',
               `Do smazání účtu. Účet, do kterého se ${INACTIVE_ACCOUNT_RETENTION_DAYS} dní nepřihlásíte, smažu; ${INACTIVE_ACCOUNT_WARNING_DAYS} dní předem vás upozorním e-mailem.`,
             ],
@@ -122,6 +122,10 @@ export const privacyPolicy: LegalDocument = {
         {
           kind: 'paragraph',
           text: 'Web používá jedinou cookie fc_session, a to jen po přihlášení. Je technicky nezbytná, obsahuje náhodný identifikátor, ne vaše údaje, a skripty na stránce ji nemohou přečíst.',
+        },
+        {
+          kind: 'paragraph',
+          text: 'Když si přepnete jazyk webu, prohlížeč si vaši volbu zapamatuje v místním úložišti (localStorage, položka fc_locale). Uloží se jen kód jazyka (cs nebo en), na server se neposílá a smažete ji vymazáním dat webu v prohlížeči. Jde o nastavení, které si sami zvolíte, proto nevyžaduje souhlas.',
         },
         {
           kind: 'paragraph',

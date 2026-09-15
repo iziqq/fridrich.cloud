@@ -2,6 +2,7 @@
 import { PERSONAL_DATA_COLLECTION_ENABLED, issuesToDetails } from '@fridrich/shared';
 import * as v from 'valibot';
 import { reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import {
   SubmitContactMessageRequest,
@@ -10,23 +11,19 @@ import {
 import CyberButton from '@/components/CyberButton.vue';
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
-import { contact, site } from '@/content/site';
+import { site } from '@/content/site';
 import { useReveal } from '@/composables/useReveal';
+import { translateMessage } from '@/i18n';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
+const { t } = useI18n();
 const { el, visible } = useReveal();
 
 const form = reactive({ name: '', email: '', message: '', website: '' });
+/** Klíče hlášek ze schématu – překládají se až při zobrazení, aby seděly i po přepnutí jazyka. */
 const errors = reactive<Record<string, string>>({});
 const status = ref<Status>('idle');
-
-const STATUS_TEXT: Record<Status, string> = {
-  idle: '',
-  sending: '> odesílám zprávu…',
-  sent: '> odesláno. Ozvu se co nejdřív.',
-  error: '> odeslání se nepodařilo. Zkuste to prosím znovu nebo napište přímo na e-mail.',
-};
 
 /** Stejné schéma parsuje i API – formulář jen ukáže chyby dřív, než se odešle. */
 function validate(): boolean {
@@ -67,23 +64,23 @@ async function submit(): Promise<void> {
 <template>
   <section id="kontakt" class="section" aria-labelledby="kontakt-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
-      <SectionLabel :text="contact.label" />
-      <GlitchHeading :text="contact.title" :level="2" />
-      <span id="kontakt-title" class="visually-hidden">{{ contact.title }}</span>
-      <p class="lead">{{ contact.lead }}</p>
+      <SectionLabel :text="t('portal.contact.label')" />
+      <GlitchHeading :text="t('portal.contact.title')" :level="2" />
+      <span id="kontakt-title" class="visually-hidden">{{ t('portal.contact.title') }}</span>
+      <p class="lead">{{ t('portal.contact.lead') }}</p>
 
       <!-- Formulář ukládá jméno, e-mail a IP – bez zásad ochrany osobních údajů zůstává jen e-mail. -->
       <div v-if="!PERSONAL_DATA_COLLECTION_ENABLED" class="mail bevel">
-        <p class="mono heading">// Přímý kontakt</p>
+        <p class="mono heading">{{ t('portal.contact.directHeading') }}</p>
         <a class="mail-address" :href="`mailto:${site.email}`">{{ site.email }}</a>
-        <CyberButton :href="`mailto:${site.email}`">Napsat e-mail</CyberButton>
+        <CyberButton :href="`mailto:${site.email}`">{{ t('portal.contact.writeEmail') }}</CyberButton>
         <!-- TODO: doplnit odkazy na LinkedIn a GitHub -->
       </div>
 
       <div v-else class="layout">
         <form class="form bevel" novalidate @submit.prevent="submit">
           <div class="field">
-            <label for="contact-name">Jméno</label>
+            <label for="contact-name">{{ t('portal.contact.form.name') }}</label>
             <input
               id="contact-name"
               v-model="form.name"
@@ -94,12 +91,12 @@ async function submit(): Promise<void> {
               :aria-describedby="errors['name'] ? 'contact-name-error' : undefined"
             />
             <p v-if="errors['name']" id="contact-name-error" class="error mono">
-              {{ errors['name'] }}
+              {{ translateMessage(errors['name']) }}
             </p>
           </div>
 
           <div class="field">
-            <label for="contact-email">E-mail</label>
+            <label for="contact-email">{{ t('portal.contact.form.email') }}</label>
             <input
               id="contact-email"
               v-model="form.email"
@@ -111,12 +108,12 @@ async function submit(): Promise<void> {
               :aria-describedby="errors['email'] ? 'contact-email-error' : undefined"
             />
             <p v-if="errors['email']" id="contact-email-error" class="error mono">
-              {{ errors['email'] }}
+              {{ translateMessage(errors['email']) }}
             </p>
           </div>
 
           <div class="field">
-            <label for="contact-message">Zpráva</label>
+            <label for="contact-message">{{ t('portal.contact.form.message') }}</label>
             <textarea
               id="contact-message"
               v-model="form.message"
@@ -126,18 +123,18 @@ async function submit(): Promise<void> {
               :aria-describedby="errors['message'] ? 'contact-message-error' : undefined"
             ></textarea>
             <p v-if="errors['message']" id="contact-message-error" class="error mono">
-              {{ errors['message'] }}
+              {{ translateMessage(errors['message']) }}
             </p>
           </div>
 
           <!-- Honeypot – pro člověka neviditelné, roboti ho rádi vyplní. -->
           <div class="honeypot" aria-hidden="true">
-            <label for="contact-website">Webová stránka</label>
+            <label for="contact-website">{{ t('portal.contact.form.website') }}</label>
             <input id="contact-website" v-model="form.website" type="text" tabindex="-1" autocomplete="off" />
           </div>
 
           <CyberButton type="submit" :disabled="status === 'sending'">
-            {{ status === 'sending' ? 'Odesílám…' : 'Odeslat' }}
+            {{ status === 'sending' ? t('portal.contact.form.submitting') : t('portal.contact.form.submit') }}
           </CyberButton>
 
           <p
@@ -147,22 +144,22 @@ async function submit(): Promise<void> {
             role="status"
             aria-live="polite"
           >
-            {{ STATUS_TEXT[status] }}
+            {{ t(`portal.contact.status.${status}`) }}
           </p>
 
           <!--
             Souhlas se nevyžaduje – odpověď na poptávku je krok před uzavřením smlouvy
             (čl. 6 odst. 1 písm. b) GDPR). Informace o zpracování ale být musí.
           -->
-          <p class="consent">
-            Údaje použiji jen k odpovědi na vaši poptávku a zprávu smažu nejpozději
-            po roce. Více v
-            <RouterLink to="/ochrana-osobnich-udaju">zásadách ochrany osobních údajů</RouterLink>.
-          </p>
+          <i18n-t keypath="portal.contact.consent.text" tag="p" class="consent">
+            <template #link>
+              <RouterLink to="/ochrana-osobnich-udaju">{{ t('portal.contact.consent.link') }}</RouterLink>
+            </template>
+          </i18n-t>
         </form>
 
         <aside class="direct">
-          <p class="mono heading">// Přímý kontakt</p>
+          <p class="mono heading">{{ t('portal.contact.directHeading') }}</p>
           <ul>
             <li>
               <a :href="`mailto:${site.email}`">{{ site.email }}</a>

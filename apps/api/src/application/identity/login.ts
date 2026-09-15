@@ -1,3 +1,4 @@
+import { identityKeys, type Locale } from '@fridrich/shared';
 import { EmailAddress } from '../../domain/identity/EmailAddress.js';
 import { LoginCode, LOGIN_CODE_LIFETIME_MS } from '../../domain/identity/LoginCode.js';
 import { DomainError } from '../../domain/shared/DomainError.js';
@@ -8,6 +9,8 @@ import type { IdentityDeps } from './deps.js';
 export interface RequestLoginCodeCommand {
   email: string;
   sourceIp: string;
+  /** Jazyk požadavku – kód přijde v jazyce, ve kterém se uživatel právě přihlašuje. */
+  locale: Locale;
 }
 
 /**
@@ -52,7 +55,7 @@ export async function requestLoginCode(
   await deps.loginCodes.save(challenge);
 
   await deps.email.send(
-    loginCodeEmail(email.value, code, Math.round(LOGIN_CODE_LIFETIME_MS / 60_000)),
+    loginCodeEmail(email.value, code, Math.round(LOGIN_CODE_LIFETIME_MS / 60_000), command.locale),
   );
 }
 
@@ -60,11 +63,13 @@ export interface VerifyLoginCodeCommand {
   email: string;
   code: string;
   sourceIp: string;
+  /** Jazyk požadavku – po úspěšném přihlášení se uloží k účtu. */
+  locale: Locale;
 }
 
 /** Stejná hláška pro neznámý účet, chybějící i špatný kód – nic neprozradí. */
 function rejected(): DomainError {
-  return DomainError.field('code', 'Kód není platný. Vyžádejte si nový.');
+  return DomainError.field('code', identityKeys.codeInvalid);
 }
 
 /**
@@ -112,5 +117,5 @@ export async function verifyLoginCode(
     await deps.users.save(user);
   }
 
-  return startSession(deps, user);
+  return startSession(deps, user, command.locale);
 }

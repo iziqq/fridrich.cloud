@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import type { AgeGroup, Family, Guest, GuestStatus } from '@fridrich/weddy-shared';
-import {
-  AGE_GROUP_LABELS,
-  GUEST_SIDE_LABELS,
-  GUEST_STATUSES,
-  GUEST_STATUS_LABELS,
-} from '@fridrich/weddy-shared';
+import { GUEST_STATUSES, guestsKeys } from '@fridrich/weddy-shared';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { ApiError } from '@/api/http';
+import { translateMessage } from '@/i18n';
 import BottomSheet from '@/weddy/components/BottomSheet.vue';
 import ChoiceField from '@/weddy/components/ChoiceField.vue';
 import EmptyState from '@/weddy/components/EmptyState.vue';
@@ -18,10 +15,11 @@ import FormField from '@/weddy/components/FormField.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
 import type { CreateGuestRequest } from './endpoints/createGuest.endpoint';
-import { GUEST_SORT_LABELS, useGuestsStore } from './guests.store';
+import { GUEST_SORT_LABEL_KEYS, useGuestsStore } from './guests.store';
 
 const route = useRoute();
 const store = useGuestsStore();
+const { t } = useI18n();
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 
@@ -34,6 +32,15 @@ const sheetOpen = ref(false);
 const editing = ref<Guest | null>(null);
 const formErrors = ref<Record<string, string>>({});
 const saving = ref(false);
+
+/*
+ * Chyby formulářů se drží jako klíče katalogu a překládají se až při
+ * vykreslení – po přepnutí jazyka se tak přeloží i chyba, která už svítí.
+ */
+function errorText(errors: Record<string, string>, field: string): string | undefined {
+  const key = errors[field];
+  return key ? translateMessage(key) : undefined;
+}
 
 const form = reactive({
   firstName: '',
@@ -96,7 +103,7 @@ async function submit(): Promise<void> {
     formErrors.value =
       cause instanceof ApiError && cause.details.length > 0
         ? cause.fieldErrors
-        : { form: cause instanceof ApiError ? cause.message : 'Uložení se nepodařilo.' };
+        : { form: cause instanceof ApiError ? cause.message : 'weddy.guests.saveFailed' };
   } finally {
     saving.value = false;
   }
@@ -104,7 +111,7 @@ async function submit(): Promise<void> {
 
 async function removeGuest(guest: Guest): Promise<void> {
   const name = `${guest.firstName} ${guest.lastName}`.trim();
-  if (!window.confirm(`Opravdu smazat hosta ${name}?`)) return;
+  if (!window.confirm(t('weddy.guests.guest.confirmDelete', { name }))) return;
 
   await store.remove(weddingId.value, guest.id);
   if (editing.value?.id === guest.id) sheetOpen.value = false;
@@ -117,20 +124,27 @@ async function cycleStatus(guest: Guest): Promise<void> {
   if (next) await store.setStatus(weddingId.value, guest.id, next);
 }
 
-const statusOptions = GUEST_STATUSES.map((status) => ({
-  value: status,
-  label: GUEST_STATUS_LABELS[status],
-}));
+// Volby jsou `computed`, aby se popisky přeložily i po přepnutí jazyka.
+const statusOptions = computed(() =>
+  GUEST_STATUSES.map((status) => ({
+    value: status,
+    label: t(guestsKeys.status[status]),
+  })),
+);
 
-const sideOptions = [
-  { value: 'groom', label: GUEST_SIDE_LABELS.groom },
-  { value: 'bride', label: GUEST_SIDE_LABELS.bride },
-];
+const sideOptions = computed(() => [
+  { value: 'groom', label: t(guestsKeys.side.groom) },
+  { value: 'bride', label: t(guestsKeys.side.bride) },
+]);
 
-const ageOptions = [
-  { value: 'adult', label: AGE_GROUP_LABELS.adult },
-  { value: 'child', label: AGE_GROUP_LABELS.child },
-];
+const ageOptions = computed(() => [
+  { value: 'adult', label: t(guestsKeys.ageGroup.adult) },
+  { value: 'child', label: t(guestsKeys.ageGroup.child) },
+]);
+
+function statusTitle(guest: Guest): string {
+  return t('weddy.guests.list.changeStatus', { status: t(guestsKeys.status[guest.status]) });
+}
 
 /* --- Rodina --- */
 
@@ -163,19 +177,15 @@ function isFamilyOpen(familyId: string): boolean {
   return store.hasActiveFilters || expandedFamilies.value.has(familyId);
 }
 
-/** České tvary: 1 člen, 2–4 členové, 5+ členů. */
-function plural(count: number, one: string, few: string, many: string): string {
-  if (count === 1) return `${count} ${one}`;
-  if (count >= 2 && count <= 4) return `${count} ${few}`;
-  return `${count} ${many}`;
-}
-
-/** Souhrn, který dává smysl i u sbalené rodiny. */
+/**
+ * Souhrn, který dává smysl i u sbalené rodiny.
+ * České tvary (1 člen, 2–4 členové, 5+ členů) řeší plurály katalogu.
+ */
 function familySummary(family: Family): string {
   const children = family.members.filter((member) => member.ageGroup === 'child').length;
-  const parts = [plural(family.members.length, 'člen', 'členové', 'členů')];
+  const parts = [t('weddy.guests.family.memberCount', family.members.length)];
 
-  if (children > 0) parts.push(plural(children, 'dítě', 'děti', 'dětí'));
+  if (children > 0) parts.push(t('weddy.guests.family.childCount', children));
   return parts.join(' · ');
 }
 
@@ -252,7 +262,7 @@ async function submitFamily(): Promise<void> {
     familyErrors.value =
       cause instanceof ApiError && cause.details.length > 0
         ? cause.fieldErrors
-        : { form: cause instanceof ApiError ? cause.message : 'Uložení se nepodařilo.' };
+        : { form: cause instanceof ApiError ? cause.message : 'weddy.guests.saveFailed' };
   } finally {
     savingFamily.value = false;
   }
@@ -260,7 +270,8 @@ async function submitFamily(): Promise<void> {
 
 async function removeFamily(family: Family): Promise<void> {
   const count = family.members.length;
-  if (!window.confirm(`Opravdu smazat rodinu ${family.name} včetně ${count} členů?`)) return;
+  const question = t('weddy.guests.family.confirmDelete', { name: family.name, n: count }, count);
+  if (!window.confirm(question)) return;
 
   await store.removeFamily(weddingId.value, family.id);
   if (editingFamily.value?.id === family.id) familySheetOpen.value = false;
@@ -270,70 +281,76 @@ async function removeFamily(family: Family): Promise<void> {
 <template>
   <div>
     <LoadingBlock v-if="store.loading && store.guests.length === 0" />
-    <ErrorBlock v-else-if="store.error" :message="store.error" />
+    <ErrorBlock v-else-if="store.error" :message="translateMessage(store.error)" />
 
     <template v-else>
       <!-- Souhrn nad tabulkou počítá vždy ze všech hostů, filtr ho nemění. -->
       <ul class="stats">
         <li class="stat">
           <span class="value">{{ store.stats.total }}</span>
-          <span class="label">Celkem</span>
+          <span class="label">{{ t('weddy.guests.stats.total') }}</span>
         </li>
         <li class="stat">
           <span class="value accepted">{{ store.stats.accepted }}</span>
-          <span class="label">Potvrzeno</span>
+          <span class="label">{{ t('weddy.guests.stats.accepted') }}</span>
         </li>
         <li class="stat">
           <span class="value requested">{{ store.stats.requested }}</span>
-          <span class="label">Čeká</span>
+          <span class="label">{{ t('weddy.guests.stats.requested') }}</span>
         </li>
         <li class="stat">
           <span class="value">{{ store.stats.draft }}</span>
-          <span class="label">Návrhy</span>
+          <span class="label">{{ t('weddy.guests.stats.draft') }}</span>
         </li>
       </ul>
 
       <dl class="split">
         <div>
-          <dt>Ženich / Nevěsta</dt>
+          <dt>{{ t('weddy.guests.stats.sides') }}</dt>
           <dd>{{ store.stats.groom }} / {{ store.stats.bride }}</dd>
         </div>
         <div>
-          <dt>Dospělí / Děti</dt>
+          <dt>{{ t('weddy.guests.stats.ageGroups') }}</dt>
           <dd>{{ store.stats.adults }} / {{ store.stats.children }}</dd>
         </div>
         <div>
-          <dt>Odmítlo</dt>
+          <dt>{{ t('weddy.guests.stats.rejected') }}</dt>
           <dd>{{ store.stats.rejected }}</dd>
         </div>
       </dl>
 
       <div class="filters">
-        <FormField v-model="store.filters.search" label="Hledat" placeholder="Jméno hosta" />
+        <FormField
+          v-model="store.filters.search"
+          :label="t('weddy.guests.filters.search')"
+          :placeholder="t('weddy.guests.filters.searchPlaceholder')"
+        />
 
         <div class="selects">
           <label>
-            <span>Strana</span>
+            <span>{{ t('weddy.guests.filters.side') }}</span>
             <select v-model="store.filters.side">
-              <option value="all">Všichni</option>
-              <option value="groom">{{ GUEST_SIDE_LABELS.groom }}</option>
-              <option value="bride">{{ GUEST_SIDE_LABELS.bride }}</option>
+              <option value="all">{{ t('weddy.guests.filters.allPeople') }}</option>
+              <option v-for="option in sideOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
             </select>
           </label>
 
           <label>
-            <span>Věk</span>
+            <span>{{ t('weddy.guests.filters.ageGroup') }}</span>
             <select v-model="store.filters.ageGroup">
-              <option value="all">Všichni</option>
-              <option value="adult">{{ AGE_GROUP_LABELS.adult }}</option>
-              <option value="child">{{ AGE_GROUP_LABELS.child }}</option>
+              <option value="all">{{ t('weddy.guests.filters.allPeople') }}</option>
+              <option v-for="option in ageOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
             </select>
           </label>
 
           <label>
-            <span>Stav</span>
+            <span>{{ t('weddy.guests.filters.status') }}</span>
             <select v-model="store.filters.status">
-              <option value="all">Všechny</option>
+              <option value="all">{{ t('weddy.guests.filters.allStatuses') }}</option>
               <option v-for="option in statusOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
@@ -342,10 +359,10 @@ async function removeFamily(family: Family): Promise<void> {
 
           <!-- Řazení není filtr, proto ho „Zrušit filtry" nechává být. -->
           <label>
-            <span>Řadit podle</span>
+            <span>{{ t('weddy.guests.filters.sort') }}</span>
             <select v-model="store.sort">
-              <option value="lastName">{{ GUEST_SORT_LABELS.lastName }}</option>
-              <option value="firstName">{{ GUEST_SORT_LABELS.firstName }}</option>
+              <option value="lastName">{{ t(GUEST_SORT_LABEL_KEYS.lastName) }}</option>
+              <option value="firstName">{{ t(GUEST_SORT_LABEL_KEYS.firstName) }}</option>
             </select>
           </label>
         </div>
@@ -356,22 +373,22 @@ async function removeFamily(family: Family): Promise<void> {
           class="btn btn-ghost clear"
           @click="store.resetFilters()"
         >
-          Zrušit filtry
+          {{ t('weddy.guests.filters.clear') }}
         </button>
       </div>
 
       <EmptyState
         v-if="store.guests.length === 0"
         icon="👥"
-        title="Zatím žádní hosté"
-        description="Přidejte prvního hosta a začněte skládat seznam."
+        :title="t('weddy.guests.empty.noGuestsTitle')"
+        :description="t('weddy.guests.empty.noGuestsDescription')"
       />
 
       <EmptyState
         v-else-if="store.filtered.length === 0"
         icon="🔍"
-        title="Nikdo neodpovídá filtru"
-        description="Zkuste hledání zúžit jinak, nebo filtry zrušte."
+        :title="t('weddy.guests.empty.noMatchTitle')"
+        :description="t('weddy.guests.empty.noMatchDescription')"
       />
 
       <!--
@@ -381,11 +398,11 @@ async function removeFamily(family: Family): Promise<void> {
       <template v-else>
         <section v-for="group in store.sections" :key="group.side" class="side">
           <h2 class="side-head">
-            <span>{{ GUEST_SIDE_LABELS[group.side] }}</span>
+            <span>{{ t(guestsKeys.side[group.side]) }}</span>
             <span class="count mono">{{ group.count }}</span>
           </h2>
 
-          <p v-if="group.count === 0" class="side-empty">Zatím nikdo</p>
+          <p v-if="group.count === 0" class="side-empty">{{ t('weddy.guests.list.sideEmpty') }}</p>
 
           <article v-for="family in group.families" :key="family.id" class="family">
             <header class="family-head">
@@ -410,11 +427,11 @@ async function removeFamily(family: Family): Promise<void> {
               </button>
               <div class="controls">
                 <button type="button" class="icon-button" @click="openEditFamily(family)">
-                  <span class="visually-hidden">Upravit rodinu</span>
+                  <span class="visually-hidden">{{ t('weddy.guests.family.edit') }}</span>
                   <span aria-hidden="true">✏️</span>
                 </button>
                 <button type="button" class="icon-button" @click="removeFamily(family)">
-                  <span class="visually-hidden">Smazat rodinu</span>
+                  <span class="visually-hidden">{{ t('weddy.guests.family.delete') }}</span>
                   <span aria-hidden="true">🗑️</span>
                 </button>
               </div>
@@ -425,17 +442,17 @@ async function removeFamily(family: Family): Promise<void> {
                 <div class="who">
                   <p class="name">{{ store.displayName(guest) }}</p>
                   <p class="meta">
-                    {{ AGE_GROUP_LABELS[guest.ageGroup] }}
+                    {{ t(guestsKeys.ageGroup[guest.ageGroup]) }}
                     <template v-if="guest.note"> · {{ guest.note }}</template>
                   </p>
                 </div>
                 <button
                   type="button"
                   class="status-button"
-                  :title="`Změnit stav (nyní ${GUEST_STATUS_LABELS[guest.status]})`"
+                  :title="statusTitle(guest)"
                   @click="cycleStatus(guest)"
                 >
-                  <StatusBadge :status="guest.status" />
+                  <StatusBadge kind="guest" :status="guest.status" />
                 </button>
               </li>
             </ul>
@@ -446,7 +463,7 @@ async function removeFamily(family: Family): Promise<void> {
               <div class="who">
                 <p class="name">{{ store.displayName(guest) }}</p>
                 <p class="meta">
-                  {{ AGE_GROUP_LABELS[guest.ageGroup] }}
+                  {{ t(guestsKeys.ageGroup[guest.ageGroup]) }}
                   <template v-if="guest.note"> · {{ guest.note }}</template>
                 </p>
               </div>
@@ -455,19 +472,19 @@ async function removeFamily(family: Family): Promise<void> {
                 <button
                   type="button"
                   class="status-button"
-                  :title="`Změnit stav (nyní ${GUEST_STATUS_LABELS[guest.status]})`"
+                  :title="statusTitle(guest)"
                   @click="cycleStatus(guest)"
                 >
-                  <StatusBadge :status="guest.status" />
+                  <StatusBadge kind="guest" :status="guest.status" />
                 </button>
 
                 <button type="button" class="icon-button" @click="openEdit(guest)">
-                  <span class="visually-hidden">Upravit hosta</span>
+                  <span class="visually-hidden">{{ t('weddy.guests.guest.edit') }}</span>
                   <span aria-hidden="true">✏️</span>
                 </button>
 
                 <button type="button" class="icon-button" @click="removeGuest(guest)">
-                  <span class="visually-hidden">Smazat hosta</span>
+                  <span class="visually-hidden">{{ t('weddy.guests.guest.delete') }}</span>
                   <span aria-hidden="true">🗑️</span>
                 </button>
               </div>
@@ -478,104 +495,125 @@ async function removeFamily(family: Family): Promise<void> {
     </template>
 
     <div class="actions-fab">
-      <button type="button" class="btn btn-secondary" @click="openCreateFamily">+ Rodina</button>
-      <FabButton label="Host" @click="openCreate" />
+      <button type="button" class="btn btn-secondary" @click="openCreateFamily">
+        {{ t('weddy.guests.family.add') }}
+      </button>
+      <FabButton :label="t('weddy.guests.guest.add')" @click="openCreate" />
     </div>
 
-    <BottomSheet v-model:open="sheetOpen" :title="editing ? 'Upravit hosta' : 'Nový host'">
+    <BottomSheet
+      v-model:open="sheetOpen"
+      :title="editing ? t('weddy.guests.guest.edit') : t('weddy.guests.guest.new')"
+    >
       <form class="sheet-form" novalidate @submit.prevent="submit">
         <div class="row">
           <FormField
             v-model="form.firstName"
-            label="Jméno"
+            :label="t('weddy.guests.guest.form.firstName')"
             required
-            :error="formErrors['firstName']"
+            :error="errorText(formErrors, 'firstName')"
           />
           <FormField
             v-model="form.lastName"
-            label="Příjmení"
+            :label="t('weddy.guests.guest.form.lastName')"
             required
-            :error="formErrors['lastName']"
+            :error="errorText(formErrors, 'lastName')"
           />
         </div>
 
         <ChoiceField
           v-model="form.side"
-          label="Strana"
-          :options="[
-            { value: 'groom', label: GUEST_SIDE_LABELS.groom },
-            { value: 'bride', label: GUEST_SIDE_LABELS.bride },
-          ]"
+          :label="t('weddy.guests.guest.form.side')"
+          :options="sideOptions"
         />
 
         <ChoiceField
           v-model="form.ageGroup"
-          label="Věková skupina"
-          :options="[
-            { value: 'adult', label: AGE_GROUP_LABELS.adult },
-            { value: 'child', label: AGE_GROUP_LABELS.child },
-          ]"
+          :label="t('weddy.guests.guest.form.ageGroup')"
+          :options="ageOptions"
         />
 
-        <ChoiceField v-model="form.status" label="Stav" :options="statusOptions" />
+        <ChoiceField
+          v-model="form.status"
+          :label="t('weddy.guests.guest.form.status')"
+          :options="statusOptions"
+        />
 
-        <FormField v-model="form.note" label="Poznámka" textarea :error="formErrors['note']" />
+        <FormField
+          v-model="form.note"
+          :label="t('weddy.guests.guest.form.note')"
+          textarea
+          :error="errorText(formErrors, 'note')"
+        />
 
-        <p v-if="formErrors['form']" class="form-error" role="alert">{{ formErrors['form'] }}</p>
+        <p v-if="formErrors['form']" class="form-error" role="alert">
+          {{ errorText(formErrors, 'form') }}
+        </p>
 
         <button type="submit" class="btn btn-primary" :disabled="saving">
-          {{ saving ? 'Ukládám…' : 'Uložit' }}
+          {{ saving ? t('weddy.guests.saving') : t('weddy.guests.save') }}
         </button>
       </form>
     </BottomSheet>
     <BottomSheet
       v-model:open="familySheetOpen"
-      :title="editingFamily ? 'Upravit rodinu' : 'Nová rodina'"
+      :title="editingFamily ? t('weddy.guests.family.edit') : t('weddy.guests.family.new')"
     >
       <form class="sheet-form" novalidate @submit.prevent="submitFamily">
         <FormField
           v-model="familyForm.name"
-          label="Název rodiny"
-          placeholder="Novákovi"
+          :label="t('weddy.guests.family.form.name')"
+          :placeholder="t('weddy.guests.family.form.namePlaceholder')"
           required
-          :error="familyErrors['name']"
+          :error="errorText(familyErrors, 'name')"
         />
 
         <!-- Strana se volí pro rodinu jako celek, věk u každého člena zvlášť. -->
-        <ChoiceField v-model="familyForm.side" label="Strana" :options="sideOptions" />
+        <ChoiceField
+          v-model="familyForm.side"
+          :label="t('weddy.guests.family.form.side')"
+          :options="sideOptions"
+        />
 
         <fieldset class="members-field">
-          <legend>Členové</legend>
+          <legend>{{ t('weddy.guests.family.form.members') }}</legend>
 
           <div v-for="(member, index) in familyForm.members" :key="index" class="member-row">
-            <FormField v-model="member.firstName" label="Jméno" />
-            <ChoiceField v-model="member.ageGroup" label="Věk" :options="ageOptions" />
+            <FormField
+              v-model="member.firstName"
+              :label="t('weddy.guests.family.form.memberFirstName')"
+            />
+            <ChoiceField
+              v-model="member.ageGroup"
+              :label="t('weddy.guests.family.form.memberAgeGroup')"
+              :options="ageOptions"
+            />
             <button
               type="button"
               class="icon-button remove"
               :disabled="familyForm.members.length === 1"
               @click="removeMember(index)"
             >
-              <span class="visually-hidden">Odebrat člena</span>
+              <span class="visually-hidden">{{ t('weddy.guests.family.form.removeMember') }}</span>
               <span aria-hidden="true">✕</span>
             </button>
           </div>
 
           <p v-if="familyErrors['members']" class="form-error" role="alert">
-            {{ familyErrors['members'] }}
+            {{ errorText(familyErrors, 'members') }}
           </p>
 
           <button type="button" class="btn btn-secondary" @click="addMember">
-            + Další člen
+            {{ t('weddy.guests.family.form.addMember') }}
           </button>
         </fieldset>
 
         <p v-if="familyErrors['form']" class="form-error" role="alert">
-          {{ familyErrors['form'] }}
+          {{ errorText(familyErrors, 'form') }}
         </p>
 
         <button type="submit" class="btn btn-primary" :disabled="savingFamily">
-          {{ savingFamily ? 'Ukládám…' : 'Uložit rodinu' }}
+          {{ savingFamily ? t('weddy.guests.saving') : t('weddy.guests.family.form.submit') }}
         </button>
       </form>
     </BottomSheet>

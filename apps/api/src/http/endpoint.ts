@@ -21,6 +21,7 @@ import {
   noContent,
   preflight,
   readJson,
+  requestLocale,
   serverError,
   toResponse,
 } from './responses.js';
@@ -104,7 +105,12 @@ export function defineEndpoint<
       try {
         let user: User | undefined;
         if (spec.access === 'user') {
-          user = await resolveSession(identityDeps(), readSessionToken(request));
+          // Jazyk požadavku se k účtu uloží – e-maily z plánovače pak přijdou ve zvoleném jazyce.
+          user = await resolveSession(
+            identityDeps(),
+            readSessionToken(request),
+            requestLocale(request),
+          );
           if (!user) return errorResponse(request, DomainError.unauthorized());
         }
 

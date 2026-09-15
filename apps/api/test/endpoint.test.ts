@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { HttpRequest, InvocationContext } from '@azure/functions';
+import { commonKeys, errorKeys } from '@fridrich/shared';
 import * as v from 'valibot';
 import { submitContactMessageEndpoint } from '../src/endpoints/contact/submitContactMessage.endpoint.js';
 import { DomainError } from '../src/domain/shared/DomainError.js';
@@ -69,7 +70,7 @@ describe('defineEndpoint', () => {
     assert.equal(response.status, 400);
     assert.deepEqual(response.jsonBody, {
       error: 'ValidationError',
-      message: 'Neplatná data',
+      message: commonKeys.invalidData,
       details: [{ field: 'name', message: 'Vyplňte jméno' }],
     });
   });
@@ -81,12 +82,14 @@ describe('defineEndpoint', () => {
       route: 'failing',
       access: 'public',
       async handle() {
-        throw DomainError.notFound('Plánování');
+        throw DomainError.notFound();
       },
     });
 
     const response = await failing.invoke(fakeRequest({ method: 'GET' }), context);
     assert.equal(response.status, 404);
+    // Hláška je klíč katalogu – text podle jazyka doplní frontend.
+    assert.equal((response.jsonBody as { message: string }).message, errorKeys.notFound);
   });
 
   it('neočekávaná výjimka skončí jako 500 bez textu chyby', async () => {

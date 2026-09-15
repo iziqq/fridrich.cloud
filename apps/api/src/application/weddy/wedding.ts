@@ -1,5 +1,5 @@
 import type { Wedding as WeddingData, WeddingInput, WeddingSummary } from '@fridrich/weddy-shared';
-import { calculateBudget, calculateGuestStats, daysUntil } from '@fridrich/weddy-shared';
+import { calculateBudget, calculateGuestStats, daysUntil, weddingKeys } from '@fridrich/weddy-shared';
 import { DomainError } from '../../domain/shared/DomainError.js';
 import { Wedding } from '../../domain/weddy/wedding/Wedding.js';
 import type { WeddyDeps } from './deps.js';
@@ -20,7 +20,7 @@ export async function loadWeddingFor(
   userId: string,
 ): Promise<Wedding> {
   const wedding = await deps.weddings.findById(weddingId);
-  if (!wedding) throw DomainError.notFound('Plánování');
+  if (!wedding) throw DomainError.notFound(weddingKeys.notFound);
 
   wedding.assertAccessibleBy(userId);
   return wedding;

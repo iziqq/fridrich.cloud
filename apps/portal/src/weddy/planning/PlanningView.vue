@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { PlanningCategory } from '@fridrich/weddy-shared';
-import { PLANNING_CATEGORY_LABELS, formatCurrency } from '@fridrich/weddy-shared';
+import { formatCurrency, PLANNING_CATEGORIES, planningKeys } from '@fridrich/weddy-shared';
 import { computed, onMounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
+import { currentLocale, translateMessage } from '@/i18n';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import { weddyPath } from '@/weddy/routes';
@@ -10,6 +12,12 @@ import { usePlanningStore } from './planning.store';
 
 const route = useRoute();
 const store = usePlanningStore();
+const { t } = useI18n();
+
+/** Částka se zapisuje podle jazyka rozhraní, měna zůstává koruna. */
+function money(amount: number): string {
+  return formatCurrency(amount, currentLocale.value);
+}
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 
@@ -36,12 +44,10 @@ const ICONS: Record<PlanningCategory, string> = {
 <template>
   <div>
     <LoadingBlock v-if="store.loading && store.items.length === 0" />
-    <ErrorBlock v-else-if="store.error" :message="store.error" />
+    <ErrorBlock v-else-if="store.error" :message="translateMessage(store.error)" />
 
     <template v-else>
-      <p class="lead">
-        Osm oblastí přípravy. V každé si můžete držet víc variant a rozhodnout se později.
-      </p>
+      <p class="lead">{{ t('weddy.planning.overview.lead', { n: PLANNING_CATEGORIES.length }) }}</p>
 
       <ul class="sections">
         <li v-for="section in store.overview" :key="section.category">
@@ -52,18 +58,19 @@ const ICONS: Record<PlanningCategory, string> = {
             <span class="icon" aria-hidden="true">{{ ICONS[section.category] }}</span>
 
             <span class="text">
-              <span class="name">{{ PLANNING_CATEGORY_LABELS[section.category] }}</span>
+              <span class="name">{{ t(planningKeys.category[section.category]) }}</span>
               <span class="meta">
-                <template v-if="section.itemCount === 0">Zatím prázdné</template>
+                <template v-if="section.itemCount === 0">
+                  {{ t('weddy.planning.overview.empty') }}
+                </template>
                 <template v-else>
-                  {{ section.itemCount }}
-                  {{ section.itemCount === 1 ? 'položka' : section.itemCount < 5 ? 'položky' : 'položek' }}
-                  · {{ section.acceptedCount }} schváleno
+                  {{ t('weddy.planning.overview.itemCount', section.itemCount) }}
+                  · {{ t('weddy.planning.overview.acceptedCount', { n: section.acceptedCount }) }}
                 </template>
               </span>
             </span>
 
-            <span class="total">{{ section.total > 0 ? formatCurrency(section.total) : '—' }}</span>
+            <span class="total">{{ section.total > 0 ? money(section.total) : '—' }}</span>
           </RouterLink>
         </li>
       </ul>

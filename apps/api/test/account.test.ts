@@ -28,10 +28,11 @@ async function registerAndLogin(deps: IdentityTestContext, email = EMAIL): Promi
     acceptTerms: true,
     sourceIp: IP,
     appUrl: APP_URL,
+    locale: 'cs',
   });
-  await requestLoginCode(deps, { email, sourceIp: IP });
+  await requestLoginCode(deps, { email, sourceIp: IP, locale: 'cs' });
   const code = /\b(\d{6})\b/.exec(deps.email.last?.text ?? '')?.[1] ?? '';
-  const result = await verifyLoginCode(deps, { email, code, sourceIp: IP });
+  const result = await verifyLoginCode(deps, { email, code, sourceIp: IP, locale: 'cs' });
   return result.sessionToken;
 }
 
@@ -172,9 +173,9 @@ describe('lhůta pro neaktivní účty', () => {
     deps.clock.advance(warnAfterMs + DAY_MS);
     await applyAccountRetention(deps, APP_URL);
     // Session za tu dobu dávno vypršela – uživatel se přihlásí znovu kódem z upozornění.
-    await requestLoginCode(deps, { email: EMAIL, sourceIp: IP });
+    await requestLoginCode(deps, { email: EMAIL, sourceIp: IP, locale: 'cs' });
     const code = /\b(\d{6})\b/.exec(deps.email.last?.text ?? '')?.[1] ?? '';
-    await verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP });
+    await verifyLoginCode(deps, { email: EMAIL, code, sourceIp: IP, locale: 'cs' });
     deps.clock.advance(INACTIVE_ACCOUNT_WARNING_DAYS * DAY_MS);
     const result = await applyAccountRetention(deps, APP_URL);
 

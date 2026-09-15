@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { RouterView } from 'vue-router';
 import './weddy.css';
+
+const { t } = useI18n();
 </script>
 
 <!--
@@ -13,7 +16,7 @@ import './weddy.css';
 <template>
   <div class="weddy">
     <!-- Obal portálu je pryč, takže si skip link drží plánovač sám. -->
-    <a class="skip-link" href="#obsah">Přeskočit na obsah</a>
+    <a class="skip-link" href="#obsah">{{ t('app.skipToContent') }}</a>
     <RouterView />
   </div>
 </template>

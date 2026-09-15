@@ -1,4 +1,4 @@
-import { optionalHttpUrl, requiredText } from '@fridrich/shared';
+import { messageKeys, optionalHttpUrl, requiredText, type Catalog } from '@fridrich/shared';
 import * as v from 'valibot';
 
 /*
@@ -13,6 +13,58 @@ const NAME_MAX = 200;
 const URL_MAX = 2000;
 /** Horní mez ceny – chrání před překlepem, který by rozbil rozpočet. */
 const PRICE_MAX = 100_000_000;
+
+const cs = {
+  category: {
+    ceremonyVenue: 'Místo obřadu',
+    receptionVenue: 'Místo veselky',
+    food: 'Jídlo',
+    drinks: 'Pití',
+    flowers: 'Květiny',
+    decorations: 'Výzdoba',
+    suit: 'Oblek',
+    dress: 'Šaty',
+    rings: 'Prstýnky',
+    bachelorParty: 'Rozlučka',
+    otherActivities: 'Další aktivity',
+  },
+  status: { draft: 'Návrh', accepted: 'Schváleno' },
+  categoryInvalid: 'Neplatná kategorie',
+  statusInvalid: 'Neplatný stav položky',
+  nameRequired: 'Vyplňte název',
+  nameTooLong: `Název může mít nejvýše ${NAME_MAX} znaků`,
+  urlInvalid: 'Odkaz musí začínat http:// nebo https://',
+  priceInvalid: 'Cena musí být kladné číslo',
+  itemNotFound: 'Položka neexistuje',
+};
+
+const en: Catalog<typeof cs> = {
+  category: {
+    ceremonyVenue: 'Ceremony venue',
+    receptionVenue: 'Reception venue',
+    food: 'Food',
+    drinks: 'Drinks',
+    flowers: 'Flowers',
+    decorations: 'Decorations',
+    suit: 'Suit',
+    dress: 'Dress',
+    rings: 'Rings',
+    bachelorParty: 'Bachelor party',
+    otherActivities: 'Other activities',
+  },
+  status: { draft: 'Draft', accepted: 'Approved' },
+  categoryInvalid: 'Invalid category',
+  statusInvalid: 'Invalid item status',
+  nameRequired: 'Please enter a name',
+  nameTooLong: `The name can have at most ${NAME_MAX} characters`,
+  urlInvalid: 'The link must start with http:// or https://',
+  priceInvalid: 'The price must be a positive number',
+  itemNotFound: 'The item does not exist',
+};
+
+/** Hlášky a popisky subdomény `planning` – jmenný prostor `weddyShared.planning`. */
+export const planningMessages = { cs, en };
+export const planningKeys = messageKeys(cs, 'weddyShared.planning');
 
 /* --- Výčty --- */
 
@@ -36,30 +88,11 @@ export const PLANNING_CATEGORIES = [
 
 export const PLANNING_ITEM_STATUSES = ['draft', 'accepted'] as const;
 
-export const PlanningCategorySchema = v.picklist(PLANNING_CATEGORIES, 'Neplatná kategorie');
+export const PlanningCategorySchema = v.picklist(PLANNING_CATEGORIES, planningKeys.categoryInvalid);
 export type PlanningCategory = v.InferOutput<typeof PlanningCategorySchema>;
 
-export const PlanningItemStatusSchema = v.picklist(PLANNING_ITEM_STATUSES, 'Neplatný stav položky');
+export const PlanningItemStatusSchema = v.picklist(PLANNING_ITEM_STATUSES, planningKeys.statusInvalid);
 export type PlanningItemStatus = v.InferOutput<typeof PlanningItemStatusSchema>;
-
-export const PLANNING_CATEGORY_LABELS: Record<PlanningCategory, string> = {
-  ceremonyVenue: 'Místo obřadu',
-  receptionVenue: 'Místo veselky',
-  food: 'Jídlo',
-  drinks: 'Pití',
-  flowers: 'Květiny',
-  decorations: 'Výzdoba',
-  suit: 'Oblek',
-  dress: 'Šaty',
-  rings: 'Prstýnky',
-  bachelorParty: 'Rozlučka',
-  otherActivities: 'Další aktivity',
-};
-
-export const PLANNING_ITEM_STATUS_LABELS: Record<PlanningItemStatus, string> = {
-  draft: 'Návrh',
-  accepted: 'Schváleno',
-};
 
 /* --- Položka --- */
 
@@ -77,13 +110,13 @@ export const PlanningItemSchema = v.object({
 });
 export type PlanningItem = v.InferOutput<typeof PlanningItemSchema>;
 
-const PRICE_MESSAGE = 'Cena musí být kladné číslo';
+const PRICE_MESSAGE = planningKeys.priceInvalid;
 
 /** Položka z formuláře. Cena se zaokrouhlí na koruny – haléře drží součty nečisté. */
 export const PlanningItemInputSchema = v.object({
   category: PlanningCategorySchema,
-  name: requiredText('Vyplňte název', NAME_MAX, `Název může mít nejvýše ${NAME_MAX} znaků`),
-  url: optionalHttpUrl(URL_MAX, 'Odkaz musí začínat http:// nebo https://'),
+  name: requiredText(planningKeys.nameRequired, NAME_MAX, planningKeys.nameTooLong),
+  url: optionalHttpUrl(URL_MAX, planningKeys.urlInvalid),
   price: v.optional(
     v.pipe(
       v.number(PRICE_MESSAGE),

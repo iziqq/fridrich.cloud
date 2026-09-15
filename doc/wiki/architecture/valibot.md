@@ -37,14 +37,16 @@ Library: [`valibot`](https://valibot.dev) `^1.5`, always imported as
   - `GuestSchema` – what a record looks like in a response (no transformations, shape only).
   - `GuestInputSchema` – what comes from a form (rules, trimming, normalisation; no `id`, timestamps or defaults).
 - Enums: an `as const` constant + `v.picklist` + labels:
-  `GUEST_STATUSES` → `GuestStatusSchema` → `type GuestStatus` → `GUEST_STATUS_LABELS`.
+  `GUEST_STATUSES` → `GuestStatusSchema` → `type GuestStatus` → labels in the catalog (`guestsKeys.status[status]`).
   Checking a value of unknown origin: `v.is(PlanningCategorySchema, raw)`.
 
 ## Rules
 
-1. **Messages are in Czech and meant for users** (they are product text) –
-   passed to each action (`v.nonEmpty('Vyplňte jméno')`). Forms display them
-   next to the field unchanged.
+1. **Messages are keys of a cs/en catalog**, not sentences – passed to each
+   action (`v.nonEmpty(identityKeys.displayNameRequired)`). The catalog sits in
+   the same subdomain file as the schema; keys come from `messageKeys()`, so a
+   typo does not compile. Forms show the translated text next to the field
+   (`translateMessage`) – see [i18n.md](i18n.md).
 2. **Optional text:** an empty string after trimming becomes `undefined`
    (`optionalText`). The frontend can send field values as they are.
 3. **Normalisation belongs in the schema:** trimming whitespace, lowercase

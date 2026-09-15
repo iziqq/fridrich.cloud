@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = withDefaults(
   defineProps<{
@@ -18,6 +19,8 @@ const props = withDefaults(
 
 const model = defineModel<string>({ required: true });
 
+const { t } = useI18n();
+
 const id = useId();
 const errorId = computed(() => `${id}-error`);
 const hintId = computed(() => `${id}-hint`);
@@ -34,7 +37,7 @@ const describedBy = computed(() => {
   <div class="field">
     <label :for="id">
       {{ label }}
-      <span v-if="!required" class="optional">nepovinné</span>
+      <span v-if="!required" class="optional">{{ t('weddy.components.formField.optional') }}</span>
     </label>
 
     <textarea

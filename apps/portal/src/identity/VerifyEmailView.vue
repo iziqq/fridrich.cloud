@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
 import { ApiError } from '@/api/http';
+import { translateMessage } from '@/i18n';
 import { useAuthStore } from './auth.store';
 
+const { t } = useI18n();
 const auth = useAuthStore();
 const route = useRoute();
 
 type State = 'working' | 'done' | 'failed';
 
 const state = ref<State>('working');
+/** Klíč hlášky – překládá se až při vykreslení. */
 const error = ref('');
 
 // Ověření běží samo po otevření odkazu z e-mailu – uživatel nemá co vyplňovat.
@@ -19,7 +23,7 @@ onMounted(async () => {
 
   if (!token) {
     state.value = 'failed';
-    error.value = 'Odkaz je neúplný.';
+    error.value = 'identity.verifyEmail.incompleteLink';
     return;
   }
 
@@ -29,32 +33,29 @@ onMounted(async () => {
   } catch (cause) {
     state.value = 'failed';
     error.value =
-      cause instanceof ApiError ? cause.message : 'Ověření se nepodařilo.';
+      cause instanceof ApiError ? cause.message : 'identity.verifyEmail.failed';
   }
 });
 </script>
 
 <template>
-  <AuthCard label="// Aktivace účtu" title="Aktivace účtu">
-    <p v-if="state === 'working'" class="mono caret">&gt; ověřuji</p>
+  <AuthCard :label="t('identity.verifyEmail.label')" :title="t('identity.verifyEmail.title')">
+    <p v-if="state === 'working'" class="mono caret">&gt; {{ t('identity.verifyEmail.working') }}</p>
 
     <div v-else-if="state === 'done'" class="block">
-      <p class="mono ok">&gt; účet aktivován</p>
-      <p>Rovnou jsme vás přihlásili. Můžete se pustit do práce.</p>
+      <p class="mono ok">&gt; {{ t('identity.verifyEmail.done') }}</p>
+      <p>{{ t('identity.verifyEmail.doneInfo') }}</p>
     </div>
 
     <div v-else class="block">
-      <p class="mono error">&gt; {{ error }}</p>
-      <p>
-        Odkaz platí 24 hodin a jde použít jen jednou. Do účtu se dostanete i
-        přihlášením – pošleme vám kód na e-mail.
-      </p>
+      <p class="mono error">&gt; {{ translateMessage(error) }}</p>
+      <p>{{ t('identity.verifyEmail.failedInfo') }}</p>
     </div>
 
     <template #footer>
       <p>
-        <RouterLink v-if="state === 'done'" to="/ucet">Přejít na účet</RouterLink>
-        <RouterLink v-else to="/prihlaseni">Zpět na přihlášení</RouterLink>
+        <RouterLink v-if="state === 'done'" to="/ucet">{{ t('identity.verifyEmail.goToAccount') }}</RouterLink>
+        <RouterLink v-else to="/prihlaseni">{{ t('identity.verifyEmail.backToLogin') }}</RouterLink>
       </p>
     </template>
   </AuthCard>

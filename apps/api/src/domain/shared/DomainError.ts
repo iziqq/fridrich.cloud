@@ -1,10 +1,11 @@
-import type { ApiErrorDetail } from '@fridrich/shared';
+import { commonKeys, errorKeys, type ApiErrorDetail } from '@fridrich/shared';
 
 /**
  * Chyba, kterou vyhazuje doména nebo use-case.
  *
- * Doména nezná HTTP – nese jen `kind`, který si vrstva `functions/` přeloží
- * na stavový kód. Díky tomu jde stejná logika volat i mimo HTTP (skript,
+ * Doména nezná HTTP – nese jen `kind`, který si vrstva `http/` přeloží
+ * na stavový kód. `message` i hlášky v `details` jsou klíče katalogu
+ * (`shared.errors.notFound`), ne věty – text podle jazyka doplní frontend. Díky tomu jde stejná logika volat i mimo HTTP (skript,
  * fronta, test) a chování se nezmění.
  */
 export type DomainErrorKind =
@@ -26,31 +27,31 @@ export class DomainError extends Error {
     this.details = details;
   }
 
-  static validation(details: ApiErrorDetail[], message = 'Neplatná data'): DomainError {
+  static validation(details: ApiErrorDetail[], message = commonKeys.invalidData): DomainError {
     return new DomainError('validation', message, details);
   }
 
   static field(field: string, message: string): DomainError {
-    return new DomainError('validation', 'Neplatná data', [{ field, message }]);
+    return new DomainError('validation', commonKeys.invalidData, [{ field, message }]);
   }
 
-  static unauthorized(message = 'Přihlaste se prosím'): DomainError {
+  static unauthorized(message = errorKeys.unauthorized): DomainError {
     return new DomainError('unauthorized', message);
   }
 
-  static forbidden(message = 'K tomuto obsahu nemáte přístup'): DomainError {
+  static forbidden(message = errorKeys.forbidden): DomainError {
     return new DomainError('forbidden', message);
   }
 
-  static notFound(what = 'Záznam'): DomainError {
-    return new DomainError('notFound', `${what} neexistuje`);
+  static notFound(message = errorKeys.notFound): DomainError {
+    return new DomainError('notFound', message);
   }
 
   static conflict(message: string): DomainError {
     return new DomainError('conflict', message);
   }
 
-  static tooManyRequests(message = 'Příliš mnoho pokusů. Zkuste to za chvíli.'): DomainError {
+  static tooManyRequests(message = errorKeys.tooManyRequests): DomainError {
     return new DomainError('tooManyRequests', message);
   }
 }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { Wedding } from '@fridrich/weddy-shared';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
 import { weddyPath } from '@/weddy/routes';
 import WeddingForm from './WeddingForm.vue';
 import { useWeddingStore } from './wedding.store';
 
+const { t } = useI18n();
 const weddings = useWeddingStore();
 const router = useRouter();
 
@@ -15,12 +17,12 @@ async function onSaved(wedding: Wedding): Promise<void> {
 
 <template>
   <main id="obsah" class="page-new container">
-    <RouterLink :to="weddyPath()" class="back">← Zpět na přehled</RouterLink>
-    <h1>Nové plánování</h1>
-    <p class="lead">Stačí název a jména snoubenců, zbytek se dá doplnit kdykoli později.</p>
+    <RouterLink :to="weddyPath()" class="back">{{ t('weddy.weddingNew.back') }}</RouterLink>
+    <h1>{{ t('weddy.weddingNew.title') }}</h1>
+    <p class="lead">{{ t('weddy.weddingNew.lead') }}</p>
 
     <WeddingForm
-      submit-label="Založit plánování"
+      :submit-label="t('weddy.weddingNew.submit')"
       :save="(input) => weddings.create(input)"
       @saved="onSaved"
     />

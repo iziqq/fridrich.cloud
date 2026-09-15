@@ -1,5 +1,11 @@
 import type { HttpRequest, HttpResponseInit } from '@azure/functions';
-import type { ApiErrorBody, ApiErrorCode } from '@fridrich/shared';
+import {
+  errorKeys,
+  resolveLocale,
+  type ApiErrorBody,
+  type ApiErrorCode,
+  type Locale,
+} from '@fridrich/shared';
 import { getConfig } from '../config.js';
 import { DomainError, isDomainError, type DomainErrorKind } from '../domain/shared/DomainError.js';
 
@@ -86,7 +92,7 @@ export function methodNotAllowed(
 ): HttpResponseInit {
   const body: ApiErrorBody = {
     error: 'NotFound',
-    message: `Metoda ${request.method} není na této adrese podporovaná`,
+    message: errorKeys.methodNotAllowed,
   };
   return json(request, 405, body, { Allow: allowed.join(', ') });
 }
@@ -94,7 +100,7 @@ export function methodNotAllowed(
 export function serverError(request: HttpRequest): HttpResponseInit {
   const body: ApiErrorBody = {
     error: 'InternalServerError',
-    message: 'Neočekávaná chyba serveru',
+    message: errorKeys.serverError,
   };
   return json(request, 500, body);
 }
@@ -140,4 +146,12 @@ export function clientIp(request: HttpRequest): string {
 /** Azure připojuje k adrese port (`1.2.3.4:56789`), pro klíč limitu je navíc. */
 function stripPort(address: string): string {
   return address.replace(/:\d+$/, '');
+}
+
+/**
+ * Jazyk požadavku. Frontend posílá `Accept-Language` s jazykem, který má
+ * uživatel na webu zvolený; bez hlavičky (plánovač, curl) čeština.
+ */
+export function requestLocale(request: HttpRequest): Locale {
+  return resolveLocale(request.headers.get('accept-language'));
 }

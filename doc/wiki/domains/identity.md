@@ -52,6 +52,10 @@ activated without clicking the link.
 | `ports.ts` | `UserRepository` (incl. `listForRetention`, `delete`), `TokenRepository`, `LoginCodeRepository`, `SessionRepository`, `TokenGenerator`, `IdGenerator`, `RateLimiter`, **`UserDataEraser`** (products delete their data about a user; wired in `container.ts`) |
 | `EmailSender` | Port for sending e-mails |
 
+**Language:** `User.locale` (cs/en) is set at registration and updated by `startSession` /
+`resolveSession` from the request's `Accept-Language`; every e-mail exists in both
+languages ([i18n.md](../architecture/i18n.md)).
+
 Use cases (`application/identity`): `registerUser`, `verifyEmail`,
 `requestLoginCode`, `verifyLoginCode`, `resolveSession`, `logout`,
 `deleteAccount` and `applyAccountRetention` (`account.ts`); e-mail texts in
@@ -62,7 +66,7 @@ session use update `lastSeenAt`.
 
 | Endpoint | Method and path | Request → Response |
 |---|---|---|
-| `register` | `POST /api/auth/register` | `{ email, displayName, acceptTerms: true }` → `202 { message }` – identical for an already used e-mail |
+| `register` | `POST /api/auth/register` | `{ email, displayName, acceptTerms: true }` → `202 { message: key }` – identical for an already used e-mail |
 | `verifyEmail` | `POST /api/auth/verify-email` | `{ token }` → `200 User` + session cookie |
 | `requestLoginCode` | `POST /api/auth/login` | `{ email }` → `202 { message }` – identical for an unknown address |
 | `verifyLoginCode` | `POST /api/auth/login/verify` | `{ email, code }` → `200 User` + session cookie |

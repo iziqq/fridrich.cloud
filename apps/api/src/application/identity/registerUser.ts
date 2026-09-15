@@ -1,4 +1,4 @@
-import { TERMS_VERSION, type User as PublicUser } from '@fridrich/shared';
+import { TERMS_VERSION, type Locale, type User as PublicUser } from '@fridrich/shared';
 import { EmailAddress } from '../../domain/identity/EmailAddress.js';
 import { OneTimeToken } from '../../domain/identity/OneTimeToken.js';
 import { User } from '../../domain/identity/User.js';
@@ -14,6 +14,8 @@ export interface RegisterUserCommand {
   sourceIp: string;
   /** Základ odkazu v e-mailu, např. `https://www.fridrich.cloud`. */
   appUrl: string;
+  /** Jazyk, ve kterém uživatel web používá – účet si ho zapamatuje a v něm přijde e-mail. */
+  locale: Locale;
 }
 
 /**
@@ -40,7 +42,9 @@ export async function registerUser(
   const existing = await deps.users.findByEmail(email);
   if (existing) {
     // Účet nevzniká, ale volající to nepozná.
-    await deps.email.send(accountExistsEmail(email.value, `${command.appUrl}/prihlaseni`));
+    await deps.email.send(
+      accountExistsEmail(email.value, `${command.appUrl}/prihlaseni`, command.locale),
+    );
     return undefined;
   }
 
@@ -50,11 +54,12 @@ export async function registerUser(
     displayName: command.displayName,
     acceptTerms: command.acceptTerms,
     termsVersion: TERMS_VERSION,
+    locale: command.locale,
     clock: deps.clock,
   });
 
   await deps.users.save(user);
-  await sendVerification(deps, user.id, email.value, command.appUrl);
+  await sendVerification(deps, user.id, email.value, command.appUrl, command.locale);
 
   return user.toPublic();
 }
@@ -65,6 +70,7 @@ export async function sendVerification(
   userId: string,
   email: string,
   appUrl: string,
+  locale: Locale,
 ): Promise<void> {
   await deps.tokens.invalidateAll(userId);
 
@@ -79,5 +85,5 @@ export async function sendVerification(
   await deps.tokens.save(record);
 
   const verifyUrl = `${appUrl}/overeni-emailu?token=${encodeURIComponent(token)}`;
-  await deps.email.send(verificationEmail(email, verifyUrl));
+  await deps.email.send(verificationEmail(email, verifyUrl, locale));
 }

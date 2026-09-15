@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
 import CyberButton from '@/components/CyberButton.vue';
 import GlitchHeading from '@/components/GlitchHeading.vue';
@@ -7,6 +8,7 @@ import SectionLabel from '@/components/SectionLabel.vue';
 import { projects } from '@/content/site';
 
 const route = useRoute();
+const { t } = useI18n();
 
 const project = computed(() =>
   projects.items.find((item) => item.id === route.params['id']),
@@ -16,25 +18,25 @@ const project = computed(() =>
 <template>
   <section class="page">
     <div v-if="project" class="container">
-      <SectionLabel :text="`// ${project.tagline}`" />
+      <SectionLabel :text="'// ' + t(`portal.projects.items.${project.id}.tagline`)" />
       <GlitchHeading :text="project.name" :level="1" />
 
-      <p class="status mono" :class="project.status">{{ project.statusLabel }}</p>
-      <p class="description">{{ project.description }}</p>
+      <p class="status mono" :class="project.status">{{ t(`portal.projects.status.${project.status}`) }}</p>
+      <p class="description">{{ t(`portal.projects.items.${project.id}.description`) }}</p>
 
       <ul class="stack mono">
         <li v-for="tech in project.stack" :key="tech">{{ tech }}</li>
       </ul>
 
       <div class="actions">
-        <CyberButton v-if="project.url" :href="project.url">Otevřít aplikaci</CyberButton>
-        <RouterLink to="/#projekty" class="back mono">← Zpět na projekty</RouterLink>
+        <CyberButton v-if="project.url" :href="project.url">{{ t('portal.projects.openApp') }}</CyberButton>
+        <RouterLink to="/#projekty" class="back mono">{{ t('portal.projects.backToProjects') }}</RouterLink>
       </div>
     </div>
 
     <div v-else class="container">
-      <GlitchHeading text="Projekt nenalezen" :level="1" />
-      <RouterLink to="/#projekty" class="back mono">← Zpět na projekty</RouterLink>
+      <GlitchHeading :text="t('portal.projects.notFound')" :level="1" />
+      <RouterLink to="/#projekty" class="back mono">{{ t('portal.projects.backToProjects') }}</RouterLink>
     </div>
   </section>
 </template>

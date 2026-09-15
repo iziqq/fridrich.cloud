@@ -1,4 +1,10 @@
-import { DisplayNameSchema, type User as PublicUser } from '@fridrich/shared';
+import {
+  DEFAULT_LOCALE,
+  DisplayNameSchema,
+  identityKeys,
+  type Locale,
+  type User as PublicUser,
+} from '@fridrich/shared';
 import * as v from 'valibot';
 import type { Clock } from '../shared/Clock.js';
 import { DomainError } from '../shared/DomainError.js';
@@ -20,6 +26,8 @@ export interface UserState {
   lastSeenAt?: string;
   /** Kdy odešlo upozornění, že se neaktivní účet brzy smaže. Aktivita ho ruší. */
   inactivityWarningSentAt?: string;
+  /** Jazyk e-mailů, které přijdou bez akce uživatele (plánovač). Chybí u starších účtů = čeština. */
+  locale?: Locale;
 }
 
 /**
@@ -41,6 +49,7 @@ export class User {
     readonly termsAcceptedAt: string | undefined,
     private lastSeenAtValue: string | undefined,
     private inactivityWarningSentAtValue: string | undefined,
+    private localeValue: Locale,
   ) {}
 
   /**
@@ -53,13 +62,11 @@ export class User {
     displayName: string;
     acceptTerms: boolean;
     termsVersion: string;
+    locale: Locale;
     clock: Clock;
   }): User {
     if (!input.acceptTerms) {
-      throw DomainError.field(
-        'acceptTerms',
-        'Pro založení účtu je potřeba souhlasit s obchodními podmínkami',
-      );
+      throw DomainError.field('acceptTerms', identityKeys.acceptTermsRequired);
     }
 
     const displayName = User.normalizeDisplayName(input.displayName);
@@ -76,6 +83,7 @@ export class User {
       now,
       now,
       undefined,
+      input.locale,
     );
   }
 
@@ -91,6 +99,7 @@ export class User {
       state.termsAcceptedAt,
       state.lastSeenAt,
       state.inactivityWarningSentAt,
+      state.locale ?? DEFAULT_LOCALE,
     );
   }
 
@@ -127,6 +136,10 @@ export class User {
 
   get inactivityWarningSentAt(): string | undefined {
     return this.inactivityWarningSentAtValue;
+  }
+
+  get locale(): Locale {
+    return this.localeValue;
   }
 
   verifyEmail(clock: Clock): void {
@@ -189,6 +202,16 @@ export class User {
     return sinceWarningMs >= warningDays * DAY_MS;
   }
 
+  /**
+   * Jazyk, ve kterém uživatel web právě používá. Vrací `true`, když je potřeba zápis.
+   * Ukládá se kvůli e-mailům z plánovače – ty přijdou, když uživatel web zrovna nemá otevřený.
+   */
+  changeLocale(locale: Locale): boolean {
+    if (this.localeValue === locale) return false;
+    this.localeValue = locale;
+    return true;
+  }
+
   markInactivityWarningSent(clock: Clock): void {
     this.inactivityWarningSentAtValue = clock.now().toISOString();
   }
@@ -205,6 +228,7 @@ export class User {
       emailVerified: this.verified,
       createdAt: this.createdAt,
       updatedAt: this.updatedAtValue,
+      locale: this.localeValue,
     };
 
     if (this.termsVersion) state.termsVersion = this.termsVersion;

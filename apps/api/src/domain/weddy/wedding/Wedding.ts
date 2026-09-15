@@ -1,4 +1,9 @@
-import type { Person, Wedding as WeddingData, WeddingInput } from '@fridrich/weddy-shared';
+import {
+  weddingKeys,
+  type Person,
+  type Wedding as WeddingData,
+  type WeddingInput,
+} from '@fridrich/weddy-shared';
 import type { Clock } from '../../shared/Clock.js';
 import { DomainError } from '../../shared/DomainError.js';
 
@@ -80,7 +85,7 @@ export class Wedding {
   /** Vyhodí `forbidden`, pokud uživatel k plánování nemá přístup. */
   assertAccessibleBy(userId: string): void {
     if (!this.isAccessibleBy(userId)) {
-      throw DomainError.forbidden('K tomuto plánování nemáte přístup');
+      throw DomainError.forbidden(weddingKeys.forbidden);
     }
   }
 
@@ -113,7 +118,7 @@ export class Wedding {
   removeOwner(userId: string, clock: Clock): void {
     if (!this.owners.includes(userId)) return;
     if (this.owners.length === 1) {
-      throw DomainError.conflict('Posledního vlastníka nejde odebrat – plánování je potřeba smazat');
+      throw DomainError.conflict(weddingKeys.lastOwner);
     }
 
     this.owners = this.owners.filter((ownerId) => ownerId !== userId);

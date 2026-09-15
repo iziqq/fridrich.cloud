@@ -2,25 +2,27 @@
 import CyberButton from '@/components/CyberButton.vue';
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
-import { process } from '@/content/site';
+import { useI18n } from 'vue-i18n';
+import { processSteps } from '@/content/site';
 import { useReveal } from '@/composables/useReveal';
 
+const { t } = useI18n();
 const { el, visible } = useReveal();
 </script>
 
 <template>
   <section id="vyvoj" class="section" aria-labelledby="vyvoj-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
-      <SectionLabel :text="process.label" />
-      <GlitchHeading :text="process.title" :level="2" />
-      <span id="vyvoj-title" class="visually-hidden">{{ process.title }}</span>
-      <p class="lead">{{ process.lead }}</p>
+      <SectionLabel :text="t('portal.process.label')" />
+      <GlitchHeading :text="t('portal.process.title')" :level="2" />
+      <span id="vyvoj-title" class="visually-hidden">{{ t('portal.process.title') }}</span>
+      <p class="lead">{{ t('portal.process.lead') }}</p>
 
       <!-- Kroky jsou číslovaný seznam i sémanticky, ne jen vizuálně. -->
       <ol class="steps">
         <li
-          v-for="(step, index) in process.steps"
-          :key="step.number"
+          v-for="(step, index) in processSteps"
+          :key="step.id"
           class="step"
           :style="{ '--i': index }"
         >
@@ -29,19 +31,20 @@ const { el, visible } = useReveal();
           </div>
 
           <div class="content bevel-sm">
-            <h3>{{ step.title }}</h3>
-            <p>{{ step.description }}</p>
+            <h3>{{ t(`portal.process.steps.${step.id}.title`) }}</h3>
+            <p>{{ t(`portal.process.steps.${step.id}.description`) }}</p>
             <p class="output mono">
-              <span class="output-key">Výstup:</span> {{ step.output }}
+              <span class="output-key">{{ t('portal.process.outputLabel') }}</span>
+              {{ t(`portal.process.steps.${step.id}.output`) }}
             </p>
           </div>
         </li>
       </ol>
 
-      <p class="note">{{ process.note }}</p>
+      <p class="note">{{ t('portal.process.note') }}</p>
 
       <div class="cta">
-        <CyberButton href="#kontakt">Začneme prvním krokem</CyberButton>
+        <CyberButton href="#kontakt">{{ t('portal.process.cta') }}</CyberButton>
       </div>
     </div>
   </section>

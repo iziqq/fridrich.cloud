@@ -1,4 +1,4 @@
-import type { User as PublicUser } from '@fridrich/shared';
+import type { Locale, User as PublicUser } from '@fridrich/shared';
 import { Session } from '../../domain/identity/Session.js';
 import type { User } from '../../domain/identity/User.js';
 import type { IdentityDeps } from './deps.js';
@@ -16,9 +16,16 @@ export interface SessionResult {
  * Volají to dvě cesty – opsaný kód i kliknutí na aktivační odkaz – a obě
  * musí session vyrobit stejně, proto sedí na jednom místě.
  */
-export async function startSession(deps: IdentityDeps, user: User): Promise<SessionResult> {
-  // Přihlášení je aktivita – odsouvá smazání neaktivního účtu.
-  if (user.markSeen(deps.clock)) await deps.users.save(user);
+export async function startSession(
+  deps: IdentityDeps,
+  user: User,
+  locale: Locale,
+): Promise<SessionResult> {
+  // Přihlášení je aktivita – odsouvá smazání neaktivního účtu. Jazyk se uloží
+  // pro e-maily, které přijdou bez akce uživatele (upozornění plánovače).
+  const seen = user.markSeen(deps.clock);
+  const localeChanged = user.changeLocale(locale);
+  if (seen || localeChanged) await deps.users.save(user);
 
   const { token, tokenHash } = deps.tokenGenerator.generate();
   const session = Session.start({
@@ -42,6 +49,7 @@ export async function startSession(deps: IdentityDeps, user: User): Promise<Sess
 export async function resolveSession(
   deps: IdentityDeps,
   sessionToken: string | undefined,
+  locale?: Locale,
 ): Promise<User | undefined> {
   if (!sessionToken) return undefined;
 
@@ -65,8 +73,11 @@ export async function resolveSession(
     await deps.sessions.save(session);
   }
 
-  // Používání přihlášeného účtu je aktivita stejně jako přihlášení (zápis nejvýš jednou za den).
-  if (user.markSeen(deps.clock)) {
+  // Používání přihlášeného účtu je aktivita stejně jako přihlášení (zápis nejvýš jednou
+  // za den). Přepnutí jazyka na webu se k účtu uloží při nejbližším požadavku.
+  const seen = user.markSeen(deps.clock);
+  const localeChanged = locale !== undefined && user.changeLocale(locale);
+  if (seen || localeChanged) {
     await deps.users.save(user);
   }
 

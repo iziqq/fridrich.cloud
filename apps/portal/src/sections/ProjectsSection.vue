@@ -2,19 +2,21 @@
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import ProjectCard from '@/components/ProjectCard.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
+import { useI18n } from 'vue-i18n';
 import { projects } from '@/content/site';
 import { useReveal } from '@/composables/useReveal';
 
+const { t } = useI18n();
 const { el, visible } = useReveal();
 </script>
 
 <template>
   <section id="projekty" class="section" aria-labelledby="projekty-title">
     <div ref="el" class="container reveal" :class="{ 'is-visible': visible }">
-      <SectionLabel :text="projects.label" />
-      <GlitchHeading :text="projects.title" :level="2" />
-      <span id="projekty-title" class="visually-hidden">{{ projects.title }}</span>
-      <p class="lead">{{ projects.lead }}</p>
+      <SectionLabel :text="t('portal.projects.label')" />
+      <GlitchHeading :text="t('portal.projects.title')" :level="2" />
+      <span id="projekty-title" class="visually-hidden">{{ t('portal.projects.title') }}</span>
+      <p class="lead">{{ t('portal.projects.lead') }}</p>
 
       <div class="grid">
         <ProjectCard v-for="project in projects.items" :key="project.id" :project="project" />

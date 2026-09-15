@@ -6,7 +6,7 @@ import type {
   GuestStats,
   GuestStatus,
 } from '@fridrich/weddy-shared';
-import { calculateGuestStats } from '@fridrich/weddy-shared';
+import { calculateGuestStats, guestsKeys } from '@fridrich/weddy-shared';
 import { DomainError } from '../../domain/shared/DomainError.js';
 import { createFamily as composeFamily, rewriteFamily } from '../../domain/weddy/guests/Family.js';
 import { Guest } from '../../domain/weddy/guests/Guest.js';
@@ -52,7 +52,7 @@ async function loadGuest(
   const wedding = await loadWeddingFor(deps, weddingId, userId);
 
   const guest = await deps.guests.findById(wedding.id, guestId);
-  if (!guest) throw DomainError.notFound('Host');
+  if (!guest) throw DomainError.notFound(guestsKeys.guestNotFound);
 
   return guest;
 }
@@ -124,7 +124,7 @@ async function loadFamilyMembers(
   const members = (await deps.guests.list(weddingId)).filter(
     (guest) => guest.family?.id === familyId,
   );
-  if (members.length === 0) throw DomainError.notFound('Rodina');
+  if (members.length === 0) throw DomainError.notFound(guestsKeys.familyNotFound);
 
   return members;
 }

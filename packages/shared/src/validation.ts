@@ -1,5 +1,20 @@
 import * as v from 'valibot';
 import type { ApiErrorDetail } from './api.js';
+import { messageKeys, type Catalog } from './i18n.js';
+
+const cs = {
+  invalidData: 'Neplatná data',
+  fieldRequired: 'Vyplňte toto pole',
+};
+
+const en: Catalog<typeof cs> = {
+  invalidData: 'Invalid data',
+  fieldRequired: 'Please fill in this field',
+};
+
+/** Obecné hlášky validace – jmenný prostor `shared.common`. */
+export const commonMessages = { cs, en };
+export const commonKeys = messageKeys(cs, 'shared.common');
 
 /**
  * Stavební kameny validace nad Valibotem.
@@ -116,7 +131,8 @@ export function optionalIsoDate(message: string) {
  * opraví a teprve pak má smysl ukazovat další.
  *
  * Úplně chybějící klíč hlásí Valibot za objekt, ne za pole – hláška ze
- * schématu pole se nepoužije a výchozí je anglicky. Nahradí se obecnou českou.
+ * schématu pole se nepoužije a výchozí je anglická věta. Nahradí se klíčem
+ * obecné hlášky, ať ji frontend přeloží stejně jako ostatní.
  */
 export function issuesToDetails(issues: readonly v.BaseIssue<unknown>[]): ApiErrorDetail[] {
   const details: ApiErrorDetail[] = [];
@@ -128,7 +144,7 @@ export function issuesToDetails(issues: readonly v.BaseIssue<unknown>[]): ApiErr
 
     const missingKey = issue.kind === 'schema' && issue.type === 'object' && field !== '';
     seen.add(field);
-    details.push({ field, message: missingKey ? 'Vyplňte toto pole' : issue.message });
+    details.push({ field, message: missingKey ? commonKeys.fieldRequired : issue.message });
   }
 
   return details;

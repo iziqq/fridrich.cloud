@@ -19,10 +19,11 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 |---|---|---|
 | [architecture/domains.md](architecture/domains.md) | Domain and subdomain map, where a domain lives on FE/BE, where logic belongs, dependency rules | 2026-09-15 |
 | [architecture/endpoints.md](architecture/endpoints.md) | One file per endpoint: naming, `defineEndpoint` (BE), `callEndpoint` (FE), checklist for a new endpoint | 2026-09-15 |
-| [architecture/valibot.md](architecture/valibot.md) | Types and validation with Valibot: where schemas live, naming, rules, field errors, pitfalls | 2026-09-15 |
+| [architecture/valibot.md](architecture/valibot.md) | Types and validation with Valibot: where schemas live, naming, message keys, field errors, pitfalls | 2026-09-15 |
 | [architecture/backend.md](architecture/backend.md) | `apps/api`: structure, request lifecycle, layer rules, tests, CORS | 2026-09-15 |
 | [architecture/frontend.md](architecture/frontend.md) | `apps/portal`: domain folders, store vs. view, responsive breakpoints (mobile / tablet / notebook), product routing and look, addresses | 2026-09-15 |
 | [architecture/monorepo.md](architecture/monorepo.md) | Split principles, repository structure, shared packages, what goes where, scripts | 2026-09-15 |
+| [architecture/i18n.md](architecture/i18n.md) | Translations: vue-i18n catalogs (cs/en), message keys from schemas and API, language choice, e-mails per locale | 2026-09-15 |
 | [architecture/personalData.md](architecture/personalData.md) | GDPR: what collects personal data, legal documents, account deletion, retention scheduler, the switch | 2026-09-15 |
 | [architecture/dataCosmos.md](architecture/dataCosmos.md) | Cosmos DB: containers, partition keys, TTL, RU/s capacity, repository rules | 2026-09-15 |
 

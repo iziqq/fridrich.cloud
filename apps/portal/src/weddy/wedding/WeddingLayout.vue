@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import { weddyPath } from '@/weddy/routes';
 import { useWeddingStore } from './wedding.store';
 
+const { t } = useI18n();
 const route = useRoute();
 const weddings = useWeddingStore();
 
@@ -18,23 +21,25 @@ const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 watch(weddingId, (id) => id && weddings.loadOne(id), { immediate: true });
 
 const tabs = computed(() => [
-  { to: weddyPath(`/weddings/${weddingId.value}/couple`), icon: '💑', label: 'Snoubenci' },
-  { to: weddyPath(`/weddings/${weddingId.value}/guests`), icon: '👥', label: 'Hosté' },
-  { to: weddyPath(`/weddings/${weddingId.value}/planning`), icon: '📋', label: 'Plánování' },
-  { to: weddyPath(`/weddings/${weddingId.value}/budget`), icon: '💰', label: 'Rozpočet' },
+  { to: weddyPath(`/weddings/${weddingId.value}/couple`), icon: '💑', label: t('weddy.layout.tabs.couple') },
+  { to: weddyPath(`/weddings/${weddingId.value}/guests`), icon: '👥', label: t('weddy.layout.tabs.guests') },
+  { to: weddyPath(`/weddings/${weddingId.value}/planning`), icon: '📋', label: t('weddy.layout.tabs.planning') },
+  { to: weddyPath(`/weddings/${weddingId.value}/budget`), icon: '💰', label: t('weddy.layout.tabs.budget') },
 ]);
 
-const title = computed(() => weddings.current?.title ?? 'Plánování');
+const title = computed(() => weddings.current?.title ?? t('weddy.layout.fallbackTitle'));
 </script>
 
 <template>
   <div class="layout">
     <header class="top">
       <div class="container bar">
-        <RouterLink :to="weddyPath()" class="back" aria-label="Zpět na přehled">
+        <RouterLink :to="weddyPath()" class="back" :aria-label="t('weddy.layout.back')">
           <span aria-hidden="true">←</span>
         </RouterLink>
         <h1>{{ title }}</h1>
+        <!-- Plánovač nemá navigaci portálu, jazyk se proto přepíná v horní liště. -->
+        <LocaleSwitcher class="locale" />
       </div>
     </header>
 
@@ -43,7 +48,7 @@ const title = computed(() => weddings.current?.title ?? 'Plánování');
     </main>
 
     <!-- Spodní navigace v dosahu palce (doc/wiki/domains/weddy.md). -->
-    <nav class="bottom" aria-label="Sekce plánování">
+    <nav class="bottom" :aria-label="t('weddy.layout.sections')">
       <RouterLink v-for="tab in tabs" :key="tab.to" :to="tab.to" class="tab">
         <span class="icon" aria-hidden="true">{{ tab.icon }}</span>
         <span class="label">{{ tab.label }}</span>
@@ -86,12 +91,20 @@ const title = computed(() => weddings.current?.title ?? 'Plánování');
   color: var(--color-accent);
 }
 
+/* Název se zkracuje výpustkou, přepínač jazyka zůstává vpravo v plné velikosti. */
 .bar h1 {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   font-size: 1.125rem;
   font-weight: 600;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.locale {
+  flex-shrink: 0;
+  margin-right: calc(var(--gutter) * -0.5);
 }
 
 .bottom {

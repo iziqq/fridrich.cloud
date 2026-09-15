@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import type { Project } from '@/content/site';
 
 defineProps<{ project: Project }>();
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -10,23 +13,25 @@ defineProps<{ project: Project }>();
     <div class="head">
       <div>
         <h3>{{ project.name }}</h3>
-        <p class="mono tagline">{{ project.tagline }}</p>
+        <p class="mono tagline">{{ t(`portal.projects.items.${project.id}.tagline`) }}</p>
       </div>
 
       <!-- Stav je rozlišený barvou i textem, ne jen barvou (přístupnost). -->
-      <span class="status mono" :class="project.status">{{ project.statusLabel }}</span>
+      <span class="status mono" :class="project.status">
+        {{ t(`portal.projects.status.${project.status}`) }}
+      </span>
     </div>
 
-    <p class="description">{{ project.description }}</p>
+    <p class="description">{{ t(`portal.projects.items.${project.id}.description`) }}</p>
 
     <ul class="stack mono">
       <li v-for="tech in project.stack" :key="tech">{{ tech }}</li>
     </ul>
 
     <div class="actions">
-      <RouterLink :to="`/projekty/${project.id}`" class="link">Detail projektu</RouterLink>
+      <RouterLink :to="`/projekty/${project.id}`" class="link">{{ t('portal.projects.detail') }}</RouterLink>
       <a v-if="project.url" :href="project.url" class="link primary">
-        Otevřít aplikaci ↗
+        {{ t('portal.projects.openAppExternal') }}
       </a>
     </div>
   </article>

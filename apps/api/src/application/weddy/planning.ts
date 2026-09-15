@@ -4,6 +4,7 @@ import type {
   PlanningItemInput,
   PlanningItemStatus,
 } from '@fridrich/weddy-shared';
+import { planningKeys } from '@fridrich/weddy-shared';
 import { DomainError } from '../../domain/shared/DomainError.js';
 import { PlanningItem } from '../../domain/weddy/planning/PlanningItem.js';
 import { loadWeddingFor } from './wedding.js';
@@ -33,7 +34,7 @@ async function loadItem(
   const wedding = await loadWeddingFor(deps, weddingId, userId);
 
   const item = await deps.items.findById(wedding.id, itemId);
-  if (!item) throw DomainError.notFound('Položka');
+  if (!item) throw DomainError.notFound(planningKeys.itemNotFound);
 
   return item;
 }

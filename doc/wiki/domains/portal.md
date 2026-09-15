@@ -13,7 +13,7 @@ updated: 2026-09-15
 > main goal is an enquiry through the contact form; it is also the gateway to the
 > products. Visual style inspired by **Cyberpunk 2077**. The portal is not a
 > business domain but content and look; its only API calls are
-> [contact](contact.md) and sign-in ([identity](identity.md)). Website texts are Czech.
+> [contact](contact.md) and sign-in ([identity](identity.md)). Website texts are Czech and English (switcher in the navigation).
 >
 > Personal data is collected under the privacy policy and terms at
 > `/ochrana-osobnich-udaju` and `/obchodni-podminky` ([personalData.md](../architecture/personalData.md)).
@@ -39,7 +39,7 @@ name → account. *Přihlásit se* is hidden when the GDPR switch is off. The ac
 | Footer | Products, e-mail, links *Ochrana osobních údajů* (Privacy) and *Obchodní podmínky* (Terms); bottom line with name, IČO and registered address |
 | Legal pages | `/ochrana-osobnich-udaju`, `/obchodni-podminky` – `LegalView.vue`, content in `content/legal.ts` |
 
-Copy is not hard-coded in components but lives in `apps/portal/src/content/site.ts`.
+Copy is not hard-coded in components: texts are in the `portal.*` catalog (`apps/portal/src/i18n/locales/portal.ts`, cs + en), structural data (ids, stack, status, links, company details) in `apps/portal/src/content/site.ts`. Legal documents (`content/legal.ts`) are Czech only.
 
 ## Binding rules
 

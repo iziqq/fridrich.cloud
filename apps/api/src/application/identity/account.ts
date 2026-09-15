@@ -1,4 +1,8 @@
-import { INACTIVE_ACCOUNT_RETENTION_DAYS, INACTIVE_ACCOUNT_WARNING_DAYS } from '@fridrich/shared';
+import {
+  identityKeys,
+  INACTIVE_ACCOUNT_RETENTION_DAYS,
+  INACTIVE_ACCOUNT_WARNING_DAYS,
+} from '@fridrich/shared';
 import type { User } from '../../domain/identity/User.js';
 import { DomainError } from '../../domain/shared/DomainError.js';
 import { accountDeletedEmail, inactiveAccountWarningEmail } from './emails.js';
@@ -17,10 +21,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Smazání účtu z nastavení – nevratné, uživatel dostane potvrzení e-mailem. */
 export async function deleteAccount(deps: IdentityDeps, userId: string): Promise<void> {
   const user = await deps.users.findById(userId);
-  if (!user) throw DomainError.notFound('Účet');
+  if (!user) throw DomainError.notFound(identityKeys.accountNotFound);
 
   await eraseAccount(deps, user);
-  await deps.email.send(accountDeletedEmail(user.email.value, 'na vaši žádost'));
+  await deps.email.send(accountDeletedEmail(user.email.value, { kind: 'request' }, user.locale));
 }
 
 export interface RetentionResult {
@@ -58,7 +62,8 @@ export async function applyAccountRetention(
       await deps.email.send(
         accountDeletedEmail(
           user.email.value,
-          `protože jste se ${INACTIVE_ACCOUNT_RETENTION_DAYS} dní nepřihlásili`,
+          { kind: 'inactivity', days: INACTIVE_ACCOUNT_RETENTION_DAYS },
+          user.locale,
         ),
       );
       result.deleted += 1;
@@ -67,7 +72,12 @@ export async function applyAccountRetention(
 
     if (user.inactivityWarningSentAt === undefined) {
       await deps.email.send(
-        inactiveAccountWarningEmail(user.email.value, `${appUrl}/prihlaseni`, INACTIVE_ACCOUNT_WARNING_DAYS),
+        inactiveAccountWarningEmail(
+          user.email.value,
+          `${appUrl}/prihlaseni`,
+          INACTIVE_ACCOUNT_WARNING_DAYS,
+          user.locale,
+        ),
       );
       user.markInactivityWarningSent(deps.clock);
       await deps.users.save(user);

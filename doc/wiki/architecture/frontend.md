@@ -21,7 +21,8 @@ updated: 2026-09-15
 
 ```
 apps/portal/src/
-├── api/http.ts                 # callEndpoint + ApiError – the only place with fetch
+├── api/http.ts                 # callEndpoint + ApiError – the only place with fetch; sends Accept-Language
+├── i18n/                       # vue-i18n: index.ts (setup, setLocale, translateMessage), locales/<area>.ts (cs + en)
 ├── identity/                   # identity domain
 │   ├── endpoints/              # register, requestLoginCode, verifyLoginCode, verifyEmail, logout, getCurrentUser
 │   ├── auth.store.ts           # signed-in user
@@ -62,6 +63,9 @@ apps/portal/src/
    shared kernel, they are not rewritten in a component.
 8. **Everything is responsive** – mobile, tablet and notebook, with the named
    breakpoints below. A screen that works only on one width is not finished.
+9. **No hard-coded texts** – `t('area.key')` from the area catalog, API/validation keys via
+   `translateMessage`; the language switcher (`LocaleSwitcher.vue`) is in the portal navigation and
+   the IziWeddy headers ([i18n.md](i18n.md)).
 
 ## Responsive layout and breakpoints
 
