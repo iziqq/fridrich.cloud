@@ -6,6 +6,8 @@
  * vyjmenují a zaregistrují – endpoint, který v seznamu chybí, na API neexistuje.
  */
 import { submitContactMessageEndpoint } from './endpoints/contact/submitContactMessage.endpoint.js';
+import { applyAccountRetentionEndpoint } from './endpoints/identity/applyAccountRetention.endpoint.js';
+import { deleteAccountEndpoint } from './endpoints/identity/deleteAccount.endpoint.js';
 import { getCurrentUserEndpoint } from './endpoints/identity/getCurrentUser.endpoint.js';
 import { logoutEndpoint } from './endpoints/identity/logout.endpoint.js';
 import { registerEndpoint } from './endpoints/identity/register.endpoint.js';
@@ -31,16 +33,22 @@ import { deleteWeddingEndpoint } from './endpoints/weddy/wedding/deleteWedding.e
 import { getWeddingEndpoint } from './endpoints/weddy/wedding/getWedding.endpoint.js';
 import { listWeddingsEndpoint } from './endpoints/weddy/wedding/listWeddings.endpoint.js';
 import { updateWeddingEndpoint } from './endpoints/weddy/wedding/updateWedding.endpoint.js';
+import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 import { registerEndpoints } from './http/endpoint.js';
 
-registerEndpoints([
+/*
+ * Endpointy, které přijímají nebo vydávají osobní údaje (jméno, e-mail, IP,
+ * jména hostů). Bez zásad ochrany osobních údajů se nezaregistrují vůbec –
+ * API je pak nezná a odpoví 404, i když je někdo zavolá mimo web.
+ */
+const personalDataEndpoints = [
   // identity
   registerEndpoint,
   verifyEmailEndpoint,
   requestLoginCodeEndpoint,
   verifyLoginCodeEndpoint,
-  logoutEndpoint,
   getCurrentUserEndpoint,
+  deleteAccountEndpoint,
 
   // contact
   submitContactMessageEndpoint,
@@ -71,4 +79,14 @@ registerEndpoints([
 
   // weddy / budget
   getBudgetEndpoint,
+];
+
+registerEndpoints([
+  // Odhlášení jen maže session cookie a nic nepřijímá – zůstává, aby šla
+  // ukončit případná session z doby, kdy byl sběr zapnutý.
+  logoutEndpoint,
+  // Údržba data jen maže (neaktivní účty) – musí běžet i s vypnutým sběrem,
+  // jinak by lhůta ze zásad přestala platit.
+  applyAccountRetentionEndpoint,
+  ...(PERSONAL_DATA_COLLECTION_ENABLED ? personalDataEndpoints : []),
 ]);

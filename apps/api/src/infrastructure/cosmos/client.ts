@@ -1,6 +1,7 @@
 import { Agent } from 'node:https';
 import { CosmosClient, type Container, type Database } from '@azure/cosmos';
 import { DefaultAzureCredential } from '@azure/identity';
+import { CONTACT_MESSAGE_RETENTION_DAYS } from '@fridrich/shared';
 import { CONTAINERS, getCosmosConfig, type ContainerName } from '../../config.js';
 
 /**
@@ -23,7 +24,12 @@ const CONTAINER_DEFINITIONS: {
   { id: CONTAINERS.loginCodes, partitionKey: '/userId', ttlSeconds: 60 * 60 },
   { id: CONTAINERS.sessions, partitionKey: '/userId', ttlSeconds: 60 * 24 * 60 * 60 },
   { id: CONTAINERS.rateLimits, partitionKey: '/id', ttlSeconds: 24 * 60 * 60 },
-  { id: CONTAINERS.contactMessages, partitionKey: '/id' },
+  // Lhůta ze zásad ochrany osobních údajů – zprávu smaže Cosmos DB sám rok po přijetí.
+  {
+    id: CONTAINERS.contactMessages,
+    partitionKey: '/id',
+    ttlSeconds: CONTACT_MESSAGE_RETENTION_DAYS * 24 * 60 * 60,
+  },
   { id: CONTAINERS.weddings, partitionKey: '/id' },
   { id: CONTAINERS.guests, partitionKey: '/weddingId' },
   { id: CONTAINERS.planningItems, partitionKey: '/weddingId' },
@@ -80,13 +86,23 @@ async function initDatabase(): Promise<Database> {
   });
 
   await Promise.all(
-    CONTAINER_DEFINITIONS.map((definition) =>
-      database.containers.createIfNotExists({
+    CONTAINER_DEFINITIONS.map(async (definition) => {
+      const { container, resource } = await database.containers.createIfNotExists({
         id: definition.id,
         partitionKey: { paths: [definition.partitionKey] },
         ...(definition.ttlSeconds ? { defaultTtl: definition.ttlSeconds } : {}),
-      }),
-    ),
+      });
+
+      /*
+       * `createIfNotExists` existující kontejner nemění – kontejner založený
+       * dřív by novou lhůtu nikdy nedostal a data by se nemazala, i když to
+       * zásady slibují. Rozdílné TTL se proto dorovná. Cosmos DB pak smaže
+       * i starší dokumenty, jejichž lhůta (podle `_ts`) už uplynula.
+       */
+      if (definition.ttlSeconds && resource && resource.defaultTtl !== definition.ttlSeconds) {
+        await container.replace({ ...resource, defaultTtl: definition.ttlSeconds });
+      }
+    }),
   );
 
   return database;

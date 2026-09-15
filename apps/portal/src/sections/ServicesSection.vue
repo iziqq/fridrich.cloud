@@ -79,13 +79,13 @@ const { el, visible } = useReveal();
   color: var(--cp-cyan);
 }
 
-@media (min-width: 640px) {
+@media (--tablet) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (min-width: 1024px) {
+@media (--notebook) {
   .grid {
     grid-template-columns: repeat(4, 1fr);
   }

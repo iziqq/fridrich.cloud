@@ -1,0 +1,19 @@
+/*
+ * Breakpointy – jediné místo, kde jsou šířky zapsané.
+ *
+ * Styly se píšou mobile-first: základní CSS je rozvržení pro mobil (od 360 px),
+ * širší rozvržení se přidávají přes `@media (--tablet)` a `@media (--notebook)`.
+ * Custom properties v `@media` fungovat nemůžou, proto `@custom-media`
+ * (Media Queries Level 5). Prohlížeče ho zatím neumí – do CSS ho přeloží
+ * `postcss-custom-media` a `@csstools/postcss-global-data` ho zpřístupní
+ * i ve `<style>` blocích komponent (viz `apps/portal/postcss.config.js`).
+ *
+ * Tento soubor se neimportuje do CSS – definice po překladu zmizí.
+ * Proč právě tyto hodnoty: doc/wiki/architecture/frontend.md#responsive-layout-and-breakpoints
+ */
+
+/* Tablet: 768–1023 px. */
+@custom-media --tablet (min-width: 768px);
+
+/* Notebook: od 1024 px. Širší obrazovky už jen centrují obsah (`--content-max`). */
+@custom-media --notebook (min-width: 1024px);

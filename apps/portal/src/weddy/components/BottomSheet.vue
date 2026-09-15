@@ -173,7 +173,7 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 /* Na širší obrazovce dává větší smysl klasický dialog uprostřed. */
-@media (min-width: 640px) {
+@media (--tablet) {
   .overlay {
     justify-content: center;
     align-items: center;

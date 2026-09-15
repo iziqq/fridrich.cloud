@@ -20,6 +20,9 @@ dated briefs, e.g. `2026-09-15-domainArchitecture.md`) and an **ingest** operati
 | [2026-09-15-domainArchitecture.md](2026-09-15-domainArchitecture.md) | Request for domain architecture on FE and BE, one file per endpoint, Valibot, LLM Wiki. | [architecture/](../wiki/architecture/domains.md) |
 | [2026-09-15-docsInEnglish.md](2026-09-15-docsInEnglish.md) | All documentation in English, including anything given in Czech. | [CLAUDE.md](../../CLAUDE.md), whole wiki |
 | [2026-09-15-camelCaseFileNames.md](2026-09-15-camelCaseFileNames.md) | Documentation file names in camelCase, recorded in the docs. | [CLAUDE.md](../../CLAUDE.md#page-conventions), [decisions.md](../wiki/decisions.md) |
+| [2026-09-15-gdprNoDataCollection.md](2026-09-15-gdprNoDataCollection.md) | Hide everything that collects personal data until GDPR documentation exists. | [architecture/personalData.md](../wiki/architecture/personalData.md), [decisions.md](../wiki/decisions.md) |
+| [2026-09-15-legalDocumentsAndRetention.md](2026-09-15-legalDocumentsAndRetention.md) | Privacy policy and terms, self-service account deletion, one-year retention scheduler; controller identification from ARES. | [architecture/personalData.md](../wiki/architecture/personalData.md), [domains/identity.md](../wiki/domains/identity.md) |
+| [2026-09-15-responsiveFrontend.md](2026-09-15-responsiveFrontend.md) | Everything on the frontend responsive, breakpoints for notebook, tablet and mobile. | [CLAUDE.md](../../CLAUDE.md#frontend), [architecture/frontend.md](../wiki/architecture/frontend.md#responsive-layout-and-breakpoints) |
 
 > ℹ️ Links inside the sources point to documents as they existed when the
 > source was written (e.g. `architecture.md`, `iziweddy.md`). Those files no

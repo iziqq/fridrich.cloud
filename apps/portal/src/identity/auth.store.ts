@@ -1,6 +1,7 @@
 import type { User } from '@fridrich/shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import { deleteAccount } from './endpoints/deleteAccount.endpoint';
 import { getCurrentUser } from './endpoints/getCurrentUser.endpoint';
 import { logout } from './endpoints/logout.endpoint';
 import { verifyEmail } from './endpoints/verifyEmail.endpoint';
@@ -61,5 +62,24 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, loaded, isAuthenticated, load, signInWithCode, activateAccount, signOut };
+  /**
+   * Zrušení účtu z nastavení. Na rozdíl od odhlášení se při chybě uživatel
+   * lokálně neodhlašuje – musí vidět, že se účet nesmazal, a zkusit to znovu.
+   */
+  async function closeAccount(): Promise<void> {
+    await deleteAccount();
+    user.value = null;
+    loaded.value = true;
+  }
+
+  return {
+    user,
+    loaded,
+    isAuthenticated,
+    load,
+    signInWithCode,
+    activateAccount,
+    signOut,
+    closeAccount,
+  };
 });

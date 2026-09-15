@@ -60,7 +60,7 @@ export const createGuestEndpoint = defineEndpoint({
   name: 'createGuest',
   method: 'POST',
   route: 'weddy/weddings/{weddingId}/guests',
-  access: 'user',                 // 'public' | 'user'
+  access: 'user',                 // 'public' | 'user' | 'maintenance'
   params: CreateGuestParams,
   body: CreateGuestRequest,
   response: CreateGuestResponse,  // type-checks the return value of handle
@@ -77,6 +77,9 @@ What the `defineEndpoint` wrapper (`apps/api/src/http/endpoint.ts`) does for the
 
 1. `access: 'user'` → verifies the session cookie; without it returns `401`.
    `user` is then typed as `User` in `handle`; for `public` it is `undefined`.
+   `access: 'maintenance'` → header `x-maintenance-token` must match the
+   `MAINTENANCE_TOKEN` setting (constant-time compare), otherwise `401`; for the
+   scheduler only ([personalData.md](personalData.md#retention-scheduler)).
 2. Parses `params`, `query` (from the URL) and `body` (JSON) with their schemas.
    Invalid input → `400` with `details: [{ field: 'groom.firstName', message }]`
    and `handle` is never called.
@@ -89,6 +92,9 @@ What the `defineEndpoint` wrapper (`apps/api/src/http/endpoint.ts`) does for the
 `registerEndpoints()` groups endpoints by route and registers one Azure
 function per route (the runtime does not allow two functions on the same route),
 including `OPTIONS`. A duplicate method + route fails application start.
+Endpoints that take or return personal data go into `personalDataEndpoints`,
+which is registered only when `PERSONAL_DATA_COLLECTION_ENABLED` is on
+([personalData.md](personalData.md)).
 
 **What belongs in `handle`:** extract arguments from `params`/`body`, call
 **one** use case, return status and body, optionally a header (`Set-Cookie`).
@@ -154,7 +160,8 @@ in the same commit** – the shared file name finds them with
 1. Rules for new fields → schema in the shared kernel (`packages/<product>-shared`), see [valibot.md](valibot.md).
 2. Behaviour → domain object / domain function; orchestration → use case in `application/`.
 3. Backend: `endpoints/<domain>/<subdomain>/<name>.endpoint.ts` following the pattern above.
-4. Register it in `apps/api/src/index.ts`.
+4. Register it in `apps/api/src/index.ts` – in `personalDataEndpoints` if it
+   takes or returns personal data (name, e-mail, IP, people in a product).
 5. Frontend: `<domain>/<subdomain>/endpoints/<name>.endpoint.ts` with the same schemas.
 6. Call it from a store (shared state) or a view (one-off call). Store actions
    are **not named like the endpoint** (`addFamily` calls `createFamily`).

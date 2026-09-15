@@ -1,0 +1,45 @@
+name: Mazání starých osobních údajů
+
+# Plánovač lhůt ze zásad ochrany osobních údajů.
+#
+# Spravované funkce Static Web Apps (tarif Free) umí jen HTTP triggery, ne
+# časovač – proto denně zavolá údržbový endpoint GitHub Actions. Endpoint
+# upozorní účty, které se měsíc nepřihlásí do konce lhůty, a smaže účty
+# neaktivní déle než rok i s daty v aplikacích. Zprávy z kontaktního
+# formuláře maže Cosmos DB sám přes TTL, na ty plánovač není potřeba.
+#
+# Potřebuje secret MAINTENANCE_TOKEN se stejnou hodnotou jako Application
+# setting MAINTENANCE_TOKEN ve Static Web App (doc/wiki/operations/deployment.md).
+on:
+  schedule:
+    # Každý den ve 3:17 UTC – mimo celou hodinu, kdy GitHub plánované běhy zdržuje.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: data-retention
+  cancel-in-progress: false
+
+jobs:
+  account_retention:
+    name: Neaktivní účty
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Zavolat údržbu
+        env:
+          MAINTENANCE_TOKEN: ${{ secrets.MAINTENANCE_TOKEN }}
+          API_URL: https://www.fridrich.cloud/api/maintenance/account-retention
+        run: |
+          if [ -z "$MAINTENANCE_TOKEN" ]; then
+            echo "Chybí secret MAINTENANCE_TOKEN – údržba nemůže běžet."
+            exit 1
+          fi
+
+          # Jedno spuštění zpracuje nejvýš 50 účtů; zbytek dožene další den.
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-delay 30 --retry-all-errors \
+            -X POST \
+            -H "x-maintenance-token: $MAINTENANCE_TOKEN" \
+            "$API_URL"
+          echo

@@ -182,7 +182,7 @@ async function submit(): Promise<void> {
   font-size: 0.875rem;
 }
 
-@media (min-width: 560px) {
+@media (--tablet) {
   .row {
     grid-template-columns: repeat(2, 1fr);
   }

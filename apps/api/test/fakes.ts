@@ -15,6 +15,7 @@ import type {
   SessionRepository,
   TokenGenerator,
   TokenRepository,
+  UserDataEraser,
   UserRepository,
 } from '../src/domain/identity/ports.js';
 import { Guest } from '../src/domain/weddy/guests/Guest.js';
@@ -47,8 +48,20 @@ export class InMemoryUserRepository implements UserRepository {
     return undefined;
   }
 
+  async listForRetention(inactiveBefore: string, warnedBefore: string, limit: number): Promise<User[]> {
+    return [...this.items.values()]
+      .filter((state) => (state.lastSeenAt ?? state.createdAt) < inactiveBefore)
+      .filter((state) => !state.inactivityWarningSentAt || state.inactivityWarningSentAt <= warnedBefore)
+      .slice(0, limit)
+      .map((state) => User.fromState(state));
+  }
+
   async save(user: User): Promise<void> {
     this.items.set(user.id, user.toState());
+  }
+
+  async delete(id: string): Promise<void> {
+    this.items.delete(id);
   }
 }
 
@@ -91,6 +104,12 @@ export class InMemoryTokenRepository implements TokenRepository {
   async invalidateAll(userId: string): Promise<void> {
     for (const [id, state] of this.items) {
       if (state.userId === userId && !state.usedAt) this.items.delete(id);
+    }
+  }
+
+  async deleteAllForUser(userId: string): Promise<void> {
+    for (const [id, state] of this.items) {
+      if (state.userId === userId) this.items.delete(id);
     }
   }
 }
@@ -177,6 +196,15 @@ export class CountingRateLimiter implements RateLimiter {
     const next = (this.counts.get(key) ?? 0) + 1;
     this.counts.set(key, next);
     return next <= limit;
+  }
+}
+
+/** Zapamatuje si, čí data měl smazat – test ověří, že identity dala produktům vědět. */
+export class RecordingUserDataEraser implements UserDataEraser {
+  readonly erasedUserIds: string[] = [];
+
+  async eraseUserData(userId: string): Promise<void> {
+    this.erasedUserIds.push(userId);
   }
 }
 
@@ -282,9 +310,11 @@ export interface IdentityTestContext extends IdentityDeps {
   email: CollectingEmailSender;
   rateLimiter: CountingRateLimiter;
   clock: FixedClock;
+  eraser: RecordingUserDataEraser;
 }
 
 export function identityTestDeps(): IdentityTestContext {
+  const eraser = new RecordingUserDataEraser();
   return {
     users: new InMemoryUserRepository(),
     tokens: new InMemoryTokenRepository(),
@@ -295,6 +325,8 @@ export function identityTestDeps(): IdentityTestContext {
     clock: new FixedClock(new Date('2026-01-01T10:00:00.000Z')),
     email: new CollectingEmailSender(),
     rateLimiter: new CountingRateLimiter(),
+    eraser,
+    userDataErasers: [eraser],
   };
 }
 

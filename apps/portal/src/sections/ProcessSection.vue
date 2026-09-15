@@ -146,29 +146,45 @@ const { el, visible } = useReveal();
   margin-top: var(--space-4);
 }
 
-/* --- Desktop: vodorovný stepper --- */
+/* --- Notebook: vodorovný stepper ve dvou řadách po třech krocích --- */
 
-@media (min-width: 1024px) {
+/*
+ * Šest sloupců se na 1024 px nevejde – mono slova jako „Proklikatelné" jsou
+ * širší než sloupec a stránka přetékala do strany. Tři sloupce drží popisy
+ * čitelné na každé šířce notebooku; spojnici proto kreslí každý krok zvlášť
+ * (od své značky k další), aby řady nepropojovala čára přes celý seznam.
+ */
+@media (--notebook) {
   .steps {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: var(--space-2);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: calc(3rem + var(--space-3)) var(--space-2);
     padding-left: 0;
     padding-top: 3rem;
   }
 
   .steps::before {
-    top: 1.125rem;
-    right: 0;
-    bottom: auto;
-    left: 0;
-    width: auto;
-    height: 1px;
-    background: linear-gradient(to right, var(--cp-yellow), var(--cp-cyan));
+    display: none;
   }
 
   .step {
     padding-bottom: 0;
+  }
+
+  .step::before {
+    content: '';
+    position: absolute;
+    top: -1.875rem;
+    right: calc(var(--space-2) * -1);
+    left: 2.25rem;
+    height: 1px;
+    background: linear-gradient(to right, var(--cp-yellow), var(--cp-cyan));
+    opacity: 0.4;
+  }
+
+  .step:nth-child(3n)::before,
+  .step:last-child::before {
+    right: 0;
   }
 
   .marker {

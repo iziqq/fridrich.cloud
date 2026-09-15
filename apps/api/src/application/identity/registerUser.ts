@@ -1,4 +1,4 @@
-import type { User as PublicUser } from '@fridrich/shared';
+import { TERMS_VERSION, type User as PublicUser } from '@fridrich/shared';
 import { EmailAddress } from '../../domain/identity/EmailAddress.js';
 import { OneTimeToken } from '../../domain/identity/OneTimeToken.js';
 import { User } from '../../domain/identity/User.js';
@@ -9,6 +9,8 @@ import type { IdentityDeps } from './deps.js';
 export interface RegisterUserCommand {
   email: string;
   displayName: string;
+  /** Souhlas s obchodními podmínkami ve verzi `TERMS_VERSION`. */
+  acceptTerms: boolean;
   sourceIp: string;
   /** Základ odkazu v e-mailu, např. `https://www.fridrich.cloud`. */
   appUrl: string;
@@ -46,6 +48,8 @@ export async function registerUser(
     id: deps.ids.next(),
     email,
     displayName: command.displayName,
+    acceptTerms: command.acceptTerms,
+    termsVersion: TERMS_VERSION,
     clock: deps.clock,
   });
 

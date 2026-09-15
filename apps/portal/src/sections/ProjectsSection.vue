@@ -39,7 +39,7 @@ const { el, visible } = useReveal();
   margin-top: var(--space-4);
 }
 
-@media (min-width: 900px) {
+@media (--tablet) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }

@@ -17,12 +17,12 @@ updated: 2026-09-15
 
 | Container | Partition key | Domain | Note |
 |---|---|---|---|
-| `users` | `/id` | identity | |
+| `users` | `/id` | identity | `lastSeenAt`, `inactivityWarningSentAt` drive deletion of inactive accounts |
 | `tokens` | `/userId` | identity | activation links, TTL 30 days |
 | `loginCodes` | `/userId` | identity | login codes, TTL 1 hour |
 | `sessions` | `/userId` | identity | TTL 60 days |
 | `rateLimits` | `/id` | shared | TTL 24 hours |
-| `contactMessages` | `/id` | contact | |
+| `contactMessages` | `/id` | contact | TTL 365 days (privacy policy) |
 | `weddings` | `/id` | weddy / wedding | including the couple and `ownerIds` |
 | `guests` | `/weddingId` | weddy / guests | a family is the `family` field on a guest |
 | `planningItems` | `/weddingId` | weddy / planning | the budget is not stored, it is calculated |
@@ -31,6 +31,9 @@ updated: 2026-09-15
 Names are held by `CONTAINERS` in `apps/api/src/config.ts`. Containers and the
 database are created on first use (`createIfNotExists`); temporary data is
 deleted by Cosmos DB itself via **TTL**, no cleanup job is needed.
+Because `createIfNotExists` never changes an existing container, `initDatabase`
+**reconciles `defaultTtl`** when it differs from the definition (`container.replace`) –
+otherwise a TTL added later (contact messages) would never apply in production.
 
 The partition key follows the dominant query – for guests and items it is
 always "everything for one wedding", hence `/weddingId`.

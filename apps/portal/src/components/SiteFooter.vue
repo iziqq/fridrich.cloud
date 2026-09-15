@@ -26,13 +26,15 @@ const year = new Date().getFullYear();
         <p class="mono heading">// Kontakt</p>
         <ul>
           <li><a :href="`mailto:${site.email}`">{{ site.email }}</a></li>
+          <li><RouterLink to="/ochrana-osobnich-udaju">Ochrana osobních údajů</RouterLink></li>
+          <li><RouterLink to="/obchodni-podminky">Obchodní podmínky</RouterLink></li>
         </ul>
       </div>
     </div>
 
+    <!-- Identifikace podnikatele musí být na webu vidět (§ 435 občanského zákoníku). -->
     <div class="container bottom">
-      <p class="mono">© {{ year }} {{ site.name }}</p>
-      <!-- TODO: před spuštěním doplnit IČO a odkaz na zásady ochrany osobních údajů -->
+      <p class="mono">© {{ year }} {{ site.name }} · IČO {{ site.ico }} · {{ site.address }}</p>
       <p class="mono">{{ site.domain }}</p>
     </div>
   </footer>
@@ -97,7 +99,7 @@ const year = new Date().getFullYear();
   text-decoration: none;
 }
 
-@media (min-width: 768px) {
+@media (--tablet) {
   .inner {
     grid-template-columns: 2fr 1fr 1fr;
   }

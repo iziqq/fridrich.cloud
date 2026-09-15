@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { navItems, site } from '@/content/site';
@@ -27,8 +28,9 @@ onMounted(() => {
   window.addEventListener('scroll', onScroll, { passive: true });
 
   // Stav přihlášení se zjišťuje dotazem na API – session drží httpOnly cookie,
-  // kterou JavaScript nepřečte.
-  void auth.load();
+  // kterou JavaScript nepřečte. Bez sběru osobních údajů přihlášení není,
+  // takže se ani neptáme.
+  if (PERSONAL_DATA_COLLECTION_ENABLED) void auth.load();
 });
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll);
@@ -73,12 +75,14 @@ function target(hash: string): string {
         </li>
       </ul>
 
-      <span class="divider" aria-hidden="true"></span>
+      <template v-if="PERSONAL_DATA_COLLECTION_ENABLED">
+        <span class="divider" aria-hidden="true"></span>
 
-      <RouterLink v-if="auth.isAuthenticated" to="/ucet" class="login account">
-        {{ auth.user?.displayName }}
-      </RouterLink>
-      <RouterLink v-else to="/prihlaseni" class="login">Přihlásit se</RouterLink>
+        <RouterLink v-if="auth.isAuthenticated" to="/ucet" class="login account">
+          {{ auth.user?.displayName }}
+        </RouterLink>
+        <RouterLink v-else to="/prihlaseni" class="login">Přihlásit se</RouterLink>
+      </template>
 
       <button
         class="toggle"
@@ -101,7 +105,11 @@ function target(hash: string): string {
             {{ item.label }}
           </a>
         </li>
-        <li class="overlay-login" :style="{ '--i': navItems.length }">
+        <li
+          v-if="PERSONAL_DATA_COLLECTION_ENABLED"
+          class="overlay-login"
+          :style="{ '--i': navItems.length }"
+        >
           <RouterLink v-if="auth.isAuthenticated" to="/ucet">
             {{ auth.user?.displayName }}
           </RouterLink>
@@ -303,7 +311,7 @@ function target(hash: string): string {
   }
 }
 
-@media (min-width: 768px) {
+@media (--tablet) {
   .links,
   .divider,
   .login {

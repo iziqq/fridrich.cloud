@@ -23,7 +23,7 @@ updated: 2026-09-15
 | **Shared kernel** | `packages/weddy-shared` |
 | **Currency** | CZK |
 | **Platform** | mobile-first, works on desktop too |
-| **Status** | ✅ done |
+| **Status** | ✅ done; stores personal data of the couple and guests under the privacy policy – data deleted with the wedding or the account ([personalData.md](../architecture/personalData.md)) |
 | **UI language** | Czech |
 
 ## Subdomains
@@ -69,7 +69,8 @@ navigation** with four tabs: 💑 Snoubenci (Couple) · 👥 Hosté (Guests) ·
 
 ## UI principles (mobile-first)
 
-- Design starts at **360 px** width, desktop via media queries.
+- Design starts at **360 px** width; tablet and notebook layouts via the shared
+  breakpoints `--tablet` (768 px) / `--notebook` (1024 px) – see [frontend.md](../architecture/frontend.md#responsive-layout-and-breakpoints).
 - Touch targets at least **44 × 44 px**.
 - Primary action as a **floating action button (FAB)** bottom right.
 - Forms as a **bottom sheet** (`BottomSheet.vue`) or full screen.

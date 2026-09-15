@@ -3,6 +3,7 @@ import { systemClock } from '../domain/shared/Clock.js';
 import type { ContactDeps } from '../application/contact/submitContactMessage.js';
 import type { IdentityDeps } from '../application/identity/deps.js';
 import type { WeddyDeps } from '../application/weddy/deps.js';
+import { eraseUserWeddyData } from '../application/weddy/wedding.js';
 import { tokenGenerator, uuidGenerator } from './crypto.js';
 import { createEmailSender } from './email/senders.js';
 import {
@@ -44,6 +45,9 @@ export function identityDeps(): IdentityDeps {
     clock: systemClock,
     email: createEmailSender(),
     rateLimiter: cosmosRateLimiter,
+    // Domény se navzájem nevolají – jen tady se identity dozví, že při smazání
+    // účtu má smazat i data v produktech. Nový produkt s daty uživatele přidá svůj řádek.
+    userDataErasers: [{ eraseUserData: (userId) => eraseUserWeddyData(weddyDeps(), userId) }],
   };
 
   return identity;

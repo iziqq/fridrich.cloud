@@ -4,7 +4,7 @@ import type { HttpRequest, InvocationContext } from '@azure/functions';
 import * as v from 'valibot';
 import { submitContactMessageEndpoint } from '../src/endpoints/contact/submitContactMessage.endpoint.js';
 import { DomainError } from '../src/domain/shared/DomainError.js';
-import { defineEndpoint } from '../src/http/endpoint.js';
+import { defineEndpoint, MAINTENANCE_TOKEN_HEADER } from '../src/http/endpoint.js';
 
 /**
  * Obálka endpointu – jen mapování požadavku a odpovědi.
@@ -19,17 +19,22 @@ function fakeRequest(input: {
   url?: string;
   body?: unknown;
   params?: Record<string, string>;
+  headers?: Record<string, string>;
 }): HttpRequest {
   return {
     method: input.method ?? 'POST',
     url: input.url ?? 'http://localhost:7071/api/test',
     params: input.params ?? {},
-    headers: new Headers(),
+    headers: new Headers(input.headers ?? {}),
     json: async () => input.body,
   } as unknown as HttpRequest;
 }
 
 const context = { error: () => undefined } as unknown as InvocationContext;
+
+// Konfigurace se načítá líně při prvním požadavku, takže stačí nastavit před testy.
+const MAINTENANCE_TOKEN = 'test-maintenance-token-0123456789abcdef';
+process.env['MAINTENANCE_TOKEN'] = MAINTENANCE_TOKEN;
 
 describe('defineEndpoint', () => {
   const echo = defineEndpoint({
@@ -110,5 +115,36 @@ describe('submitContactMessage.endpoint', () => {
     );
 
     assert.equal(response.status, 400);
+  });
+});
+
+describe('přístup maintenance', () => {
+  const maintenance = defineEndpoint({
+    name: 'maintenance',
+    method: 'POST',
+    route: 'maintenance/test',
+    access: 'maintenance',
+    async handle() {
+      return { status: 204 };
+    },
+  });
+
+  it('se správným tokenem pustí plánovač dál', async () => {
+    const response = await maintenance.invoke(
+      fakeRequest({ headers: { [MAINTENANCE_TOKEN_HEADER]: MAINTENANCE_TOKEN } }),
+      context,
+    );
+    assert.equal(response.status, 204);
+  });
+
+  it('bez tokenu nebo se špatným tokenem vrátí 401', async () => {
+    const missing = await maintenance.invoke(fakeRequest({}), context);
+    const wrong = await maintenance.invoke(
+      fakeRequest({ headers: { [MAINTENANCE_TOKEN_HEADER]: 'hádám' } }),
+      context,
+    );
+
+    assert.equal(missing.status, 401);
+    assert.equal(wrong.status, 401);
   });
 });

@@ -53,6 +53,11 @@ export interface AppConfig {
   appUrl: string;
   cookieDomain?: string;
   isProduction: boolean;
+  /**
+   * Tajný token plánovače údržby (mazání neaktivních účtů). Nevyplněný =
+   * údržbové endpointy odmítnou každý požadavek.
+   */
+  maintenanceToken?: string;
   email: {
     /** Připojovací řetězec Azure Communication Services; prázdný = jiný odesílatel. */
     connectionString?: string;
@@ -119,6 +124,9 @@ export function getConfig(): AppConfig {
 
   const cookieDomain = process.env['COOKIE_DOMAIN'];
   if (cookieDomain) config.cookieDomain = cookieDomain;
+
+  const maintenanceToken = process.env['MAINTENANCE_TOKEN'];
+  if (maintenanceToken) config.maintenanceToken = maintenanceToken;
 
   const acs = process.env['ACS_CONNECTION_STRING'];
   if (acs) config.email.connectionString = acs;

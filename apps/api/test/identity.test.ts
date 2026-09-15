@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { TERMS_VERSION } from '@fridrich/shared';
 import { requestLoginCode, verifyLoginCode } from '../src/application/identity/login.js';
 import { registerUser } from '../src/application/identity/registerUser.js';
 import { logout, resolveSession } from '../src/application/identity/session.js';
@@ -21,6 +22,7 @@ async function register(deps: IdentityTestContext, email = EMAIL): Promise<void>
   await registerUser(deps, {
     email,
     displayName: 'Jan Dvořák',
+    acceptTerms: true,
     sourceIp: IP,
     appUrl: APP_URL,
   });
@@ -82,6 +84,7 @@ describe('registrace', () => {
     const result = await registerUser(deps, {
       email: EMAIL,
       displayName: 'Podvodník',
+      acceptTerms: true,
       sourceIp: '10.0.0.2',
       appUrl: APP_URL,
     });
@@ -97,6 +100,7 @@ describe('registrace', () => {
     await registerUser(deps, {
       email: EMAIL,
       displayName: 'Podvodník',
+      acceptTerms: true,
       sourceIp: '10.0.0.2',
       appUrl: APP_URL,
     });
@@ -110,9 +114,40 @@ describe('registrace', () => {
     const deps = identityTestDeps();
 
     await assert.rejects(
-      registerUser(deps, { email: EMAIL, displayName: '   ', sourceIp: IP, appUrl: APP_URL }),
+      registerUser(deps, {
+        email: EMAIL,
+        displayName: '   ',
+        acceptTerms: true,
+        sourceIp: IP,
+        appUrl: APP_URL,
+      }),
       isDomainError,
     );
+  });
+
+  it('bez souhlasu s obchodními podmínkami účet nezaloží', async () => {
+    const deps = identityTestDeps();
+
+    await assert.rejects(
+      registerUser(deps, {
+        email: EMAIL,
+        displayName: 'Jan Dvořák',
+        acceptTerms: false,
+        sourceIp: IP,
+        appUrl: APP_URL,
+      }),
+      (error) => isDomainError(error) && error.details[0]?.field === 'acceptTerms',
+    );
+    assert.equal(deps.users.items.size, 0);
+  });
+
+  it('uloží verzi obchodních podmínek, se kterou uživatel souhlasil', async () => {
+    const deps = identityTestDeps();
+    await register(deps);
+
+    const [state] = [...deps.users.items.values()];
+    assert.equal(state?.termsVersion, TERMS_VERSION);
+    assert.equal(state?.termsAcceptedAt, deps.clock.now().toISOString());
   });
 
   it('respektuje rate limit', async () => {

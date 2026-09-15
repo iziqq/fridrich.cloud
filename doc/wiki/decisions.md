@@ -5,6 +5,9 @@ sources:
   - raw/2026-09-15-domainArchitecture.md
   - raw/2026-09-15-docsInEnglish.md
   - raw/2026-09-15-camelCaseFileNames.md
+  - raw/2026-09-15-responsiveFrontend.md
+  - raw/2026-09-15-gdprNoDataCollection.md
+  - raw/2026-09-15-legalDocumentsAndRetention.md
   - raw/iziweddySpec.md (ch. 12), raw/portalSpec.md (ch. 11)
   - history: doc/architecture.md (Open questions, Answered)
 updated: 2026-09-15
@@ -20,6 +23,15 @@ updated: 2026-09-15
 
 | Date | Decision | Why | Detail |
 |---|---|---|---|
+| 2026-09-15 | **Personal data collection back on** with a privacy policy and terms (`/ochrana-osobnich-udaju`, `/obchodni-podminky`); controller Libor Fridrich, IČO 08005788 (ARES) | Owner supplied the legal documents' requirements and identification; the switch stays for emergencies. Documents are a template – lawyer review recommended. | [raw/2026-09-15-legalDocumentsAndRetention.md](../raw/2026-09-15-legalDocumentsAndRetention.md), [personalData.md](architecture/personalData.md) |
+| 2026-09-15 | **Legal bases: contract and legitimate interest, no consent** – terms checkbox at registration (stored version + time), information notice (no checkbox) on the contact form | Account and IziWeddy are a contract; replying to an enquiry is a pre-contract step; consent would be revocable and wrongly framed. The stored terms version proves what the user agreed to. | [personalData.md](architecture/personalData.md#terms-acceptance-at-registration) |
+| 2026-09-15 | **Self-service account deletion** (`DELETE /api/auth/account`) cascades into products through the `UserDataEraser` port wired in `container.ts`; sole-owner weddings deleted, shared ones keep other owners | Right to erasure without an e-mail round-trip; domains still do not call each other; user deleted last so a failed deletion can be repeated | [personalData.md](architecture/personalData.md#account-deletion-right-to-erasure) |
+| 2026-09-15 | **Retention: contact messages 365 days via Cosmos TTL; accounts inactive 365 days deleted by a daily GitHub Actions scheduler** after a 30-day e-mail warning | Owner asked for deletion after a year. Deleting active users' plans would destroy live data, so the year counts from last activity. TTL needs no job; account deletion must cascade, which TTL cannot. SWA Free has no timer trigger. Never delete without a full warning period. | [personalData.md](architecture/personalData.md#retention-scheduler) |
+| 2026-09-15 | **Existing personal data in Cosmos DB kept** | Owner's answer; covered by the policy, and old inactive accounts will get the warning and be deleted by the scheduler | [raw/2026-09-15-legalDocumentsAndRetention.md](../raw/2026-09-15-legalDocumentsAndRetention.md) |
+| 2026-09-15 | **No personal data collection until a privacy policy exists** *(superseded the same day by "Personal data collection back on")* – `PERSONAL_DATA_COLLECTION_ENABLED = false` hides the contact form, registration, login, account and IziWeddy, and leaves their endpoints unregistered (only `logout` stays); the contact section shows the e-mail address | Owner has no GDPR documentation yet. A switch in the shared kernel turns off frontend and API together (a hidden form alone could still be called directly) and is reversible with one commit. | [raw/2026-09-15-gdprNoDataCollection.md](../raw/2026-09-15-gdprNoDataCollection.md), [personalData.md](architecture/personalData.md) |
+| 2026-09-15 | **Portal process stepper on notebook in 3 × 2**, not 6 columns | Six columns overflowed the page at 1024 px (long mono words wider than a ~150 px column) and the descriptions were too narrow to read; three columns work on every notebook width without an extra breakpoint | [frontend.md](architecture/frontend.md#responsive-layout-and-breakpoints), `ProcessSection.vue` |
+| 2026-09-15 | **Breakpoints defined once as `@custom-media`** (`--tablet`, `--notebook`) in `packages/design/src/breakpoints.css`, compiled by PostCSS (`postcss-custom-media` + `@csstools/postcss-global-data`); all existing components moved to them (`560`/`640`/`720` → tablet, `900` → tablet or notebook by layout) | Custom properties do not work in `@media`, so literal px drifted to six widths. `@custom-media` is standard CSS (Media Queries 5) – the PostCSS step can go once browsers support it. Sass rejected: the project has no preprocessor. Cost: two dev dependencies. | [frontend.md](architecture/frontend.md#where-breakpoints-are-defined) |
+| 2026-09-15 | **Everything on the frontend is responsive**, mobile-first, with two breakpoints: tablet `≥ 768px`, notebook `≥ 1024px` (mobile = base styles from 360 px) | Owner's request; `768px` already switches the portal menu, the portal grid is 1 / 2 / 3 columns, IziWeddy is phone-first. One set of values instead of per-component guesses. | [raw/2026-09-15-responsiveFrontend.md](../raw/2026-09-15-responsiveFrontend.md), [frontend.md](architecture/frontend.md#responsive-layout-and-breakpoints) |
 | 2026-09-15 | **Documentation file names in camelCase** (`weddyGuests.md`); dated raw sources keep an ISO date prefix; `README.md`, `CLAUDE.md`, `index.md`, `log.md` stay conventional | Owner's request; consistent with camelCase TypeScript modules such as `createGuest.endpoint.ts` | [raw/2026-09-15-camelCaseFileNames.md](../raw/2026-09-15-camelCaseFileNames.md), [CLAUDE.md](../../CLAUDE.md#page-conventions) |
 | 2026-09-15 | **All documentation in English** – wiki, raw sources, READMEs, `CLAUDE.md`; Czech input is stored as an English translation. Product UI texts stay Czech. | Owner's request; one documentation language for people and agents | [raw/2026-09-15-docsInEnglish.md](../raw/2026-09-15-docsInEnglish.md) |
 | 2026-09-15 | **Documentation as an LLM Wiki** (Karpathy): `doc/raw` immutable sources, `doc/wiki` pages maintained by the agent, schema in `CLAUDE.md` | Knowledge accumulates and is kept up to date instead of being re-derived from code and stale documents | [CLAUDE.md](../../CLAUDE.md), [index](index.md) |
@@ -54,9 +66,10 @@ updated: 2026-09-15
 | 7 | weddy | `updateGuest` on a family member overwrites the side for that member only (the UI does not offer it – members are edited via the family form – but the API does) | Consider keeping the side in `Guest.update` for family members |
 | 8 | portal | Analytics? | Cookieless – Application Insights or Plausible |
 | 9 | portal | Blog / articles? | Not for now |
-| 10 | portal | Portrait photo and company registration number (IČO) in the footer | To be supplied by the owner |
+| 10 | portal | Portrait photo in the footer (IČO and address added 2026-09-15) | To be supplied by the owner |
 | 11 | budgy | Questions before the specification | [budgy.md](domains/budgy.md#questions-before-the-specification) |
-
+| 15 | platform | Legal review of the privacy policy and terms | Recommended before wider launch |
+| 16 | platform | Gmail copies of contact messages and system e-mails are deleted manually | Consider a Gmail filter/auto-delete or a no-reply sender (ACS) that keeps no sent copies |
 Answered and superseded (history): e-mails – originally proposed Azure
 Communication Services, SMTP is used in production (ACS remains an alternative);
 UI library for IziWeddy – custom CSS on top of `@fridrich/design`, no library.

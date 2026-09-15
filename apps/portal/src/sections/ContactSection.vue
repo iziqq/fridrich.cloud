@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { issuesToDetails } from '@fridrich/shared';
+import { PERSONAL_DATA_COLLECTION_ENABLED, issuesToDetails } from '@fridrich/shared';
 import * as v from 'valibot';
 import { reactive, ref } from 'vue';
+import { RouterLink } from 'vue-router';
 import {
   SubmitContactMessageRequest,
   submitContactMessage,
@@ -71,7 +72,15 @@ async function submit(): Promise<void> {
       <span id="kontakt-title" class="visually-hidden">{{ contact.title }}</span>
       <p class="lead">{{ contact.lead }}</p>
 
-      <div class="layout">
+      <!-- Formulář ukládá jméno, e-mail a IP – bez zásad ochrany osobních údajů zůstává jen e-mail. -->
+      <div v-if="!PERSONAL_DATA_COLLECTION_ENABLED" class="mail bevel">
+        <p class="mono heading">// Přímý kontakt</p>
+        <a class="mail-address" :href="`mailto:${site.email}`">{{ site.email }}</a>
+        <CyberButton :href="`mailto:${site.email}`">Napsat e-mail</CyberButton>
+        <!-- TODO: doplnit odkazy na LinkedIn a GitHub -->
+      </div>
+
+      <div v-else class="layout">
         <form class="form bevel" novalidate @submit.prevent="submit">
           <div class="field">
             <label for="contact-name">Jméno</label>
@@ -141,9 +150,14 @@ async function submit(): Promise<void> {
             {{ STATUS_TEXT[status] }}
           </p>
 
+          <!--
+            Souhlas se nevyžaduje – odpověď na poptávku je krok před uzavřením smlouvy
+            (čl. 6 odst. 1 písm. b) GDPR). Informace o zpracování ale být musí.
+          -->
           <p class="consent">
-            Odesláním souhlasíte se zpracováním uvedených údajů za účelem odpovědi na
-            vaši poptávku.
+            Údaje použiji jen k odpovědi na vaši poptávku a zprávu smažu nejpozději
+            po roce. Více v
+            <RouterLink to="/ochrana-osobnich-udaju">zásadách ochrany osobních údajů</RouterLink>.
           </p>
         </form>
 
@@ -251,6 +265,10 @@ textarea {
   font-size: 0.8125rem;
 }
 
+.consent a {
+  color: var(--cp-cyan);
+}
+
 .heading {
   color: var(--cp-cyan);
 }
@@ -259,7 +277,28 @@ textarea {
   padding-block: 0.35rem;
 }
 
-@media (min-width: 900px) {
+.mail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+  max-width: 40rem;
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--cp-line);
+  background: var(--cp-panel);
+}
+
+.mail-address {
+  /* Dlouhá adresa se na 360 px musí zalomit, ne vytlačit stránku do strany. */
+  overflow-wrap: anywhere;
+  color: var(--cp-text);
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: 600;
+}
+
+@media (--notebook) {
   .layout {
     grid-template-columns: 1.6fr 1fr;
     gap: var(--space-8);

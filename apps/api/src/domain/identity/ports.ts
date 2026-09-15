@@ -14,7 +14,15 @@ import type { User } from './User.js';
 export interface UserRepository {
   findById(id: string): Promise<User | undefined>;
   findByEmail(email: EmailAddress): Promise<User | undefined>;
+  /**
+   * Neaktivní účty, se kterými má údržba co dělat, nejvýš `limit` najednou:
+   * bez aktivity od `inactiveBefore` (ISO datum) a zároveň bez upozornění,
+   * nebo s upozorněním nejpozději v `warnedBefore`. Čerstvě upozorněné účty
+   * se nevrací, aby dávku neucpaly. Aktivita = `lastSeenAt`, u starších účtů registrace.
+   */
+  listForRetention(inactiveBefore: string, warnedBefore: string, limit: number): Promise<User[]>;
   save(user: User): Promise<void>;
+  delete(id: string): Promise<void>;
 }
 
 export interface TokenRepository {
@@ -22,6 +30,19 @@ export interface TokenRepository {
   save(token: OneTimeToken): Promise<void>;
   /** Zneplatní starší nespotřebované ověřovací odkazy uživatele. */
   invalidateAll(userId: string): Promise<void>;
+  /** Smaže všechny odkazy uživatele včetně použitých – při smazání účtu. */
+  deleteAllForUser(userId: string): Promise<void>;
+}
+
+/**
+ * Smazání dat, která o uživateli drží jiné domény (produkty).
+ *
+ * Identity neví, co produkty ukládají, a domény se navzájem nevolají
+ * (CLAUDE.md, pravidlo 3). Každý produkt proto dodá vlastní implementaci
+ * a propojí je až `infrastructure/container.ts`.
+ */
+export interface UserDataEraser {
+  eraseUserData(userId: string): Promise<void>;
 }
 
 export interface LoginCodeRepository {

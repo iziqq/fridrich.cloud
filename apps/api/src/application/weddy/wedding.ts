@@ -93,21 +93,44 @@ export async function updateWedding(
   return wedding.toPublic();
 }
 
-/**
- * Smaže plánování včetně hostů a položek.
- *
- * Cosmos DB nezná transakce napříč kontejnery, takže pořadí je schválně
- * takové, že se svatba maže poslední. Kdyby to spadlo uprostřed, zůstane
- * dohledatelná a smazání jde zopakovat – opačné pořadí by nechalo osiřelá
- * data bez vazby na cokoli.
- */
+/** Smaže plánování včetně hostů a položek. */
 export async function deleteWedding(
   deps: WeddyDeps,
   weddingId: string,
   userId: string,
 ): Promise<void> {
   const wedding = await loadWeddingFor(deps, weddingId, userId);
+  await deleteWithContent(deps, wedding);
+}
 
+/**
+ * Smaže data uživatele v IziWeddy – volá se při smazání jeho účtu.
+ *
+ * Plánování, které patří jen jemu, se smaže celé včetně hostů a položek.
+ * Ze sdíleného plánování se jen odebere – ostatní vlastníci o svá data nepřijdou.
+ */
+export async function eraseUserWeddyData(deps: WeddyDeps, userId: string): Promise<void> {
+  const weddings = await deps.weddings.listForOwner(userId);
+
+  for (const wedding of weddings) {
+    if (wedding.isOwnedOnlyBy(userId)) {
+      await deleteWithContent(deps, wedding);
+    } else {
+      wedding.removeOwner(userId, deps.clock);
+      await deps.weddings.save(wedding);
+    }
+  }
+}
+
+/**
+ * Smaže svatbu i s obsahem.
+ *
+ * Cosmos DB nezná transakce napříč kontejnery, takže pořadí je schválně
+ * takové, že se svatba maže poslední. Kdyby to spadlo uprostřed, zůstane
+ * dohledatelná a smazání jde zopakovat – opačné pořadí by nechalo osiřelá
+ * data bez vazby na cokoli.
+ */
+async function deleteWithContent(deps: WeddyDeps, wedding: Wedding): Promise<void> {
   await Promise.all([
     deps.guests.deleteAllForWedding(wedding.id),
     deps.items.deleteAllForWedding(wedding.id),

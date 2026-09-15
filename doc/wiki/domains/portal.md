@@ -14,6 +14,9 @@ updated: 2026-09-15
 > products. Visual style inspired by **Cyberpunk 2077**. The portal is not a
 > business domain but content and look; its only API calls are
 > [contact](contact.md) and sign-in ([identity](identity.md)). Website texts are Czech.
+>
+> Personal data is collected under the privacy policy and terms at
+> `/ochrana-osobnich-udaju` and `/obchodni-podminky` ([personalData.md](../architecture/personalData.md)).
 
 The full specification (section copy, effects, assets) is in the source
 [raw/portalSpec.md](../../raw/portalSpec.md). This page holds the rules every
@@ -23,7 +26,7 @@ change must respect.
 
 Menu: *O mně · Služby · Vývoj · Projekty · Kontakt · Přihlásit se* (About me ·
 Services · Development · Projects · Contact · Sign in); after sign-in the user's
-name → account. The active section is highlighted while scrolling (`useActiveSection`).
+name → account. *Přihlásit se* is hidden when the GDPR switch is off. The active section is highlighted while scrolling (`useActiveSection`).
 
 | Section | Content |
 |---|---|
@@ -31,8 +34,10 @@ name → account. The active section is highlighted while scrolling (`useActiveS
 | About me | 10+ years full stack, large international companies as well as smaller custom development, industries strip |
 | Services | Custom web applications · Cloud (Azure) · Integration and automation · Consulting and code review |
 | Development | **Key section** – 6 steps: kick-off meeting → brief confirmation → analysis → mocked demo → main development with a test environment → production |
-| Projects | IziWeddy (in development), IziBudgy (coming soon) |
-| Contact | Form name/e-mail/message + honeypot, direct contacts |
+| Projects | IziWeddy (in development), IziBudgy (coming soon); the *Otevřít aplikaci* (Open app) button only with the GDPR switch on |
+| Contact | Form name/e-mail/message + honeypot, information notice with a link to the privacy policy, direct contacts. With the switch off: only the e-mail address and a `Napsat e-mail` (Write an e-mail) `mailto:` button |
+| Footer | Products, e-mail, links *Ochrana osobních údajů* (Privacy) and *Obchodní podmínky* (Terms); bottom line with name, IČO and registered address |
+| Legal pages | `/ochrana-osobnich-udaju`, `/obchodni-podminky` – `LegalView.vue`, content in `content/legal.ts` |
 
 Copy is not hard-coded in components but lives in `apps/portal/src/content/site.ts`.
 
@@ -49,6 +54,7 @@ Copy is not hard-coded in components but lives in `apps/portal/src/content/site.
   colour always accompanied by text or an icon.
 - **Body text never in uppercase**, `line-height: 1.7`, max. `70ch`.
 - **Bevelled corners instead of rounded** (`clip-path`), 12-column grid, max. width `1200px`, gutter 24 px (mobile 16 px).
+- **Responsive** on mobile, tablet (`--tablet`, ≥ 768 px) and notebook (`--notebook`, ≥ 1024 px) – breakpoints in [frontend.md](../architecture/frontend.md#responsive-layout-and-breakpoints). The *Vývoj* (Development) timeline is vertical up to tablet and a horizontal 3 × 2 stepper on notebook.
 - **Animations** 120–320 ms, never looping outside the viewport; `prefers-reduced-motion` disables glitch, scanlines, typewriter and the growing timeline.
 - **Self-hosted fonts** (`@fontsource`) – no calls to third-party domains.
 
@@ -77,9 +83,9 @@ Typography: Rajdhani (headings), Chakra Petch (body), JetBrains Mono (HUD, numbe
 
 ## Open items
 
-Cookieless analytics, blog, portrait photo and company registration number in
-the footer – see [decisions.md](../decisions.md#open-questions).
+Cookieless analytics (would require a privacy policy update), blog, portrait photo
+in the footer – see [decisions.md](../decisions.md#open-questions).
 
 ## Related
 
-- [Frontend](../architecture/frontend.md) · [contact](contact.md)
+- [Frontend](../architecture/frontend.md) · [contact](contact.md) · [Personal data](../architecture/personalData.md)

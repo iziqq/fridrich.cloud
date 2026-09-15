@@ -116,7 +116,7 @@ const { el, visible } = useReveal();
   color: var(--cp-text);
 }
 
-@media (min-width: 900px) {
+@media (--notebook) {
   .body {
     grid-template-columns: 1.6fr 1fr;
     gap: var(--space-8);

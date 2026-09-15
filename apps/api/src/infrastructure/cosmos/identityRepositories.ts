@@ -44,9 +44,40 @@ export const userCosmosRepository: UserRepository = {
     return found ? User.fromState(stripSystemFields(found)) : undefined;
   },
 
+  async listForRetention(inactiveBefore, warnedBefore, limit) {
+    const container = await getContainer(CONTAINERS.users);
+    const { resources } = await container.items
+      .query<UserState>({
+        // Účty z doby před sledováním aktivity nemají `lastSeenAt` – počítá se od registrace.
+        // Dotaz jde přes všechny partition, ale běží jednou denně a vrací jen pár dokumentů.
+        query: `SELECT * FROM c
+          WHERE (IS_DEFINED(c.lastSeenAt) ? c.lastSeenAt : c.createdAt) < @inactiveBefore
+            AND (NOT IS_DEFINED(c.inactivityWarningSentAt) OR c.inactivityWarningSentAt <= @warnedBefore)
+          OFFSET 0 LIMIT @limit`,
+        parameters: [
+          { name: '@inactiveBefore', value: inactiveBefore },
+          { name: '@warnedBefore', value: warnedBefore },
+          { name: '@limit', value: limit },
+        ],
+      })
+      .fetchAll();
+
+    return resources.map((state) => User.fromState(stripSystemFields(state)));
+  },
+
   async save(user) {
     const container = await getContainer(CONTAINERS.users);
     await container.items.upsert(user.toState());
+  },
+
+  async delete(id) {
+    try {
+      const container = await getContainer(CONTAINERS.users);
+      await container.item(id, id).delete();
+    } catch (error) {
+      // Opakované smazání (např. po pádu uprostřed) není chyba.
+      if (!isNotFound(error)) throw error;
+    }
   },
 };
 
@@ -114,6 +145,18 @@ export const tokenCosmosRepository: TokenRepository = {
     await Promise.all(
       resources.map((state) => container.item(state.id, userId).delete()),
     );
+  },
+
+  async deleteAllForUser(userId) {
+    const container = await getContainer(CONTAINERS.tokens);
+    const { resources } = await container.items
+      .query<OneTimeTokenState>({
+        query: 'SELECT c.id FROM c WHERE c.userId = @userId',
+        parameters: [{ name: '@userId', value: userId }],
+      })
+      .fetchAll();
+
+    await Promise.all(resources.map((state) => container.item(state.id, userId).delete()));
   },
 };
 

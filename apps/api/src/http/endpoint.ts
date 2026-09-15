@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import {
   app,
   type HttpMethod,
@@ -9,6 +10,7 @@ import { issuesToDetails } from '@fridrich/shared';
 import * as v from 'valibot';
 import { resolveSession } from '../application/identity/session.js';
 import type { User } from '../domain/identity/User.js';
+import { getConfig } from '../config.js';
 import { DomainError } from '../domain/shared/DomainError.js';
 import { identityDeps } from '../infrastructure/container.js';
 import { readSessionToken } from './cookies.js';
@@ -38,7 +40,14 @@ type AnySchema = v.GenericSchema;
 /** Výstup schématu; bez schématu `undefined`. */
 type Parsed<TSchema> = TSchema extends AnySchema ? v.InferOutput<TSchema> : undefined;
 
-export type EndpointAccess = 'public' | 'user';
+/**
+ * `public` – kdokoli; `user` – přihlášený uživatel; `maintenance` – jen plánovač
+ * údržby s tajným tokenem v hlavičce `x-maintenance-token` (`MAINTENANCE_TOKEN`).
+ */
+export type EndpointAccess = 'public' | 'user' | 'maintenance';
+
+/** Hlavička s tokenem plánovače – vlastní, protože `Authorization` si Static Web Apps může brát pro sebe. */
+export const MAINTENANCE_TOKEN_HEADER = 'x-maintenance-token';
 
 export interface EndpointInput<TParams, TQuery, TBody, TAccess extends EndpointAccess> {
   params: TParams;
@@ -99,6 +108,13 @@ export function defineEndpoint<
           if (!user) return errorResponse(request, DomainError.unauthorized());
         }
 
+        if (
+          spec.access === 'maintenance' &&
+          !isMaintenanceTokenValid(request.headers.get(MAINTENANCE_TOKEN_HEADER))
+        ) {
+          return errorResponse(request, DomainError.unauthorized());
+        }
+
         const params = parse(spec.params, request.params) as Parsed<TParams>;
         const query = parse(
           spec.query,
@@ -128,6 +144,22 @@ export function defineEndpoint<
       }
     },
   };
+}
+
+/**
+ * Porovná token plánovače s nastavením.
+ *
+ * Bez nastaveného tokenu neprojde nic – zapomenuté nastavení nesmí údržbu
+ * otevřít každému. Porovnání otisků v konstantním čase neprozradí, kolik
+ * znaků tokenu útočník trefil.
+ */
+function isMaintenanceTokenValid(received: string | null): boolean {
+  const expected = getConfig().maintenanceToken;
+  if (!expected || !received) return false;
+
+  const expectedHash = createHash('sha256').update(expected).digest();
+  const receivedHash = createHash('sha256').update(received).digest();
+  return timingSafeEqual(expectedHash, receivedHash);
 }
 
 /** Rozparsuje vstup schématem; neplatný vstup skončí jako 400 s detaily po polích. */

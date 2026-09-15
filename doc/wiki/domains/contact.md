@@ -12,6 +12,10 @@ updated: 2026-09-15
 > The portal contact form – the main business goal of the website (an enquiry).
 > **The only public (unauthenticated) write endpoint**, so it has its own protection.
 
+> ℹ️ Collected under the privacy policy. The form shows an information notice
+> linking to `/ochrana-osobnich-udaju` (no consent checkbox – the legal basis is
+> steps before a contract). Hidden with the GDPR switch – see [personalData.md](../architecture/personalData.md).
+
 ## Rules
 
 | Field | Rule (`ContactMessageInputSchema`) |
@@ -25,6 +29,8 @@ updated: 2026-09-15
 - **Rate limit** 5 messages per hour per IP (use case).
 - The message is **saved to `contactMessages` and also e-mailed** to
   `CONTACT_INBOX` – a mail outage does not lose it. Content is escaped in the HTML e-mail.
+- **Retention 365 days** (`CONTACT_MESSAGE_RETENTION_DAYS`): container `defaultTtl`, Cosmos DB deletes
+  messages by itself. The inbox copy is deleted manually within a year (promised in the privacy policy).
 
 ## Code
 

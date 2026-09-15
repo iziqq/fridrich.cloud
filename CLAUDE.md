@@ -112,7 +112,7 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 
 1. **Organise by domain, not by technical layer.** A (sub)domain has the same name in `packages/*-shared`, `apps/api` and `apps/portal`.
 2. **Business logic always lives in the domain** – domain objects and domain functions in `apps/api/src/domain`, pure shared rules and calculations in `packages/*-shared`. Never in endpoint files, Vue components or stores.
-3. **Domains do not call each other.** They share only the user identity (`userId`). Subdomains of `weddy` may depend on the root `wedding` (access check via `loadWeddingFor`).
+3. **Domains do not call each other.** They share only the user identity (`userId`). Subdomains of `weddy` may depend on the root `wedding` (access check via `loadWeddingFor`). A cross-domain effect goes through a port of the triggering domain wired in `infrastructure/container.ts` – e.g. account deletion calls `UserDataEraser`, implemented by each product.
 4. **Composition over inheritance** – no abstract base classes between domain objects.
 
 ### Endpoints – one file per endpoint
@@ -147,6 +147,21 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 21. Pinia store (`<subdomain>.store.ts`) only for state shared across components/screens.
 22. Use shared-kernel calculations (`calculateBudget`, `groupIntoFamilies`) instead of re-implementing them in components.
 23. Product styles only under the product class (`.weddy`) – nothing on `:root`, no bare element selectors. Every product screen has exactly one `main#obsah`.
+24. **Everything on the frontend is responsive** – every view and component (portal and products) must work on mobile, tablet and notebook. Styles are mobile-first: base CSS is the mobile layout, wider layouts are added with the **named breakpoints** defined once in `packages/design/src/breakpoints.css` (`@custom-media`, compiled by PostCSS in `apps/portal/postcss.config.js`):
+
+    | Device | Width | Media query |
+    |---|---|---|
+    | Mobile | 360–767 px | base styles, no query |
+    | Tablet | 768–1023 px | `@media (--tablet)` |
+    | Notebook | ≥ 1024 px | `@media (--notebook)` |
+
+    Never write a width in px in `@media`; if a component does not fit between breakpoints, fix the component (`minmax(0, 1fr)`, `flex-wrap`, `clamp()`), do not add a breakpoint. No horizontal scrolling at any width, touch targets at least 44 × 44 px, wide tables become card lists on mobile, content width is capped on notebook. Before finishing a frontend change, check the screen at 360, 768 and 1024 px. Details: `doc/wiki/architecture/frontend.md#responsive-layout-and-breakpoints`.
+
+### Personal data (GDPR)
+
+25. **Personal data only as the privacy policy describes it.** The policy and terms live in `apps/portal/src/content/legal.ts`; retention periods and document versions are constants in `packages/shared/src/privacy.ts` used by both apps. Any change to what is collected, why, where or for how long must update the policy table in the same change and bump `PRIVACY_POLICY_VERSION` (terms: `TERMS_VERSION`).
+26. **Everything that takes or stores personal data** (name, e-mail, phone, IP, people entered into a product) must be behind the switch `PERSONAL_DATA_COLLECTION_ENABLED` on **both** sides: endpoints in `personalDataEndpoints` (`apps/api/src/index.ts`), routes in `personalDataRoutes` (`apps/portal/src/router/routes.ts`), links, buttons and forms with `v-if`. Change the switch only when the owner asks.
+27. **Every product that stores user data implements `UserDataEraser`** and registers it in `infrastructure/container.ts`, so account deletion and retention remove it. No analytics, tracking, third-party embeds or non-essential cookies without a policy update. Details: `doc/wiki/architecture/personalData.md`.
 
 ## Code conventions
 
@@ -189,6 +204,8 @@ Before finishing a task run `npm run typecheck && npm run test && npm run build`
 - Do not hand-write TypeScript interfaces for API data – derive them from Valibot schemas.
 - Do not call `fetch`/`callEndpoint` outside frontend endpoint files.
 - Do not create abstract classes to share behaviour between domain objects.
+- Do not add a form, endpoint or screen that collects personal data outside the `PERSONAL_DATA_COLLECTION_ENABLED` switch or without updating the privacy policy, and do not flip the switch without the owner.
+- Do not build desktop-only layouts, write px widths in `@media` or add breakpoints beyond `--tablet` and `--notebook`.
 - Do not edit files in `doc/raw/` (except storing a new source in English).
 - Do not write documentation in Czech.
 - Do not finish a change that affects architecture, domain rules or endpoints without updating the wiki, index and log.

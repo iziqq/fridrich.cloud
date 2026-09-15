@@ -1,4 +1,9 @@
-import { AccountEmailSchema, DisplayNameSchema, MessageResponseSchema } from '@fridrich/shared';
+import {
+  AcceptTermsSchema,
+  AccountEmailSchema,
+  DisplayNameSchema,
+  MessageResponseSchema,
+} from '@fridrich/shared';
 import * as v from 'valibot';
 import { callEndpoint } from '@/api/http';
 
@@ -7,6 +12,7 @@ import { callEndpoint } from '@/api/http';
 export const RegisterRequest = v.object({
   email: AccountEmailSchema,
   displayName: DisplayNameSchema,
+  acceptTerms: AcceptTermsSchema,
 });
 export type RegisterRequest = v.InferInput<typeof RegisterRequest>;
 

@@ -18,7 +18,7 @@ updated: 2026-09-15
 ```
 apps/api/
 ├── src/
-│   ├── index.ts                  # list of all endpoints → registerEndpoints()
+│   ├── index.ts                  # list of all endpoints → registerEndpoints() (personal data ones behind the GDPR switch)
 │   ├── config.ts                 # Application settings, container names
 │   ├── domain/                   # domain – knows nothing about HTTP or the Cosmos SDK
 │   │   ├── shared/               # DomainError, Clock
@@ -29,7 +29,7 @@ apps/api/
 │   │       ├── guests/           # Guest, Family (createFamily, rewriteFamily), GuestRepository
 │   │       └── planning/         # PlanningItem, PlanningItemRepository
 │   ├── application/              # use cases – orchestration over the domain
-│   │   ├── identity/             # registerUser, login (requestLoginCode, verifyLoginCode), session, verifyEmail, emails
+│   │   ├── identity/             # registerUser, login, session, verifyEmail, account (deleteAccount, applyAccountRetention), emails
 │   │   ├── contact/              # submitContactMessage
 │   │   └── weddy/                # deps, wedding, guests (incl. families), planning, budget
 │   ├── endpoints/                # HTTP contract – 1 file = 1 endpoint
@@ -62,7 +62,7 @@ sequenceDiagram
     participant I as repository (infrastructure)
     R->>E: HTTP request
     E->>D: endpoint by method (OPTIONS → preflight)
-    D->>D: session (access 'user') → 401
+    D->>D: session (access 'user') / token (access 'maintenance') → 401
     D->>D: Valibot parse params/query/body → 400
     D->>H: typed input + user
     H->>U: one use case
@@ -98,14 +98,14 @@ sequenceDiagram
 
 | Level | File | How |
 |---|---|---|
-| Domain + use cases | `test/identity.test.ts`, `test/weddy.test.ts` | in-memory repositories from `test/fakes.ts`, `FixedClock`; no SDK mocks |
+| Domain + use cases | `test/identity.test.ts`, `test/account.test.ts` (deletion, retention), `test/weddy.test.ts` | in-memory repositories from `test/fakes.ts`, `FixedClock`; no SDK mocks |
 | Input rules (shared schemas) | `test/schemas.test.ts` | `v.safeParse` + `issuesToDetails`, asserts field paths |
-| Endpoint wrapper | `test/endpoint.test.ts` | fake `HttpRequest`: 400 with details, `DomainError` translation, 500 without text |
+| Endpoint wrapper | `test/endpoint.test.ts` | fake `HttpRequest`: 400 with details, `DomainError` translation, 500 without text, maintenance token |
 | HTTP helpers | `test/http.test.ts` | `clientIp`, cookies |
 | Production cryptography | `test/crypto.test.ts` | the real `tokenGenerator` |
 
 `npm run test -w apps/api` builds `dist/` and runs `node --test`. CI checks that
-at least 60 tests ran (97 today) – see [deployment.md](../operations/deployment.md).
+at least 60 tests ran (117 today) – see [deployment.md](../operations/deployment.md).
 
 ## CORS
 

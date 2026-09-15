@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ContactMessageInputSchema, issuesToDetails } from '@fridrich/shared';
+import { AcceptTermsSchema, ContactMessageInputSchema, issuesToDetails } from '@fridrich/shared';
 import {
   FamilyInputSchema,
   GuestInputSchema,
@@ -147,5 +147,19 @@ describe('ContactMessageInputSchema', () => {
   it('odmítne příliš krátkou zprávu i neplatný e-mail najednou', () => {
     const input = { name: 'Jan', email: 'bez-zavinace', message: 'Ahoj' };
     assert.deepEqual(fieldsOf(ContactMessageInputSchema, input), ['email', 'message']);
+  });
+});
+
+describe('AcceptTermsSchema', () => {
+  it('projde jen výslovný souhlas', () => {
+    assert.equal(v.parse(AcceptTermsSchema, true), true);
+  });
+
+  it('nezaškrtnutý souhlas odmítne s hláškou pro formulář', () => {
+    const result = v.safeParse(v.object({ acceptTerms: AcceptTermsSchema }), { acceptTerms: false });
+    assert.equal(result.success, false);
+    assert.deepEqual(issuesToDetails(result.issues ?? []), [
+      { field: 'acceptTerms', message: 'Pro založení účtu je potřeba souhlasit s obchodními podmínkami' },
+    ]);
   });
 });

@@ -5,6 +5,8 @@
  * rozvržení a později přeložit (doc/wiki/domains/portal.md).
  */
 
+import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
+
 export interface NavItem {
   label: string;
   hash: string;
@@ -47,6 +49,10 @@ export const site = {
   domain: 'fridrich.cloud',
   tagline: 'Vývoj na míru',
   email: 'liborfridrich@gmail.com',
+  // Identifikace podnikatele (ARES) – povinná na webu i ve všech právních dokumentech.
+  ico: '08005788',
+  address: 'Nová 182, 273 51 Velké Přítočno',
+  legalForm: 'fyzická osoba podnikající, zapsaná v živnostenském rejstříku',
 } as const;
 
 export const navItems: NavItem[] = [
@@ -183,7 +189,8 @@ export const projects = {
       status: 'development',
       statusLabel: 'Ve vývoji',
       stack: ['Vue 3', 'Azure Functions', 'Cosmos DB'],
-      url: '/izi-weddy',
+      // Aplikace vyžaduje účet a ukládá jména hostů – odkaz jen se zapnutým sběrem údajů.
+      url: PERSONAL_DATA_COLLECTION_ENABLED ? '/izi-weddy' : undefined,
     },
     {
       id: 'izibudgy',

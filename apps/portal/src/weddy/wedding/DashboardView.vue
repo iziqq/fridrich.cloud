@@ -205,7 +205,7 @@ dd {
   margin-top: var(--space-3);
 }
 
-@media (min-width: 720px) {
+@media (--tablet) {
   .list {
     grid-template-columns: repeat(2, 1fr);
   }

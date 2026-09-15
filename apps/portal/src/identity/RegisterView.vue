@@ -9,6 +9,7 @@ import { register } from './endpoints/register.endpoint';
 
 const displayName = ref('');
 const email = ref('');
+const acceptTerms = ref(false);
 const fieldErrors = ref<Record<string, string>>({});
 const generalError = ref('');
 const done = ref('');
@@ -17,6 +18,7 @@ const busy = ref(false);
 // Chyby chodí po polích – ze schématu ještě před odesláním, nebo z backendu.
 const nameError = computed(() => fieldErrors.value['displayName']);
 const emailError = computed(() => fieldErrors.value['email']);
+const termsError = computed(() => fieldErrors.value['acceptTerms']);
 
 async function submit(): Promise<void> {
   fieldErrors.value = {};
@@ -27,6 +29,8 @@ async function submit(): Promise<void> {
     const response = await register({
       displayName: displayName.value,
       email: email.value,
+      // Schéma pustí jen `true` – nezaškrtnutý souhlas skončí chybou u pole ještě před odesláním.
+      acceptTerms: acceptTerms.value as true,
     });
     done.value = response.message;
   } catch (cause) {
@@ -72,6 +76,27 @@ async function submit(): Promise<void> {
         :error="emailError"
       />
 
+      <div class="terms">
+        <label class="checkbox">
+          <input
+            v-model="acceptTerms"
+            type="checkbox"
+            name="acceptTerms"
+            :aria-invalid="Boolean(termsError)"
+            :aria-describedby="termsError ? 'register-terms-error' : undefined"
+          />
+          <span>
+            Souhlasím s
+            <RouterLink to="/obchodni-podminky" target="_blank">obchodními podmínkami</RouterLink>
+          </span>
+        </label>
+        <p v-if="termsError" id="register-terms-error" class="error mono">{{ termsError }}</p>
+        <p class="info">
+          Jak s vaším jménem a e-mailem zacházím, popisují
+          <RouterLink to="/ochrana-osobnich-udaju" target="_blank">zásady ochrany osobních údajů</RouterLink>.
+        </p>
+      </div>
+
       <p v-if="generalError" class="error mono" role="alert">&gt; {{ generalError }}</p>
 
       <CyberButton type="submit" :disabled="busy">
@@ -95,6 +120,36 @@ form,
 
 .error {
   color: var(--cp-magenta);
+}
+
+.terms {
+  display: grid;
+  gap: 0.35rem;
+}
+
+/* Celý řádek je klikací, ať se checkbox trefí i prstem (min. 44 px). */
+.checkbox {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  min-height: var(--touch-target);
+  cursor: pointer;
+}
+
+.checkbox input {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--cp-yellow);
+}
+
+.terms a {
+  color: var(--cp-cyan);
+}
+
+.info {
+  color: var(--cp-muted);
+  font-size: 0.8125rem;
 }
 
 .ok {

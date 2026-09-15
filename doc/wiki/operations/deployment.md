@@ -32,7 +32,7 @@ updated: 2026-09-15
 1. `npm ci` (builds the shared packages)
 2. `npm run typecheck`, `npm run lint`, `npm run test`
 3. **Safeguard: at least 60 API tests** – `node --test` with no files found ends
-   with zero tests and exit code 0. 97 tests today.
+   with zero tests and exit code 0. 117 tests today.
 4. `npm run build` → `apps/portal/dist` (including `staticwebapp.config.json` from `public/`)
 5. `npm run build:api` → `apps/api/deploy`
 6. `npx @azure/static-web-apps-cli@2 deploy` – a PR goes to environment `pr-<number>`
@@ -75,8 +75,20 @@ npx @azure/static-web-apps-cli@2 deploy apps/portal/dist \
 | `ALLOWED_ORIGINS`, `APP_URL` | `https://www.fridrich.cloud` |
 | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | mailbox |
 | `CONTACT_INBOX` | address for enquiries |
+| `MAINTENANCE_TOKEN` | random secret (`openssl rand -hex 32`) for the retention scheduler; the same value as the GitHub secret |
 
 `COOKIE_DOMAIN` stays empty (single origin).
+
+## Retention scheduler (`.github/workflows/data-retention.yml`)
+
+Daily at 03:17 UTC (and manually via `workflow_dispatch`) it calls
+`POST https://www.fridrich.cloud/api/maintenance/account-retention` with header
+`x-maintenance-token` from repository secret `MAINTENANCE_TOKEN`. It deletes
+accounts inactive for a year after a 30-day warning ([personalData.md](../architecture/personalData.md#retention-scheduler)).
+
+- A timer trigger is not available on SWA Free managed functions – hence GitHub Actions.
+- The token must be set **in both places**; missing on Azure → `401`, missing in GitHub → the job fails.
+- GitHub disables scheduled workflows after 60 days without repository activity – re-enable in the Actions tab.
 
 ## `staticwebapp.config.json`
 
@@ -86,4 +98,4 @@ an honest 404 instead of HTML.
 
 ## Related
 
-- [Local development](localDevelopment.md) · [Monorepo](../architecture/monorepo.md) · [Data in Cosmos DB](../architecture/dataCosmos.md)
+- [Local development](localDevelopment.md) · [Monorepo](../architecture/monorepo.md) · [Data in Cosmos DB](../architecture/dataCosmos.md) · [Personal data](../architecture/personalData.md)

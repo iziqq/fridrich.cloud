@@ -99,6 +99,27 @@ export class Wedding {
     this.touch(clock);
   }
 
+  /** Plánování patří jen tomuto uživateli – po jeho odchodu by nemělo majitele. */
+  isOwnedOnlyBy(userId: string): boolean {
+    return this.owners.length === 1 && this.owners[0] === userId;
+  }
+
+  /**
+   * Odebere vlastníka při smazání jeho účtu.
+   *
+   * Posledního vlastníka odebrat nejde – plánování bez majitele by nikdo neviděl
+   * ani nesmazal. Takové plánování se místo toho maže celé (`eraseUserWeddyData`).
+   */
+  removeOwner(userId: string, clock: Clock): void {
+    if (!this.owners.includes(userId)) return;
+    if (this.owners.length === 1) {
+      throw DomainError.conflict('Posledního vlastníka nejde odebrat – plánování je potřeba smazat');
+    }
+
+    this.owners = this.owners.filter((ownerId) => ownerId !== userId);
+    this.touch(clock);
+  }
+
   private touch(clock: Clock): void {
     this.updatedAtValue = clock.now().toISOString();
   }

@@ -21,16 +21,17 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [architecture/endpoints.md](architecture/endpoints.md) | One file per endpoint: naming, `defineEndpoint` (BE), `callEndpoint` (FE), checklist for a new endpoint | 2026-09-15 |
 | [architecture/valibot.md](architecture/valibot.md) | Types and validation with Valibot: where schemas live, naming, rules, field errors, pitfalls | 2026-09-15 |
 | [architecture/backend.md](architecture/backend.md) | `apps/api`: structure, request lifecycle, layer rules, tests, CORS | 2026-09-15 |
-| [architecture/frontend.md](architecture/frontend.md) | `apps/portal`: domain folders, store vs. view, product routing and look, addresses | 2026-09-15 |
+| [architecture/frontend.md](architecture/frontend.md) | `apps/portal`: domain folders, store vs. view, responsive breakpoints (mobile / tablet / notebook), product routing and look, addresses | 2026-09-15 |
 | [architecture/monorepo.md](architecture/monorepo.md) | Split principles, repository structure, shared packages, what goes where, scripts | 2026-09-15 |
+| [architecture/personalData.md](architecture/personalData.md) | GDPR: what collects personal data, legal documents, account deletion, retention scheduler, the switch | 2026-09-15 |
 | [architecture/dataCosmos.md](architecture/dataCosmos.md) | Cosmos DB: containers, partition keys, TTL, RU/s capacity, repository rules | 2026-09-15 |
 
 ## Domains
 
 | Page | Summary | Updated |
 |---|---|---|
-| [domains/identity.md](domains/identity.md) | Passwordless identity: flows, domain model, 6 endpoints, security rules | 2026-09-15 |
-| [domains/contact.md](domains/contact.md) | Contact form: rules, honeypot, rate limit, endpoint | 2026-09-15 |
+| [domains/identity.md](domains/identity.md) | Passwordless identity: flows, domain model, 8 endpoints incl. account deletion and retention, security rules | 2026-09-15 |
+| [domains/contact.md](domains/contact.md) | Contact form: rules, honeypot, rate limit, 1-year retention, endpoint | 2026-09-15 |
 | [domains/weddy.md](domains/weddy.md) | IziWeddy: subdomains, access via `loadWeddingFor`, routes, mobile UI principles | 2026-09-15 |
 | [domains/weddyWedding.md](domains/weddyWedding.md) | Plans and the couple: dashboard, field rules, 5 endpoints, code | 2026-09-15 |
 | [domains/weddyGuests.md](domains/weddyGuests.md) | Guests and families: enums, family rules, list, statistics, 8 endpoints | 2026-09-15 |

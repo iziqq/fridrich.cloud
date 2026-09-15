@@ -17,6 +17,9 @@ export interface SessionResult {
  * musí session vyrobit stejně, proto sedí na jednom místě.
  */
 export async function startSession(deps: IdentityDeps, user: User): Promise<SessionResult> {
+  // Přihlášení je aktivita – odsouvá smazání neaktivního účtu.
+  if (user.markSeen(deps.clock)) await deps.users.save(user);
+
   const { token, tokenHash } = deps.tokenGenerator.generate();
   const session = Session.start({
     id: deps.ids.next(),
@@ -60,6 +63,11 @@ export async function resolveSession(
   // Platnost se posouvá jen jednou za den, ne při každém požadavku.
   if (session.touch(deps.clock)) {
     await deps.sessions.save(session);
+  }
+
+  // Používání přihlášeného účtu je aktivita stejně jako přihlášení (zápis nejvýš jednou za den).
+  if (user.markSeen(deps.clock)) {
+    await deps.users.save(user);
   }
 
   return user;

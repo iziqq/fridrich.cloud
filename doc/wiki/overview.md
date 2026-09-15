@@ -19,10 +19,16 @@ updated: 2026-09-15
 | Part | Address | Description | Status |
 |---|---|---|---|
 | **Portal** | `/` | Presentation – about me, services, development process, projects, contact | ✅ done |
-| **Identity** | `/prihlaseni`, `/registrace`, `/ucet` | Passwordless account shared by everything | ✅ done |
+| **Identity** | `/prihlaseni`, `/registrace`, `/ucet` | Passwordless account shared by everything, self-service deletion | ✅ done |
 | **IziWeddy** | `/izi-weddy` | Wedding planner – couple, guests, planning, budget | ✅ done |
+| **Legal** | `/ochrana-osobnich-udaju`, `/obchodni-podminky` | Privacy policy and terms | ✅ done |
 | **IziBudgy** | `/izi-budgy` | Household budget | 🕓 TODO – specification missing |
-| **API** | `/api` | `identity`, `contact`, `weddy` – 26 endpoints | ✅ done |
+| **API** | `/api` | `identity`, `contact`, `weddy` – 28 endpoints | ✅ done |
+| **Retention scheduler** | GitHub Actions | Daily deletion of inactive accounts | ✅ done – needs `MAINTENANCE_TOKEN` set up |
+
+> ℹ️ Personal data is collected under the privacy policy; contact messages expire
+> after a year and inactive accounts are deleted after a year. Everything can be
+> switched off by `PERSONAL_DATA_COLLECTION_ENABLED` – [architecture/personalData.md](architecture/personalData.md).
 
 ```
                     ┌──────────────────────────────────────┐

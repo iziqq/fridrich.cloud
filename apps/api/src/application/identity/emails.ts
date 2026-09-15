@@ -85,3 +85,36 @@ export function accountExistsEmail(to: string, loginUrl: string): EmailMessage {
     ),
   };
 }
+
+/**
+ * Upozornění před smazáním neaktivního účtu.
+ *
+ * Plánování svatby může ležet měsíce ladem – uživatel se má dozvědět dřív,
+ * než o data přijde, a stačí mu se přihlásit.
+ */
+export function inactiveAccountWarningEmail(to: string, loginUrl: string, days: number): EmailMessage {
+  return {
+    to,
+    subject: 'Váš účet se brzy smaže – fridrich.cloud',
+    text: `Na fridrich.cloud jste se už dlouho nepřihlásili. Pokud se nepřihlásíte do ${days} dní, účet i všechna data v aplikacích (například plánování v IziWeddy) smažeme.\n\nÚčet si ponecháte tím, že se přihlásíte:\n${loginUrl}\n\nPokud účet nepotřebujete, nemusíte nic dělat.`,
+    html: layout(
+      'Váš účet se brzy smaže',
+      `Na fridrich.cloud jste se už dlouho nepřihlásili. Pokud se nepřihlásíte do ${days} dní, účet i všechna data v aplikacích (například plánování v IziWeddy) smažeme. Pokud účet nepotřebujete, nemusíte nic dělat.`,
+      { action: { label: 'Přihlásit se a účet ponechat', url: loginUrl } },
+    ),
+  };
+}
+
+/** Potvrzení smazání účtu – `reason` doplňuje větu „Účet jsme smazali …". */
+export function accountDeletedEmail(to: string, reason: string): EmailMessage {
+  return {
+    to,
+    subject: 'Účet byl smazán – fridrich.cloud',
+    text: `Váš účet na fridrich.cloud jsme smazali ${reason}. Spolu s ním jsme smazali i data v aplikacích (například plánování v IziWeddy).\n\nTento e-mail je poslední, který od nás v souvislosti s účtem dostanete.`,
+    html: layout(
+      'Účet byl smazán',
+      `Váš účet na fridrich.cloud jsme smazali ${reason}. Spolu s ním jsme smazali i data v aplikacích (například plánování v IziWeddy). Tento e-mail je poslední, který od nás v souvislosti s účtem dostanete.`,
+      {},
+    ),
+  };
+}

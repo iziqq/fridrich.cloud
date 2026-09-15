@@ -882,7 +882,7 @@ select {
   color: var(--color-danger);
 }
 
-@media (min-width: 560px) {
+@media (--tablet) {
   .row {
     grid-template-columns: repeat(2, 1fr);
   }

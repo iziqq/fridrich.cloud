@@ -60,7 +60,7 @@ Domain:
 |---|---|
 | Shared kernel | `packages/weddy-shared/src/wedding.ts` – `PersonSchema`, `PersonInputSchema`, `WeddingSchema`, `WeddingInputSchema`, `WeddingSummarySchema`, `daysUntil` |
 | Domain | `apps/api/src/domain/weddy/wedding/Wedding.ts`, `WeddingRepository.ts` |
-| Use cases | `apps/api/src/application/weddy/wedding.ts` – `loadWeddingFor`, `listWeddings`, `getWedding`, `createWedding`, `updateWedding`, `deleteWedding` |
+| Use cases | `apps/api/src/application/weddy/wedding.ts` – `loadWeddingFor`, `listWeddings`, `getWedding`, `createWedding`, `updateWedding`, `deleteWedding`, `eraseUserWeddyData` (account deletion: sole-owner weddings deleted with guests and items, shared ones only `removeOwner`) |
 | BE endpoints | `apps/api/src/endpoints/weddy/wedding/` |
 | FE endpoints | `apps/portal/src/weddy/wedding/endpoints/` |
 | Store | `wedding.store.ts` – `summaries`, `current`, `loadList`, `loadOne`, `create`, `update`, `remove` |

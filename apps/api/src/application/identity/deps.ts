@@ -6,6 +6,7 @@ import type {
   SessionRepository,
   TokenGenerator,
   TokenRepository,
+  UserDataEraser,
   UserRepository,
 } from '../../domain/identity/ports.js';
 import type { EmailSender } from '../../domain/identity/EmailSender.js';
@@ -21,4 +22,6 @@ export interface IdentityDeps {
   clock: Clock;
   email: EmailSender;
   rateLimiter: RateLimiter;
+  /** Mazání dat uživatele v produktech (IziWeddy, …) při smazání účtu. */
+  userDataErasers: UserDataEraser[];
 }

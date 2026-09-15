@@ -81,7 +81,10 @@ in `apps/`, the database or the UI.
 
 1. **Domains do not call each other.** The only thing they share is the user
    identity (`userId`) passed by the endpoint wrapper. If a domain grows, it can
-   be cut out without touching the others.
+   be cut out without touching the others. A cross-domain effect goes through a
+   port owned by the triggering domain and wired in `infrastructure/container.ts` –
+   account deletion calls `UserDataEraser`, implemented by `weddy`
+   (`eraseUserWeddyData`) ([personalData.md](personalData.md#account-deletion-right-to-erasure)).
 2. **`weddy` subdomains may depend on `wedding`** (the root) – every use case
    calls `loadWeddingFor()`, which checks access. There are no direct
    dependencies between `guests`, `planning` and `budget`; `budget` reads

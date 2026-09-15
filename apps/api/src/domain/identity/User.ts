@@ -4,6 +4,8 @@ import type { Clock } from '../shared/Clock.js';
 import { DomainError } from '../shared/DomainError.js';
 import { EmailAddress } from './EmailAddress.js';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export interface UserState {
   id: string;
   email: string;
@@ -11,12 +13,19 @@ export interface UserState {
   emailVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Verze obchodních podmínek, se kterou uživatel při registraci souhlasil. */
+  termsVersion?: string;
+  termsAcceptedAt?: string;
+  /** Poslední přihlášení nebo aktivita v session; podle ní se maže neaktivní účet. */
+  lastSeenAt?: string;
+  /** Kdy odešlo upozornění, že se neaktivní účet brzy smaže. Aktivita ho ruší. */
+  inactivityWarningSentAt?: string;
 }
 
 /**
  * Agregát uživatele.
  *
- * Nese chování (ověření e-mailu, přejmenování), ne jen data. Hash hesla sem
+ * Nese chování (ověření e-mailu, přejmenování, aktivitu), ne jen data. Hash hesla sem
  * schválně nepatří – žije vedle v agregátu `Credentials`, aby se nemohl
  * omylem dostat do odpovědi API spolu s profilem.
  */
@@ -28,18 +37,46 @@ export class User {
     private verified: boolean,
     readonly createdAt: string,
     private updatedAtValue: string,
+    readonly termsVersion: string | undefined,
+    readonly termsAcceptedAt: string | undefined,
+    private lastSeenAtValue: string | undefined,
+    private inactivityWarningSentAtValue: string | undefined,
   ) {}
 
+  /**
+   * Nový účet vzniká jen se souhlasem s obchodními podmínkami – účet je smlouva
+   * o užívání služby a souhlas je její součástí, ne formalita formuláře.
+   */
   static register(input: {
     id: string;
     email: EmailAddress;
     displayName: string;
+    acceptTerms: boolean;
+    termsVersion: string;
     clock: Clock;
   }): User {
+    if (!input.acceptTerms) {
+      throw DomainError.field(
+        'acceptTerms',
+        'Pro založení účtu je potřeba souhlasit s obchodními podmínkami',
+      );
+    }
+
     const displayName = User.normalizeDisplayName(input.displayName);
     const now = input.clock.now().toISOString();
 
-    return new User(input.id, input.email, displayName, false, now, now);
+    return new User(
+      input.id,
+      input.email,
+      displayName,
+      false,
+      now,
+      now,
+      input.termsVersion,
+      now,
+      now,
+      undefined,
+    );
   }
 
   static fromState(state: UserState): User {
@@ -50,6 +87,10 @@ export class User {
       state.emailVerified,
       state.createdAt,
       state.updatedAt,
+      state.termsVersion,
+      state.termsAcceptedAt,
+      state.lastSeenAt,
+      state.inactivityWarningSentAt,
     );
   }
 
@@ -79,6 +120,15 @@ export class User {
     return this.updatedAtValue;
   }
 
+  /** Od kdy se počítá neaktivita – účty z doby před sledováním aktivity berou datum registrace. */
+  get lastActivityAt(): string {
+    return this.lastSeenAtValue ?? this.createdAt;
+  }
+
+  get inactivityWarningSentAt(): string | undefined {
+    return this.inactivityWarningSentAtValue;
+  }
+
   verifyEmail(clock: Clock): void {
     if (this.verified) return; // opakované ověření není chyba, jen nic nedělá
     this.verified = true;
@@ -98,11 +148,76 @@ export class User {
     this.touch(clock);
   }
 
+  /**
+   * Zaznamená aktivitu uživatele. Vrací `true`, když je potřeba zápis.
+   *
+   * Zapisuje se nejvýš jednou za den – na lhůtě v řádu měsíců na hodinách
+   * nezáleží a každý požadavek by jinak znamenal zápis do databáze. Aktivita
+   * zároveň ruší upozornění na blížící se smazání.
+   */
+  markSeen(clock: Clock): boolean {
+    const now = clock.now();
+    const seenRecently =
+      this.lastSeenAtValue !== undefined &&
+      now.getTime() - new Date(this.lastSeenAtValue).getTime() < DAY_MS;
+
+    if (seenRecently && this.inactivityWarningSentAtValue === undefined) return false;
+
+    this.lastSeenAtValue = now.toISOString();
+    this.inactivityWarningSentAtValue = undefined;
+    return true;
+  }
+
+  /** Neaktivní déle, než je daný počet dní. */
+  isInactiveFor(days: number, clock: Clock): boolean {
+    const inactiveMs = clock.now().getTime() - new Date(this.lastActivityAt).getTime();
+    return inactiveMs >= days * DAY_MS;
+  }
+
+  /**
+   * Smazat jde až po celé lhůtě neaktivity **a** nejdřív `warningDays` po upozornění.
+   *
+   * Druhá podmínka chrání účty, které upozornění nedostaly včas (plánovač
+   * neběžel, účet je z doby před sledováním aktivity) – ty se nejdřív upozorní
+   * a smažou se až po plné výpovědní lhůtě, nikdy bez varování.
+   */
+  isDueForDeletion(retentionDays: number, warningDays: number, clock: Clock): boolean {
+    if (!this.isInactiveFor(retentionDays, clock)) return false;
+    if (this.inactivityWarningSentAtValue === undefined) return false;
+
+    const sinceWarningMs = clock.now().getTime() - new Date(this.inactivityWarningSentAtValue).getTime();
+    return sinceWarningMs >= warningDays * DAY_MS;
+  }
+
+  markInactivityWarningSent(clock: Clock): void {
+    this.inactivityWarningSentAtValue = clock.now().toISOString();
+  }
+
   private touch(clock: Clock): void {
     this.updatedAtValue = clock.now().toISOString();
   }
 
   toState(): UserState {
+    const state: UserState = {
+      id: this.id,
+      email: this.emailAddress.value,
+      displayName: this.name,
+      emailVerified: this.verified,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAtValue,
+    };
+
+    if (this.termsVersion) state.termsVersion = this.termsVersion;
+    if (this.termsAcceptedAt) state.termsAcceptedAt = this.termsAcceptedAt;
+    if (this.lastSeenAtValue) state.lastSeenAt = this.lastSeenAtValue;
+    if (this.inactivityWarningSentAtValue) {
+      state.inactivityWarningSentAt = this.inactivityWarningSentAtValue;
+    }
+    return state;
+  }
+
+  /** Tvar, který smí vidět prohlížeč – souhlas a údaje o aktivitě zůstávají na serveru. */
+  toPublic(): PublicUser {
     return {
       id: this.id,
       email: this.emailAddress.value,
@@ -111,10 +226,5 @@ export class User {
       createdAt: this.createdAt,
       updatedAt: this.updatedAtValue,
     };
-  }
-
-  /** Tvar, který smí vidět prohlížeč. */
-  toPublic(): PublicUser {
-    return this.toState();
   }
 }

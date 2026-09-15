@@ -123,7 +123,7 @@ const ICONS: Record<PlanningCategory, string> = {
   white-space: nowrap;
 }
 
-@media (min-width: 720px) {
+@media (--tablet) {
   .sections {
     grid-template-columns: repeat(2, 1fr);
   }

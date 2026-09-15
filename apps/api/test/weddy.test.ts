@@ -16,6 +16,7 @@ import { createItem, listItems } from '../src/application/weddy/planning.js';
 import {
   createWedding,
   deleteWedding,
+  eraseUserWeddyData,
   getWedding,
   listWeddings,
   updateWedding,
@@ -392,5 +393,41 @@ describe('rodiny', () => {
 
     await assert.rejects(createFamily(deps, weddingId, novakovi, STRANGER), isDomainError);
     await assert.rejects(deleteFamily(deps, weddingId, family.id, STRANGER), isDomainError);
+  });
+});
+
+describe('smazání dat uživatele při zrušení účtu', () => {
+  it('plánování, které patří jen jemu, smaže i s hosty a položkami', async () => {
+    const { deps, weddingId } = await withWedding();
+    await createGuest(deps, weddingId, { firstName: 'Eva', lastName: 'Malá', side: 'bride' }, OWNER);
+    await createItem(deps, weddingId, { category: 'flowers', name: 'Kytice', price: 3000 }, OWNER);
+
+    await eraseUserWeddyData(deps, OWNER);
+
+    assert.equal(deps.weddings.items.size, 0);
+    assert.equal(deps.guests.items.size, 0);
+    assert.equal(deps.items.items.size, 0);
+  });
+
+  it('ze sdíleného plánování jen odebere – druhý vlastník o data nepřijde', async () => {
+    const { deps, weddingId } = await withWedding();
+    await createGuest(deps, weddingId, { firstName: 'Eva', lastName: 'Malá', side: 'bride' }, OWNER);
+    const wedding = await deps.weddings.findById(weddingId);
+    assert.ok(wedding);
+    wedding.shareWith(STRANGER, deps.clock);
+    await deps.weddings.save(wedding);
+
+    await eraseUserWeddyData(deps, OWNER);
+
+    assert.deepEqual(deps.weddings.items.get(weddingId)?.ownerIds, [STRANGER]);
+    assert.equal(deps.guests.items.size, 1);
+  });
+
+  it('cizí plánování nechá být', async () => {
+    const { deps, weddingId } = await withWedding();
+
+    await eraseUserWeddyData(deps, STRANGER);
+
+    assert.ok(deps.weddings.items.has(weddingId));
   });
 });

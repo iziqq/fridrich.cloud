@@ -45,7 +45,7 @@ fridrich.cloud/
 
 | Package | Content | Used by |
 |---|---|---|
-| `@fridrich/design` | `primitives.css` (structure), `theme-cyberpunk.css` (portal), fonts, effects. Products take only the structure and supply their own palette. | portal |
+| `@fridrich/design` | `primitives.css` (structure), `breakpoints.css` (`@custom-media --tablet`, `--notebook`), `theme-cyberpunk.css` (portal), fonts, effects. Products take only the structure and supply their own palette. | portal |
 | `@fridrich/shared` | `validation.ts` (Valibot building blocks, `issuesToDetails`), `api.ts` (`ApiErrorBodySchema`, `MessageResponseSchema`), `identity.ts` (`UserSchema`, `AccountEmailSchema`, `DisplayNameSchema`, `LOGIN_CODE_LENGTH`), `contact.ts` | portal, api, weddy-shared |
 | `@fridrich/weddy-shared` | `wedding.ts`, `guests.ts`, `planning.ts`, `budget.ts` – entity and input schemas, enums + labels, `calculateBudget`, `calculateGuestStats`, `groupIntoFamilies`, `daysUntil`, `formatCurrency` | portal, api |
 | `@fridrich/budgy-shared` | *(TODO – created together with IziBudgy)* | |
