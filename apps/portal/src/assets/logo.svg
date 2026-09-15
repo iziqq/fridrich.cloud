@@ -1,0 +1,21 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ears-->
+  <path d="M10 17L13 9L18 14L10 17Z" fill="#ff6b35"/>
+  <path d="M30 17L27 9L22 14L30 17Z" fill="#ff6b35"/>
+
+  <!-- Ear Insides -->
+  <path d="M11.5 16.5L13.5 11L16.5 14.5L11.5 16.5Z" fill="white"/>
+  <path d="M28.5 16.5L26.5 11L23.5 14.5L28.5 16.5Z" fill="white"/>
+
+  <!-- Eyes -->
+  <!-- Left Eye -->
+  <circle cx="15" cy="23" r="3.5" fill="white"/>
+  <circle cx="15" cy="23" r="1.5" fill="#1a1a1a"/>
+
+  <!-- Right Eye -->
+  <circle cx="25" cy="23" r="3.5" fill="white"/>
+  <circle cx="25" cy="23" r="1.5" fill="#1a1a1a"/>
+
+  <!-- Nose -->
+  <path d="M17.5 27 L22.5 27 Q20 29 17.5 27Z" fill="#ff6b35"/>
+</svg>

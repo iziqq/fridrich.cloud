@@ -290,3 +290,13 @@ Source: [raw/2026-09-15-glassDesign.md](../raw/2026-09-15-glassDesign.md)
   delete confirmation – no horizontal overflow.
 - Touched pages: `domains/portal.md` (binding rules, new *Design: Glass* section, accessibility), `architecture/monorepo.md`,
   `decisions.md`, `index.md`; raw source listed in `doc/raw/README.md`.
+
+## [2026-09-15] change | Logo in the navigation, favicon, bar always visible
+
+- Owner added `apps/portal/src/assets/logo.svg` (fox); `SiteNav` shows it instead of the "FL" monogram.
+- The navigation no longer hides when scrolling down (scroll listener and `.is-hidden` removed).
+- `apps/portal/public/favicon.svg` = logo on a dark rounded square (white eyes stay visible on light tabs);
+  `index.html` links it instead of the inline data-URI icon.
+- Verified in headless Chrome at 1024 and 360 px: after scrolling ~2 300 px the bar is still 16 px from the top,
+  the logo loads, `/favicon.svg` is served as `image/svg+xml`.
+- Touched pages: `domains/portal.md`.

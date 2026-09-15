@@ -3,6 +3,7 @@ import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, useRoute } from 'vue-router';
+import logoUrl from '@/assets/logo.svg';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import { navItems, site } from '@/content/site';
 import { useActiveSection } from '@/composables/useActiveSection';
@@ -13,30 +14,20 @@ const { t } = useI18n();
 const auth = useAuthStore();
 
 const menuOpen = ref(false);
-const hidden = ref(false);
 
 const sectionIds = navItems.map((item) => item.hash.slice(1));
 const activeSection = useActiveSection(sectionIds);
 
-let lastScroll = 0;
-
-function onScroll(): void {
-  const current = window.scrollY;
-  // Lišta se schová při scrollu dolů a vrátí při scrollu nahoru.
-  hidden.value = current > 160 && current > lastScroll && !menuOpen.value;
-  lastScroll = current;
-}
-
-onMounted(() => {
-  window.addEventListener('scroll', onScroll, { passive: true });
-
-  // Stav přihlášení se zjišťuje dotazem na API – session drží httpOnly cookie,
+/*
+ * Lišta zůstává při scrollu vždy nahoře – navigace i přepínač jazyka mají být
+ * po ruce na každém místě stránky, ne až po scrollu zpět nahoru.
+ */
+onMounted(() => {  // Stav přihlášení se zjišťuje dotazem na API – session drží httpOnly cookie,
   // kterou JavaScript nepřečte. Bez sběru osobních údajů přihlášení není,
   // takže se ani neptáme.
   if (PERSONAL_DATA_COLLECTION_ENABLED) void auth.load();
 });
 onBeforeUnmount(() => {
-  window.removeEventListener('scroll', onScroll);
   document.body.style.removeProperty('overflow');
 });
 
@@ -59,15 +50,11 @@ function target(hash: string): string {
 </script>
 
 <template>
-  <header class="site-nav" :class="{ 'is-hidden': hidden }">
+  <header class="site-nav">
     <nav class="bar glass" :aria-label="t('portal.nav.label')">
       <RouterLink to="/" class="logo" :aria-label="t('portal.nav.home')">
-        <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
-          <path
-            d="M4 4h10v3H7v6h6v3H7v12H4V4Zm14 0h3v19h7v3h-10V4Z"
-            fill="currentColor"
-          />
-        </svg>
+        <!-- Popis nese odkaz (aria-label), obrázek je jen dekorace. -->
+        <img :src="logoUrl" alt="" width="36" height="36" />
       </RouterLink>
 
       <ul class="links">
@@ -138,11 +125,6 @@ function target(hash: string): string {
   display: flex;
   justify-content: center;
   padding-inline: var(--gutter);
-  transition: transform var(--dur-slow) var(--ease);
-}
-
-.site-nav.is-hidden {
-  transform: translateY(calc(-100% - var(--space-4)));
 }
 
 /* Plovoucí skleněná pilulka – rozostření a okraj dodává třída glass. */
@@ -162,7 +144,17 @@ function target(hash: string): string {
   place-items: center;
   min-width: 2.75rem;
   min-height: 2.75rem;
-  color: var(--color-accent);
+  border-radius: var(--radius-pill);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.logo:hover {
+  transform: scale(1.06);
+}
+
+.logo img {
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 .links {

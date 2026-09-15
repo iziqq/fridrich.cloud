@@ -28,7 +28,7 @@ change must respect.
 
 Menu: *O mně · Služby · Vývoj · Projekty · Kontakt · Přihlásit se* (About me ·
 Services · Development · Projects · Contact · Sign in); after sign-in the user's
-name → account. *Přihlásit se* is hidden when the GDPR switch is off. The active section is highlighted while scrolling (`useActiveSection`).
+name → account. *Přihlásit se* is hidden when the GDPR switch is off. The bar is a floating glass pill that **stays visible while scrolling** (it used to hide on scroll down) and shows the **fox logo** (`apps/portal/src/assets/logo.svg`). The active section is highlighted while scrolling (`useActiveSection`).
 
 | Section | Content |
 |---|---|
@@ -74,7 +74,8 @@ mood of the brand but reads calmer and more premium; orange replaces the neon ye
 | Tokens | `packages/design/src/theme-glass.css` | palette, fonts, radii, blur, shadow; orange glows under the page (`body::before`, not on IziWeddy pages) |
 | Effects | `packages/design/src/effects.css` | `.glass`, `.glass-strong`, `.accent-glow`, `.text-gradient`, `.reveal`, reduced motion/transparency fallbacks |
 | Fonts | `packages/design/src/fonts.css` | Inter 400/500/600/700, latin + latin-ext, self-hosted |
-| Components | `AppButton` (orange pill / glass pill), `SectionHeading`, `SectionLabel` (glass pill with an orange dot), `SiteNav` (floating glass pill) | `apps/portal/src/components` |
+| Components | `AppButton` (orange pill / glass pill), `SectionHeading`, `SectionLabel` (glass pill with an orange dot), `SiteNav` (floating glass pill, always visible, logo) | `apps/portal/src/components` |
+| Logo and favicon | `apps/portal/src/assets/logo.svg` (fox, transparent – used in the nav); `apps/portal/public/favicon.svg` = the same logo on a dark rounded square, because its white eyes would vanish on a light browser tab | `index.html` links `/favicon.svg` |
 | E-mails | `apps/api/src/application/identity/emails.ts` | same palette with solid colours (e-mail clients have no blur) |
 
 | Token | Value | Use |
