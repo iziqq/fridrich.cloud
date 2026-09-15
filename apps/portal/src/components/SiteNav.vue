@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { navItems, site } from '@/content/site';
 import { useActiveSection } from '@/composables/useActiveSection';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/identity/auth.store';
 
 const route = useRoute();
 const auth = useAuthStore();

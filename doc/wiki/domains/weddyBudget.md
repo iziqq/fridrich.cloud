@@ -1,52 +1,52 @@
 ---
-title: weddy / budget – rozpočet
-type: domena
+title: weddy / budget – the budget
+type: domain
 sources:
-  - raw/iziweddy-specifikace.md (kap. 5.5, 7.4)
-  - kód: packages/weddy-shared/src/budget.ts, apps/api/src/application/weddy/budget.ts, apps/portal/src/weddy/budget
+  - raw/iziweddySpec.md (ch. 5.5, 7.4)
+  - code: packages/weddy-shared/src/budget.ts, apps/api/src/application/weddy/budget.ts, apps/portal/src/weddy/budget
 updated: 2026-09-15
 ---
 
-# `weddy / budget` – rozpočet
+# `weddy / budget` – the budget
 
-> Rozpočet **sečte ceny všech položek plánování**. Nikam se neukládá, vždy se
-> počítá z aktuálních položek. Nemá vlastní agregát ani kontejner – je to
-> odvozený pohled nad subdoménou `planning`.
+> The budget **adds up the prices of all planning items**. It is never stored,
+> always calculated from the current items. It has no aggregate or container of
+> its own – it is a derived view over the `planning` subdomain.
 
-## Hodnoty
+## Values
 
-| Hodnota | Výpočet |
+| Value | Calculation |
 |---|---|
-| `total` | součet cen všech položek |
-| `accepted` | součet cen položek `accepted` |
-| `draft` | součet cen položek `draft` |
-| `itemsWithoutPrice` | počet položek bez ceny – upozornění, že součet nemusí být úplný |
-| `byCategory[sekce]` | totéž pro každou z 11 sekcí (klíč je vždy přítomen, i s nulami) |
+| `total` | sum of prices of all items |
+| `accepted` | sum of prices of `accepted` items |
+| `draft` | sum of prices of `draft` items |
+| `itemsWithoutPrice` | number of items without a price – a warning that the total may be incomplete |
+| `byCategory[section]` | the same for each of the 11 sections (the key is always present, even with zeros) |
 
-Položky bez ceny se do součtů nepočítají (jako 0), jen do `itemsWithoutPrice`.
+Items without a price are not included in the sums (count as 0), only in `itemsWithoutPrice`.
 
-## Kde se počítá
+## Where it is calculated
 
-Jediná implementace je `calculateBudget(items)` ve sdíleném jádru:
+The single implementation is `calculateBudget(items)` in the shared kernel:
 
-- **Backend** – endpoint `getBudget` (use-case `application/weddy/budget.ts`)
-  načte položky a zavolá ji.
-- **Frontend – obrazovka Rozpočet** (`BudgetView.vue`) volá endpoint
-  `getBudget` při každém otevření; stav nesdílí, proto nemá store.
-- **Frontend – přehled sekcí** v plánování počítá součty lokálně stejnou funkcí
-  z položek v `planning.store`, aby se po úpravě přepočítal okamžitě.
+- **Backend** – the `getBudget` endpoint (use case `application/weddy/budget.ts`)
+  loads the items and calls it.
+- **Frontend – Budget screen** (`BudgetView.vue`) calls the `getBudget` endpoint
+  every time it opens; it shares no state, so it has no store.
+- **Frontend – section overview** in planning calculates totals locally with the
+  same function from the items in `planning.store`, so they update instantly after an edit.
 
-Protože je výpočet jeden, čísla na obou místech nemůžou nesouhlasit.
+Because there is one calculation, the numbers in both places cannot disagree.
 
-## Obrazovka
+## Screen
 
-Celkem velkým písmem, pruh schváleno/návrhy, rozpis podle sekcí (jen sekce
-s cenou nebo s položkou bez ceny, odkaz do sekce), upozornění na položky bez
-ceny, prázdný stav s odkazem na plánování.
+Total in large type, accepted/draft bar, breakdown by section (only sections
+with a price or an item without one, linking to the section), a warning about
+items without a price, an empty state linking to planning.
 
 ## Endpoint
 
-| Endpoint | Metoda a cesta | Response |
+| Endpoint | Method and path | Response |
 |---|---|---|
 | `getBudget` | `GET /api/weddy/weddings/{weddingId}/budget` | `BudgetSummary` |
 
@@ -59,18 +59,18 @@ ceny, prázdný stav s odkazem na plánování.
   }
 }
 ```
-*(ukázka zkrácená – `byCategory` obsahuje všech 11 sekcí)*
+*(shortened example – `byCategory` contains all 11 sections)*
 
-## Kód
+## Code
 
-| Vrstva | Soubor |
+| Layer | File |
 |---|---|
-| Sdílené jádro | `packages/weddy-shared/src/budget.ts` – `BudgetBreakdownSchema`, `BudgetSummarySchema`, `calculateBudget`, `formatCurrency` |
-| Use-case | `apps/api/src/application/weddy/budget.ts` |
-| Endpointy | `apps/api/src/endpoints/weddy/budget/getBudget.endpoint.ts`, `apps/portal/src/weddy/budget/endpoints/getBudget.endpoint.ts` |
+| Shared kernel | `packages/weddy-shared/src/budget.ts` – `BudgetBreakdownSchema`, `BudgetSummarySchema`, `calculateBudget`, `formatCurrency` |
+| Use case | `apps/api/src/application/weddy/budget.ts` |
+| Endpoints | `apps/api/src/endpoints/weddy/budget/getBudget.endpoint.ts`, `apps/portal/src/weddy/budget/endpoints/getBudget.endpoint.ts` |
 | UI | `apps/portal/src/weddy/budget/BudgetView.vue` |
 
-## Související
+## Related
 
-- [planning](weddy-planning.md) · [weddy](weddy.md)
-- Možné rozšíření: cílový rozpočet (kolik zbývá), zálohy a platby.
+- [planning](weddyPlanning.md) · [weddy](weddy.md)
+- Possible extensions: budget target (how much is left), deposits and payments.

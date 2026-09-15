@@ -1,9 +1,8 @@
-import type { User as PublicUser } from '@fridrich/shared';
+import { DisplayNameSchema, type User as PublicUser } from '@fridrich/shared';
+import * as v from 'valibot';
 import type { Clock } from '../shared/Clock.js';
 import { DomainError } from '../shared/DomainError.js';
 import { EmailAddress } from './EmailAddress.js';
-
-const DISPLAY_NAME_MAX = 100;
 
 export interface UserState {
   id: string;
@@ -34,7 +33,7 @@ export class User {
   static register(input: {
     id: string;
     email: EmailAddress;
-    displayName: unknown;
+    displayName: string;
     clock: Clock;
   }): User {
     const displayName = User.normalizeDisplayName(input.displayName);
@@ -54,17 +53,14 @@ export class User {
     );
   }
 
-  private static normalizeDisplayName(raw: unknown): string {
-    if (typeof raw !== 'string' || raw.trim() === '') {
-      throw DomainError.field('displayName', 'Vyplňte jméno');
+  /** Jméno je invariant uživatele – drží se ho i volání mimo HTTP (skript, test). */
+  private static normalizeDisplayName(raw: string): string {
+    const result = v.safeParse(DisplayNameSchema, raw);
+    if (!result.success) {
+      throw DomainError.field('displayName', result.issues[0].message);
     }
 
-    const trimmed = raw.trim();
-    if (trimmed.length > DISPLAY_NAME_MAX) {
-      throw DomainError.field('displayName', `Jméno může mít nejvýše ${DISPLAY_NAME_MAX} znaků`);
-    }
-
-    return trimmed;
+    return result.output;
   }
 
   get email(): EmailAddress {
@@ -89,7 +85,7 @@ export class User {
     this.touch(clock);
   }
 
-  rename(displayName: unknown, clock: Clock): void {
+  rename(displayName: string, clock: Clock): void {
     this.name = User.normalizeDisplayName(displayName);
     this.touch(clock);
   }

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
-import { useWeddingsStore } from '@/weddy/stores/weddings';
 import { weddyPath } from '@/weddy/routes';
+import { useWeddingStore } from './wedding.store';
 
 const route = useRoute();
-const weddings = useWeddingsStore();
+const weddings = useWeddingStore();
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 
@@ -42,7 +42,7 @@ const title = computed(() => weddings.current?.title ?? 'Plánování');
       <RouterView />
     </main>
 
-    <!-- Spodní navigace v dosahu palce (doc/iziweddy.md, kap. 6.2). -->
+    <!-- Spodní navigace v dosahu palce (doc/wiki/domains/weddy.md). -->
     <nav class="bottom" aria-label="Sekce plánování">
       <RouterLink v-for="tab in tabs" :key="tab.to" :to="tab.to" class="tab">
         <span class="icon" aria-hidden="true">{{ tab.icon }}</span>

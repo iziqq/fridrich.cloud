@@ -1,67 +1,68 @@
 ---
-title: Data v Cosmos DB
-type: koncept
+title: Data in Cosmos DB
+type: concept
 sources:
-  - kód: apps/api/src/config.ts, apps/api/src/infrastructure/cosmos
-  - historie: doc/architecture.md kap. 7 (commit 8db5e0a)
+  - code: apps/api/src/config.ts, apps/api/src/infrastructure/cosmos
+  - history: doc/architecture.md ch. 7 (commit 8db5e0a)
 updated: 2026-09-15
 ---
 
-# Data v Cosmos DB
+# Data in Cosmos DB
 
-> Azure Cosmos DB (NoSQL API), účet `lf-page-db`, databáze **`izi-db`**.
-> Kontejner na agregát, partition key podle dominantního dotazu, sdílená
-> kapacita na úrovni databáze. Doména o Cosmos DB neví.
+> Azure Cosmos DB (NoSQL API), account `lf-page-db`, database **`izi-db`**.
+> One container per aggregate, partition key by the dominant query, capacity
+> shared at database level. The domain knows nothing about Cosmos DB.
 
-## Kontejnery
+## Containers
 
-| Kontejner | Partition key | Doména | Poznámka |
+| Container | Partition key | Domain | Note |
 |---|---|---|---|
 | `users` | `/id` | identity | |
-| `tokens` | `/userId` | identity | aktivační odkazy, TTL 30 dní |
-| `loginCodes` | `/userId` | identity | přihlašovací kódy, TTL 1 hodina |
-| `sessions` | `/userId` | identity | TTL 60 dní |
-| `rateLimits` | `/id` | sdílené | TTL 24 hodin |
+| `tokens` | `/userId` | identity | activation links, TTL 30 days |
+| `loginCodes` | `/userId` | identity | login codes, TTL 1 hour |
+| `sessions` | `/userId` | identity | TTL 60 days |
+| `rateLimits` | `/id` | shared | TTL 24 hours |
 | `contactMessages` | `/id` | contact | |
-| `weddings` | `/id` | weddy / wedding | včetně snoubenců a `ownerIds` |
-| `guests` | `/weddingId` | weddy / guests | rodina je pole `family` u hosta |
-| `planningItems` | `/weddingId` | weddy / planning | rozpočet se neukládá, počítá se |
+| `weddings` | `/id` | weddy / wedding | including the couple and `ownerIds` |
+| `guests` | `/weddingId` | weddy / guests | a family is the `family` field on a guest |
+| `planningItems` | `/weddingId` | weddy / planning | the budget is not stored, it is calculated |
 | *(TODO)* | | budgy | |
 
-Názvy drží `CONTAINERS` v `apps/api/src/config.ts`. Kontejnery i databáze
-vznikají samy při prvním použití (`createIfNotExists`); dočasná data maže
-Cosmos DB sám přes **TTL**, úklidová úloha není potřeba.
+Names are held by `CONTAINERS` in `apps/api/src/config.ts`. Containers and the
+database are created on first use (`createIfNotExists`); temporary data is
+deleted by Cosmos DB itself via **TTL**, no cleanup job is needed.
 
-Partition key se volí podle dominantního dotazu – u hostů a položek je to vždy
-„vše pro jednu svatbu", proto `/weddingId`.
+The partition key follows the dominant query – for guests and items it is
+always "everything for one wedding", hence `/weddingId`.
 
-## Kapacita (RU/s)
+## Capacity (RU/s)
 
-Účet **není serverless**, má předplacenou kapacitu se stropem **400 RU/s na
-celý účet**:
+The account is **not serverless**; it has provisioned capacity capped at
+**400 RU/s for the whole account**:
 
-1. **Kapacita se drží na databázi, ne na kontejnerech.** Kontejner s vlastní
-   kapacitou chce minimálně 400 RU/s – devět kontejnerů by chtělo 3600
-   a vytvoření by selhalo. Řídí to `COSMOS_THROUGHPUT` (na serverless účtu prázdné).
-2. **Nová databáze se do stropu nevejde** – produkty proto sdílí `izi-db`.
+1. **Capacity is held by the database, not by containers.** A container with its
+   own capacity needs at least 400 RU/s – nine containers would need 3600 and
+   creation would fail. Controlled by `COSMOS_THROUGHPUT` (empty on a serverless account).
+2. **A new database does not fit under the cap** – products therefore share `izi-db`.
 
-> ⚠️ **Vývoj i produkce jedou proti stejné databázi.** Vědomé rozhodnutí.
-> Při lokálním zkoušení s `local.settings.json` mířícím na `lf-page-db` se
-> zapisuje do ostrých dat. Oddělení = zvýšit strop účtu a založit druhou databázi.
+> ⚠️ **Development and production use the same database.** A deliberate
+> decision. Local experiments with a `local.settings.json` pointing to
+> `lf-page-db` write into live data. Separating them = raising the account cap
+> and creating a second database.
 
-> ℹ️ V `izi-db` zůstávají kontejnery `Seats`, `Users` a `AuthSessions`
-> z předchozí aplikace. Pozor na `Users` vs. `users` – Cosmos DB rozlišuje
-> velikost písmen.
+> ℹ️ `izi-db` still contains the `Seats`, `Users` and `AuthSessions` containers
+> from a previous application. Watch out for `Users` vs. `users` – Cosmos DB is
+> case-sensitive.
 
-## Pravidla pro kód
+## Rules for code
 
-- Repozitáře (`infrastructure/cosmos/*Repositories.ts`) přijímají a vracejí
-  jen doménové objekty (`Guest.fromState(stripSystemFields(doc))`,
+- Repositories (`infrastructure/cosmos/*Repositories.ts`) accept and return only
+  domain objects (`Guest.fromState(stripSystemFields(doc))`,
   `container.items.upsert(guest.toState())`).
-- Typy SDK (`ItemResponse`, `FeedResponse`, …) mimo `infrastructure/cosmos` nesmí.
-- Cosmos neumí transakce napříč kontejnery – pořadí zápisů volí use-case tak,
-  aby šla operace po pádu zopakovat (svatba se maže poslední).
+- SDK types (`ItemResponse`, `FeedResponse`, …) must not leave `infrastructure/cosmos`.
+- Cosmos has no transactions across containers – the use case orders writes so
+  that the operation can be repeated after a crash (the wedding is deleted last).
 
-## Související
+## Related
 
-- [Backend](backend.md) · [Nasazení](../provoz/nasazeni.md) · [Lokální vývoj](../provoz/lokalni-vyvoj.md)
+- [Backend](backend.md) · [Deployment](../operations/deployment.md) · [Local development](../operations/localDevelopment.md)

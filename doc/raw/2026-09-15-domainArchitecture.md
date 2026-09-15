@@ -1,31 +1,36 @@
 ---
-title: Zadání – doménová architektura, endpointy a Valibot
-type: zdroj
+title: Brief – domain architecture, endpoints and Valibot
+type: source
 date: 2026-09-15
-autor: Libor Fridrich
+author: Libor Fridrich
+language: translated from Czech
 ---
 
-# Zadání – doménová architektura, endpointy a Valibot
+# Brief – domain architecture, endpoints and Valibot
 
-Doslovné znění požadavku zadavatele. Neměnný zdroj – co z něj plyne, je
-rozepsané ve wiki (viz [wiki/log.md](../wiki/log.md), záznam z 2026-09-15).
+English translation of the project owner's request (the owner wants all
+documentation in English; the Czech wording is in the conversation of
+2026-09-15). Immutable source – what follows from it is compiled into the
+wiki (see [wiki/log.md](../wiki/log.md), entry of 2026-09-15).
 
 ---
 
-Rád bych abys přidal další dokumentaci pro AI agenta. Rád bych aby backend (API) i frontend bylo psána jako doménově. Např.:
-- Weddy bude jedna velká doména
-  - Budget bude doména, která bude komunikovat s API endpointy.
-  - Couple doména
-  - Guests doména
-atd.
+I would like you to add more documentation for the AI agent. I would like both
+the backend (API) and the frontend to be written in a domain-oriented way. For example:
+- Weddy will be one big domain
+  - Budget will be a domain that communicates with API endpoints.
+  - Couple domain
+  - Guests domain
+etc.
 
-Dále Frontend komunikace s API:
-Každý endpoint bude mít separátní soubor, např. getCouple.endpoint. V tomto souboru bude definovaný response type, request type.
+Next, frontend communication with the API:
+Every endpoint will have a separate file, e.g. getCouple.endpoint. That file will define the response type and the request type.
 
-Rád bych aby podobným stylem bylo řešeno i na backendu. Všechno co souvisí s endpointem, bylo u endpointu. Business logika vždy v doméně.
+I would like the backend to be solved in a similar style. Everything related to an endpoint should live with the endpoint. Business logic always in the domain.
 
-Všechny typy by měly být řešeny skrze Valibot package. Skrze to budeme řešit i validaci.
+All types should be handled through the Valibot package. We will also handle validation through it.
 
-Udělej tyto informace podle LLM Wiki koncept Andreje Karpathyho !
+Do this following Andrej Karpathy's LLM Wiki concept!
 
-Cokoliv bude potřeba změnit, tak změň
+Whatever needs to be changed, change it.
+

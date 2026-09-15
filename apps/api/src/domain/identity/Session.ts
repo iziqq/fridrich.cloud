@@ -21,7 +21,7 @@ export interface SessionState {
  *
  * Cookie nese jen neuhodnutelný náhodný token, žádná data o uživateli.
  * Díky tomu jde session kdykoli zneplatnit na serveru – při odhlášení,
- * při změně hesla nebo ručně (doc/architecture.md, kap. 5).
+ * při změně hesla nebo ručně (doc/wiki/domains/identity.md).
  */
 export class Session {
   private constructor(

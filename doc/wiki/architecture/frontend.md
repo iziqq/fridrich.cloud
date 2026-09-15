@@ -1,93 +1,97 @@
 ---
 title: Frontend – apps/portal
-type: koncept
+type: concept
 sources:
-  - kód: apps/portal
-  - historie: doc/architecture.md kap. 3 (commit 8db5e0a)
+  - code: apps/portal
+  - history: doc/architecture.md ch. 3 (commit 8db5e0a)
 updated: 2026-09-15
 ---
 
 # Frontend – `apps/portal`
 
-> **Jedna Vue 3 aplikace** (Composition API, `<script setup lang="ts">`,
-> Vite, Pinia, Vue Router) na doméně `www.fridrich.cloud`. Portál je v kořeni,
-> produkty jsou podstromy rout s vlastním vzhledem. Kód produktů je členěný
-> podle domén a subdomén, stejně jako backend.
+> **One Vue 3 application** (Composition API, `<script setup lang="ts">`, Vite,
+> Pinia, Vue Router) on `www.fridrich.cloud`. The portal is at the root,
+> products are route subtrees with their own look. Product code is organised by
+> domain and subdomain, same as the backend.
 
-## Struktura
+## Structure
 
 ```
 apps/portal/src/
-├── api/http.ts                 # callEndpoint + ApiError – jediné místo s fetch
-├── identity/                   # doména identity
+├── api/http.ts                 # callEndpoint + ApiError – the only place with fetch
+├── identity/                   # identity domain
 │   ├── endpoints/              # register, requestLoginCode, verifyLoginCode, verifyEmail, logout, getCurrentUser
-│   ├── auth.store.ts           # přihlášený uživatel
+│   ├── auth.store.ts           # signed-in user
 │   └── LoginView.vue, RegisterView.vue, VerifyEmailView.vue, AccountView.vue
 ├── contact/endpoints/          # submitContactMessage
-├── weddy/                      # doména IziWeddy
+├── weddy/                      # IziWeddy domain
 │   ├── wedding/                # endpoints/, wedding.store.ts, DashboardView, WeddingNewView,
 │   │                           # CoupleView, WeddingForm, WeddingLayout
 │   ├── guests/                 # endpoints/, guests.store.ts, GuestsView
 │   ├── planning/               # endpoints/, planning.store.ts, PlanningView, PlanningCategoryView
 │   ├── budget/                 # endpoints/, BudgetView
-│   ├── components/             # UI stavebnice produktu (BottomSheet, FormField, StatusBadge, …)
-│   ├── routes.ts               # WEDDY_BASE, weddyPath(), routy
+│   ├── components/             # product UI kit (BottomSheet, FormField, StatusBadge, …)
+│   ├── routes.ts               # WEDDY_BASE, weddyPath(), routes
 │   ├── WeddyShell.vue, NotFoundView.vue, weddy.css
-├── components/ sections/ content/ composables/ views/   # prezentační portál (není doména)
-├── router/                     # routy portálu + vložené routy produktů, auth guard
+├── components/ sections/ content/ composables/ views/   # presentation portal (not a domain)
+├── router/                     # portal routes + embedded product routes, auth guard
 ├── App.vue, main.ts, style.css
 ```
 
-## Pravidla
+## Rules
 
-1. **Volání API jen přes endpoint soubor** (`<doména>/endpoints/*.endpoint.ts`),
-   ten volá `callEndpoint`. Žádný `fetch` v komponentách ani ve store.
-2. **Store** (`<subdoména>.store.ts`, `defineStore`) jen pro stav sdílený více
-   komponentami nebo obrazovkami (přihlášený uživatel, hosté, položky, aktuální
-   svatba). Jednorázové volání bez sdíleného stavu udělá view samo
-   (registrace, rozpočet).
-3. **Akce store se jmenují podle změny stavu,** ne podle endpointu:
+1. **API calls only through an endpoint file** (`<domain>/endpoints/*.endpoint.ts`),
+   which calls `callEndpoint`. No `fetch` in components or stores.
+2. **Store** (`<subdomain>.store.ts`, `defineStore`) only for state shared by
+   several components or screens (signed-in user, guests, items, current
+   wedding). A one-off call without shared state is done by the view itself
+   (registration, budget).
+3. **Store actions are named after the state change,** not after the endpoint:
    `addFamily` → `createFamily`, `signOut` → `logout`, `activateAccount` → `verifyEmail`.
-4. **Typy dat** se berou ze sdíleného jádra (`Guest`, `Wedding` z
-   `@fridrich/weddy-shared`) nebo z endpoint souboru (`CreateGuestRequest`).
-   Ruční interface pro data API se nepíše.
-5. **Chyby formulářů:** `ApiError.fieldErrors` (klíč = cesta pole). Stejný tvar
-   přichází z validace před odesláním i z odpovědi `400`.
-6. **Import v rámci domény relativně** (`./wedding.store`), mezi doménami přes
-   alias `@/` (`@/identity/auth.store`, `@/weddy/components/FormField.vue`).
-7. **Business pravidla** (výpočty, statistiky, seskupení rodin) se berou ze
-   sdíleného jádra, nepíšou se znovu v komponentě.
+4. **Data types** come from the shared kernel (`Guest`, `Wedding` from
+   `@fridrich/weddy-shared`) or from the endpoint file (`CreateGuestRequest`).
+   No hand-written interfaces for API data.
+5. **Form errors:** `ApiError.fieldErrors` (key = field path). The same shape
+   comes from validation before sending and from a `400` response.
+6. **Imports within a domain are relative** (`./wedding.store`), across domains
+   via the `@/` alias (`@/identity/auth.store`, `@/weddy/components/FormField.vue`).
+7. **Business rules** (calculations, statistics, family grouping) come from the
+   shared kernel, they are not rewritten in a component.
 
-## Routing a vzhled produktu
+## Routing and product look
 
-- Produkt vkládá své routy do routeru portálu (`weddyRoutes` z `weddy/routes.ts`),
-  takže přechod portál ↔ plánovač je `RouterLink`, ne načtení stránky.
-- Prefix drží `WEDDY_BASE = '/izi-weddy'`; odkazy skládá `weddyPath('/weddings/…')`.
-- `meta: { requiresAuth: true, bare: true }` na kořeni produktu: `bare`
-  schová hlavičku a patičku portálu, `requiresAuth` pošle nepřihlášeného na
-  `/prihlaseni?redirect=…`. Guard je pohodlí, ne bezpečnost – data hlídá API.
-- `WeddyShell.vue` obalí produkt `<div class="weddy">`, `weddy.css`
-  předefinuje tokeny jen pod `.weddy`.
+- A product inserts its routes into the portal router (`weddyRoutes` from
+  `weddy/routes.ts`), so moving between portal and planner is a `RouterLink`,
+  not a page load.
+- The prefix is held by `WEDDY_BASE = '/izi-weddy'`; links are built with `weddyPath('/weddings/…')`.
+- `meta: { requiresAuth: true, bare: true }` on the product root: `bare` hides the
+  portal header and footer, `requiresAuth` sends an anonymous user to
+  `/prihlaseni?redirect=…`. The guard is a convenience, not security – the API guards data.
+- `WeddyShell.vue` wraps the product in `<div class="weddy">`, and `weddy.css`
+  redefines tokens only under `.weddy`.
 
-> ⚠️ **Každá obrazovka produktu má právě jeden `main#obsah`** – buď z
-> `WeddingLayout`, nebo jako kořen vlastního pohledu. Bez `bare` by vedle
-> sebe byly dva (portál + produkt) a skip link by skočil špatně.
+> ⚠️ **Every product screen has exactly one `main#obsah`** – either from
+> `WeddingLayout` or as the root of its own view. Without `bare` there would be
+> two (portal + product) and the skip link would jump to the wrong one.
 
-> ⚠️ **V tématu produktu nic na `:root` ani holý selektor prvku.** Tokeny
-> na `:root` by přebily paletu portálu na celém webu. Všechno pod `.weddy`.
+> ⚠️ **Nothing on `:root` and no bare element selectors in a product theme.**
+> Tokens on `:root` would override the portal palette on the whole website.
+> Everything goes under `.weddy`.
 
-## Adresy
+## Addresses
 
-| Cesta | Obsah |
+| Path | Content |
 |---|---|
-| `/`, `/#o-mne`, `/#sluzby`, `/#vyvoj`, `/#projekty`, `/#kontakt` | Portál – jednostránkový web |
-| `/projekty/:id` | Detail produktu |
-| `/prihlaseni`, `/registrace`, `/overeni-emailu`, `/ucet` | Identita |
-| `/izi-weddy/*` | IziWeddy – routy v [weddy.md](../domeny/weddy.md#routy) |
+| `/`, `/#o-mne`, `/#sluzby`, `/#vyvoj`, `/#projekty`, `/#kontakt` | Portal – one-page website |
+| `/projekty/:id` | Product detail |
+| `/prihlaseni`, `/registrace`, `/overeni-emailu`, `/ucet` | Identity (login, registration, e-mail verification, account) |
+| `/izi-weddy/*` | IziWeddy – routes in [weddy.md](../domains/weddy.md#routes) |
 | `/izi-budgy/*` | IziBudgy *(TODO)* |
-| `/api/*` | API (Vite dev server ho proxuje na `:7071`) |
+| `/api/*` | API (the Vite dev server proxies it to `:7071`) |
 
-## Související
+Routes and anchors are Czech because they are part of the public website.
 
-- [Doménová architektura](domeny.md) · [Endpointy](endpointy.md) · [Valibot](valibot.md)
-- [Portál a design systém](../domeny/portal.md)
+## Related
+
+- [Domain architecture](domains.md) · [Endpoints](endpoints.md) · [Valibot](valibot.md)
+- [Portal and design system](../domains/portal.md)

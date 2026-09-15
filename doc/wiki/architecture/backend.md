@@ -1,26 +1,26 @@
 ---
 title: Backend – apps/api
-type: koncept
+type: concept
 sources:
-  - kód: apps/api
-  - historie: doc/architecture.md kap. 4 (commit 8db5e0a)
+  - code: apps/api
+  - history: doc/architecture.md ch. 4 (commit 8db5e0a)
 updated: 2026-09-15
 ---
 
 # Backend – `apps/api`
 
-> Jedna Azure Functions aplikace (Node.js, programovací model **v4**, jen HTTP
-> triggery), uvnitř rozdělená podle domén. Doménové objekty jsou jádro,
-> endpointy a Cosmos repozitáře tenké adaptéry kolem nich.
+> One Azure Functions app (Node.js, programming model **v4**, HTTP triggers
+> only), split by domain internally. Domain objects are the core; endpoints and
+> Cosmos repositories are thin adapters around them.
 
-## Struktura
+## Structure
 
 ```
 apps/api/
 ├── src/
-│   ├── index.ts                  # seznam všech endpointů → registerEndpoints()
-│   ├── config.ts                 # Application settings, názvy kontejnerů
-│   ├── domain/                   # doména – nezná HTTP ani Cosmos SDK
+│   ├── index.ts                  # list of all endpoints → registerEndpoints()
+│   ├── config.ts                 # Application settings, container names
+│   ├── domain/                   # domain – knows nothing about HTTP or the Cosmos SDK
 │   │   ├── shared/               # DomainError, Clock
 │   │   ├── identity/             # User, EmailAddress, LoginCode, OneTimeToken, Session, ports.ts
 │   │   ├── contact/              # ContactMessage (+ port)
@@ -28,94 +28,95 @@ apps/api/
 │   │       ├── wedding/          # Wedding, WeddingRepository
 │   │       ├── guests/           # Guest, Family (createFamily, rewriteFamily), GuestRepository
 │   │       └── planning/         # PlanningItem, PlanningItemRepository
-│   ├── application/              # use-casy – orchestrace nad doménou
+│   ├── application/              # use cases – orchestration over the domain
 │   │   ├── identity/             # registerUser, login (requestLoginCode, verifyLoginCode), session, verifyEmail, emails
 │   │   ├── contact/              # submitContactMessage
-│   │   └── weddy/                # deps, wedding, guests (vč. rodin), planning, budget
-│   ├── endpoints/                # HTTP kontrakt – 1 soubor = 1 endpoint
+│   │   └── weddy/                # deps, wedding, guests (incl. families), planning, budget
+│   ├── endpoints/                # HTTP contract – 1 file = 1 endpoint
 │   │   ├── identity/  contact/
 │   │   └── weddy/{wedding,guests,planning,budget}/
 │   ├── http/
 │   │   ├── endpoint.ts           # defineEndpoint, registerEndpoints
-│   │   ├── responses.ts          # json, noContent, chyby, CORS, clientIp
+│   │   ├── responses.ts          # json, noContent, errors, CORS, clientIp
 │   │   └── cookies.ts            # session cookie
 │   └── infrastructure/
-│       ├── container.ts          # složení závislostí (jediné místo, kde se potká doména s infrastrukturou)
-│       ├── cosmos/               # client, identity/weddy/support repozitáře
-│       ├── email/senders.ts      # SMTP / Azure Communication Services / konzole
-│       └── crypto.ts             # tokeny, kódy, UUID
-├── test/                         # node:test nad dist/, paměťové repozitáře (fakes.ts)
-├── scripts/build-deploy.mjs      # esbuild bundle pro nasazení
+│       ├── container.ts          # dependency composition (the only place where domain meets infrastructure)
+│       ├── cosmos/               # client, identity/weddy/support repositories
+│       ├── email/senders.ts      # SMTP / Azure Communication Services / console
+│       └── crypto.ts             # tokens, codes, UUIDs
+├── test/                         # node:test over dist/, in-memory repositories (fakes.ts)
+├── scripts/build-deploy.mjs      # esbuild bundle for deployment
 └── host.json
 ```
 
-## Životní cyklus požadavku
+## Request lifecycle
 
 ```mermaid
 sequenceDiagram
     participant R as Azure Functions runtime
-    participant E as registerEndpoints (funkce na cestu)
-    participant D as defineEndpoint obálka
+    participant E as registerEndpoints (function per route)
+    participant D as defineEndpoint wrapper
     participant H as handle (*.endpoint.ts)
-    participant U as use-case (application)
-    participant M as doména
-    participant I as repozitář (infrastructure)
-    R->>E: HTTP požadavek
-    E->>D: endpoint podle metody (OPTIONS → preflight)
+    participant U as use case (application)
+    participant M as domain
+    participant I as repository (infrastructure)
+    R->>E: HTTP request
+    E->>D: endpoint by method (OPTIONS → preflight)
     D->>D: session (access 'user') → 401
     D->>D: Valibot parse params/query/body → 400
-    D->>H: typovaný vstup + user
-    H->>U: jeden use-case
-    U->>I: načti agregát
-    U->>M: loadWeddingFor / chování
-    U->>I: ulož
+    D->>H: typed input + user
+    H->>U: one use case
+    U->>I: load aggregate
+    U->>M: loadWeddingFor / behaviour
+    U->>I: save
     H-->>D: { status, body, headers }
-    D-->>R: odpověď / DomainError → 4xx / jiná chyba → 500
+    D-->>R: response / DomainError → 4xx / other error → 500
 ```
 
-## Pravidla
+## Rules
 
-1. **Endpoint je tenký** – viz [endpointy.md](endpointy.md).
-2. **Use-case** (`application/<doména>/<subdoména>.ts`) dostává závislosti
-   parametrem (`deps: WeddyDeps`) a typovaný vstup. Načte agregát, ověří
-   přístup (`loadWeddingFor`), zavolá doménu, uloží. Vrací data pro odpověď
-   (`toState()` / `toPublic()`).
-3. **Doména** (`domain/`) – třídy s privátním konstruktorem, továrny
-   `create(...)` a `fromState(...)`, metody s chováním, `toState()` pro
-   repozitář a `toPublic()` tam, kde se část stavu nesmí dostat ven
-   (`ownerIds`). Čas přes `Clock`, ID přes `IdGenerator` / `nextId`.
-4. **Porty** (`<Agregát>Repository.ts`, `identity/ports.ts`) jsou rozhraní
-   v doméně; implementace nad Cosmos DB jsou v `infrastructure/cosmos`.
-   Mapování dokument ↔ doména (partition key, `_ts`, `stripSystemFields`)
-   je výhradně v repozitáři.
-5. **Chyby:** doména a use-case vyhazují `DomainError` s `kind`
+1. **Endpoints are thin** – see [endpoints.md](endpoints.md).
+2. **Use case** (`application/<domain>/<subdomain>.ts`) receives dependencies as
+   a parameter (`deps: WeddyDeps`) and typed input. It loads the aggregate,
+   checks access (`loadWeddingFor`), calls the domain and saves. It returns data
+   for the response (`toState()` / `toPublic()`).
+3. **Domain** (`domain/`) – classes with a private constructor, factories
+   `create(...)` and `fromState(...)`, methods with behaviour, `toState()` for
+   the repository and `toPublic()` where part of the state must not leak
+   (`ownerIds`). Time via `Clock`, IDs via `IdGenerator` / `nextId`.
+4. **Ports** (`<Aggregate>Repository.ts`, `identity/ports.ts`) are interfaces in
+   the domain; Cosmos DB implementations are in `infrastructure/cosmos`.
+   Document ↔ domain mapping (partition key, `_ts`, `stripSystemFields`) lives
+   only in the repository.
+5. **Errors:** the domain and use cases throw `DomainError` with a `kind`
    (`validation`, `unauthorized`, `forbidden`, `notFound`, `conflict`,
-   `tooManyRequests`). Překlad na HTTP je jen v `http/responses.ts`.
-6. **Žádné typy Cosmos SDK** mimo `infrastructure/cosmos`.
-7. **Kompozice místo dědičnosti** – žádné abstraktní báze doménových objektů.
+   `tooManyRequests`). Translation to HTTP happens only in `http/responses.ts`.
+6. **No Cosmos SDK types** outside `infrastructure/cosmos`.
+7. **Composition over inheritance** – no abstract base classes for domain objects.
 
-## Testy
+## Tests
 
-| Úroveň | Soubor | Jak |
+| Level | File | How |
 |---|---|---|
-| Doména + use-casy | `test/identity.test.ts`, `test/weddy.test.ts` | paměťové repozitáře z `test/fakes.ts`, `FixedClock`; žádné mockování SDK |
-| Pravidla vstupů (sdílená schémata) | `test/schemas.test.ts` | `v.safeParse` + `issuesToDetails`, kontroluje cesty polí |
-| Obálka endpointu | `test/endpoint.test.ts` | falešný `HttpRequest`: 400 s detaily, překlad `DomainError`, 500 bez textu |
-| HTTP pomocníci | `test/http.test.ts` | `clientIp`, cookies |
-| Produkční kryptografie | `test/crypto.test.ts` | skutečný `tokenGenerator` |
+| Domain + use cases | `test/identity.test.ts`, `test/weddy.test.ts` | in-memory repositories from `test/fakes.ts`, `FixedClock`; no SDK mocks |
+| Input rules (shared schemas) | `test/schemas.test.ts` | `v.safeParse` + `issuesToDetails`, asserts field paths |
+| Endpoint wrapper | `test/endpoint.test.ts` | fake `HttpRequest`: 400 with details, `DomainError` translation, 500 without text |
+| HTTP helpers | `test/http.test.ts` | `clientIp`, cookies |
+| Production cryptography | `test/crypto.test.ts` | the real `tokenGenerator` |
 
-`npm run test -w apps/api` sestaví `dist/` a spustí `node --test`. CI hlídá,
-že proběhlo aspoň 60 testů (dnes 97) – viz [nasazeni.md](../provoz/nasazeni.md).
+`npm run test -w apps/api` builds `dist/` and runs `node --test`. CI checks that
+at least 60 tests ran (97 today) – see [deployment.md](../operations/deployment.md).
 
 ## CORS
 
-V produkci žádné CORS nevzniká – API je na stejném originu jako web. Hlavičky
-přesto řeší kód (`corsHeaders`) podle `ALLOWED_ORIGINS`: při cizím původu
-musí jít konkrétní origin a `Access-Control-Allow-Credentials: true`, protože
-se posílá session cookie. `OPTIONS` obslouží `registerEndpoints` pro každou cestu.
+In production there is no CORS – the API is on the same origin as the website.
+The headers are still handled in code (`corsHeaders`) based on
+`ALLOWED_ORIGINS`: for a foreign origin a concrete origin and
+`Access-Control-Allow-Credentials: true` must be sent, because the session
+cookie is included. `OPTIONS` is served by `registerEndpoints` for every route.
 
-## Související
+## Related
 
-- [Doménová architektura](domeny.md) · [Endpointy](endpointy.md) · [Valibot](valibot.md)
-- [Data v Cosmos DB](data-cosmos.md)
-- [Identita a bezpečnost](../domeny/identity.md)
+- [Domain architecture](domains.md) · [Endpoints](endpoints.md) · [Valibot](valibot.md)
+- [Data in Cosmos DB](dataCosmos.md)
+- [Identity and security](../domains/identity.md)

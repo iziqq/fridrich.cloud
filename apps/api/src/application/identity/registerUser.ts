@@ -7,7 +7,8 @@ import { accountExistsEmail, verificationEmail } from './emails.js';
 import type { IdentityDeps } from './deps.js';
 
 export interface RegisterUserCommand {
-  raw: unknown;
+  email: string;
+  displayName: string;
   sourceIp: string;
   /** Základ odkazu v e-mailu, např. `https://www.fridrich.cloud`. */
   appUrl: string;
@@ -32,12 +33,7 @@ export async function registerUser(
   );
   if (!allowed) throw DomainError.tooManyRequests();
 
-  const raw = (typeof command.raw === 'object' && command.raw !== null ? command.raw : {}) as Record<
-    string,
-    unknown
-  >;
-
-  const email = EmailAddress.create(raw['email']);
+  const email = EmailAddress.create(command.email);
 
   const existing = await deps.users.findByEmail(email);
   if (existing) {
@@ -49,7 +45,7 @@ export async function registerUser(
   const user = User.register({
     id: deps.ids.next(),
     email,
-    displayName: raw['displayName'],
+    displayName: command.displayName,
     clock: deps.clock,
   });
 

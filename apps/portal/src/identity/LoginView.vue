@@ -5,7 +5,9 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
 import AuthField from '@/components/AuthField.vue';
 import CyberButton from '@/components/CyberButton.vue';
-import { ApiError, useAuthStore } from '@/stores/auth';
+import { ApiError } from '@/api/http';
+import { useAuthStore } from './auth.store';
+import { requestLoginCode } from './endpoints/requestLoginCode.endpoint';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -53,14 +55,16 @@ async function requestCode(): Promise<void> {
   busy.value = true;
 
   try {
-    await auth.requestLoginCode({ email: maskedEmail.value });
+    await requestLoginCode({ email: maskedEmail.value });
     step.value = 'code';
     // Kurzor rovnou do pole pro kód, ať se uživatel nemusí trefovat.
     await nextTick();
     codeField.value?.$el.querySelector('input')?.focus();
   } catch (cause) {
     error.value =
-      cause instanceof ApiError ? cause.message : 'Nepodařilo se odeslat kód. Zkuste to znovu.';
+      cause instanceof ApiError
+        ? (cause.fieldErrors['email'] ?? cause.message)
+        : 'Nepodařilo se odeslat kód. Zkuste to znovu.';
   } finally {
     busy.value = false;
   }
@@ -71,7 +75,7 @@ async function submitCode(): Promise<void> {
   busy.value = true;
 
   try {
-    await auth.submitLoginCode({ email: maskedEmail.value, code: code.value });
+    await auth.signInWithCode({ email: maskedEmail.value, code: code.value });
 
     // Po přihlášení zpět tam, odkud uživatel přišel. Produkty (`/izi-weddy`, …)
     // jsou sice na stejné doméně, ale router portálu je nezná – tam se musí

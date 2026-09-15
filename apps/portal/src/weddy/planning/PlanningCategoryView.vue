@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import type { PlanningCategory, PlanningItem, PlanningItemInput } from '@fridrich/weddy-shared';
+import type { PlanningCategory, PlanningItem } from '@fridrich/weddy-shared';
 import {
   PLANNING_CATEGORY_LABELS,
   PLANNING_ITEM_STATUS_LABELS,
+  PlanningCategorySchema,
   formatCurrency,
-  isPlanningCategory,
 } from '@fridrich/weddy-shared';
+import * as v from 'valibot';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import { ApiError } from '@/weddy/api';
+import { ApiError } from '@/api/http';
 import BottomSheet from '@/weddy/components/BottomSheet.vue';
 import ChoiceField from '@/weddy/components/ChoiceField.vue';
 import EmptyState from '@/weddy/components/EmptyState.vue';
@@ -17,8 +18,9 @@ import FabButton from '@/weddy/components/FabButton.vue';
 import FormField from '@/weddy/components/FormField.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
-import { usePlanningStore } from '@/weddy/stores/planning';
 import { weddyPath } from '@/weddy/routes';
+import type { CreatePlanningItemRequest } from './endpoints/createPlanningItem.endpoint';
+import { usePlanningStore } from './planning.store';
 
 const route = useRoute();
 const store = usePlanningStore();
@@ -27,7 +29,7 @@ const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 
 const category = computed<PlanningCategory | null>(() => {
   const raw = route.params['category'];
-  return isPlanningCategory(raw) ? raw : null;
+  return v.is(PlanningCategorySchema, raw) ? raw : null;
 });
 
 const items = computed(() => (category.value ? store.byCategory(category.value) : []));
@@ -80,7 +82,7 @@ async function submit(): Promise<void> {
     url: form.url.trim() || undefined,
     price: form.price.trim() === '' ? undefined : Number(form.price),
     status: form.status,
-  } as PlanningItemInput;
+  } as CreatePlanningItemRequest;
 
   try {
     if (editing.value) {

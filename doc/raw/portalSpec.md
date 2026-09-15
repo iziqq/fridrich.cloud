@@ -1,47 +1,49 @@
-# 🌃 Portál `www.fridrich.cloud`
+# 🌃 Portal `www.fridrich.cloud`
 
-Prezentační web Libora Fridricha – **vývoj na míru**. Cílem je získat poptávky:
-návštěvník musí do pár vteřin pochopit, co dělám, komu jsem to dělal a jak
-spolupráce probíhá. Zároveň je to vstupní brána k vlastním produktům
+> Translated from the Czech original; the Czech text is in git history (commit 8db5e0a, file doc/portal.md).
+
+The presentation website of Libor Fridrich – **custom development**. The goal is to generate inquiries:
+a visitor must understand within a few seconds what I do, who I have done it for and how
+the collaboration works. At the same time it is the gateway to my own products
 (IziWeddy, IziBudgy).
 
-Vizuální styl: **Cyberpunk 2077** – tmavý podklad, signální žlutá, neonová
-azurová, hranatá technická typografie, glitch efekty a HUD prvky.
+Visual style: **Cyberpunk 2077** – dark background, signal yellow, neon
+cyan, angular technical typography, glitch effects and HUD elements.
 
 ---
 
-## Obsah
+## Contents
 
-1. [Cíle a cílová skupina](#1-cíle-a-cílová-skupina)
-2. [Navigace](#2-navigace)
-3. [Sekce stránky](#3-sekce-stránky)
-4. [Design systém](#4-design-systém)
-5. [Efekty a animace](#5-efekty-a-animace)
-6. [Obrázky a média](#6-obrázky-a-média)
-7. [Komponenty](#7-komponenty)
-8. [Přístupnost](#8-přístupnost)
-9. [Výkon a SEO](#9-výkon-a-seo)
-10. [Struktura aplikace](#10-struktura-aplikace)
-11. [Otevřené otázky](#11-otevřené-otázky)
+1. [Goals and target audience](#1-goals-and-target-audience)
+2. [Navigation](#2-navigation)
+3. [Page sections](#3-page-sections)
+4. [Design system](#4-design-system)
+5. [Effects and animations](#5-effects-and-animations)
+6. [Images and media](#6-images-and-media)
+7. [Components](#7-components)
+8. [Accessibility](#8-accessibility)
+9. [Performance and SEO](#9-performance-and-seo)
+10. [Application structure](#10-application-structure)
+11. [Open questions](#11-open-questions)
 
 ---
 
-## 1. Cíle a cílová skupina
+## 1. Goals and target audience
 
 | | |
 |---|---|
-| **Hlavní cíl** | Poptávka přes kontaktní formulář |
-| **Vedlejší cíle** | Ukázat zkušenost z velkých firem a vlastní produkty jako důkaz schopností; vysvětlit, jak spolupráce probíhá |
-| **Cílová skupina** | Firmy a podnikatelé hledající vývoj webových a cloudových aplikací na míru |
-| **Tón** | Sebejistý, technický, konkrétní. Žádné prázdné marketingové fráze. |
-| **Zařízení** | Mobile-first, ale desktop je pro tuhle cílovku stejně důležitý |
+| **Primary goal** | An inquiry via the contact form |
+| **Secondary goals** | Show experience from large companies and my own products as proof of capability; explain how the collaboration works |
+| **Target audience** | Companies and entrepreneurs looking for custom development of web and cloud applications |
+| **Tone** | Confident, technical, specific. No empty marketing phrases. |
+| **Devices** | Mobile-first, but for this target audience desktop is just as important |
 
 ---
 
-## 2. Navigace
+## 2. Navigation
 
-Sticky „pill" lišta plovoucí nad obsahem – tmavý panel se zaoblenými konci,
-tenkým světlým okrajem a jemným stínem.
+A sticky "pill" bar floating above the content – a dark panel with rounded ends,
+a thin light border and a subtle shadow.
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -49,211 +51,211 @@ tenkým světlým okrajem a jemným stínem.
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-| Položka | Cíl |
+| Item | Target |
 |---|---|
-| **O mně** | `/#o-mne` |
-| **Služby** | `/#sluzby` |
-| **Vývoj** | `/#vyvoj` – jak spolupráce probíhá krok po kroku |
-| **Projekty** | `/#projekty` |
-| **Kontakt** | `/#kontakt` |
-| *(oddělovač)* | svislá linka `--cp-line` |
-| **Přihlásit se** | `/prihlaseni` |
+| **O mně** (About me) | `/#o-mne` |
+| **Služby** (Services) | `/#sluzby` |
+| **Vývoj** (Development) | `/#vyvoj` – how the collaboration works, step by step |
+| **Projekty** (Projects) | `/#projekty` |
+| **Kontakt** (Contact) | `/#kontakt` |
+| *(separator)* | vertical line `--cp-line` |
+| **Přihlásit se** (Log in) | `/prihlaseni` |
 
-> **Reference** v menu zatím nejsou. Až budou k dispozici citace klientů,
-> položka se vloží mezi *Vývoj* a *Projekty* – sekce i komponenta jsou na to
-> v [kap. 3.6](#36-reference-později) připravené.
+> **References** are not in the menu yet. Once client testimonials are available,
+> the item will be inserted between *Vývoj* and *Projekty* – both the section and the component are
+> prepared for it in [section 3.6](#36-references-later).
 
-### Chování
+### Behavior
 
-- Položky jsou **verzálkami**, `letter-spacing: 0.08em`, font Rajdhani 600.
-- **Aktivní sekce** se zvýrazní signální žlutou (`--cp-yellow`) – sleduje se
-  `IntersectionObserver`em, ne jen kliknutím.
-- **Hover:** krátký glitch posun (±2 px) + přebarvení na žlutou.
-- **Přihlásit se** je vizuálně oddělené – světlejší text, po přihlášení se mění
-  na jméno uživatele s rozbalovací nabídkou (*Můj účet*, *IziWeddy*, *Odhlásit*).
-- **Mobil (< 768 px):** logo + ikona menu; po otevření **fullscreen overlay**
-  s položkami pod sebou, animovaný jako „boot sekvence" terminálu.
-- Lišta se při scrollu dolů skryje a při scrollu nahoru vrátí.
+- Items are in **uppercase**, `letter-spacing: 0.08em`, font Rajdhani 600.
+- The **active section** is highlighted in signal yellow (`--cp-yellow`) – it is tracked
+  with an `IntersectionObserver`, not just by clicking.
+- **Hover:** a short glitch shift (±2 px) + recoloring to yellow.
+- **Přihlásit se** is visually separated – lighter text; after login it changes
+  to the user's name with a dropdown menu (*Můj účet* (My account), *IziWeddy*, *Odhlásit* (Log out)).
+- **Mobile (< 768 px):** logo + menu icon; when opened, a **fullscreen overlay**
+  with the items stacked vertically, animated like a terminal "boot sequence".
+- The bar hides when scrolling down and comes back when scrolling up.
 
 ---
 
-## 3. Sekce stránky
+## 3. Page sections
 
 ### 3.1 Hero
 
-Úvodní obrazovka na celou výšku viewportu.
+An intro screen spanning the full viewport height.
 
-- **Nadnadpis** (mono, azurová): `// FRIDRICH.CLOUD`
-- **Nadpis (glitch):** `LIBOR FRIDRICH`
-- **Podnadpis:** `VÝVOJ NA MÍRU`
-- **Perex:** `10 let full stack vývoje. Weby a aplikace na míru – od analýzy po produkci.`
-- **CTA:** primární `MÁM PROJEKT` (→ kontakt), sekundární `JAK PRACUJI` (→ vývoj).
-- **Pozadí:** tmavý neonový snímek města s duotone gradientem, přes něj scanlines
-  a šum; dole plynulý přechod do barvy podkladu.
-- **HUD dekorace:** rohové značky, vlevo dole „typewriter" výpis technologií
+- **Overline** (mono, cyan): `// FRIDRICH.CLOUD`
+- **Heading (glitch):** `LIBOR FRIDRICH`
+- **Subheading:** `VÝVOJ NA MÍRU` (Custom development)
+- **Lead:** `10 let full stack vývoje. Weby a aplikace na míru – od analýzy po produkci.` (10 years of full stack development. Custom websites and applications – from analysis to production.)
+- **CTA:** primary `MÁM PROJEKT` (I have a project) (→ contact), secondary `JAK PRACUJI` (How I work) (→ development).
+- **Background:** a dark neon city shot with a duotone gradient, overlaid with scanlines
+  and noise; at the bottom a smooth transition into the background color.
+- **HUD decoration:** corner marks, bottom left a "typewriter" listing of technologies
   (`Vue 3 · TypeScript · .NET · Azure · Cosmos DB`).
 
-### 3.2 O mně
+### 3.2 About me
 
-Portrét s duotone filtrem (žlutá/azurová) a zkosenými rohy, vedle text v první
-osobě.
+A portrait with a duotone filter (yellow/cyan) and beveled corners, next to it text in the first
+person.
 
-**Obsah textu:**
+**Text content:**
 
-- **10 let praxe** ve full stack vývoji – frontend, backend i databáze.
-- Vývoj pro **velké mezinárodní firmy** napříč odvětvími. Část zakázek vedená
-  přímo, část pod dodavatelskými firmami.
-- Vedle korporátních projektů i **menší vývoj na míru** – tam, kde si zákazník
-  potřebuje sednout s člověkem, který to i naprogramuje.
+- **10 years of experience** in full stack development – frontend, backend and databases.
+- Development for **large international companies** across industries. Some engagements led
+  directly, some under contractor companies.
+- Alongside corporate projects also **smaller custom development** – where the customer
+  needs to sit down with a person who will also program it.
 
-> ⚠️ **Jména klientů se na web nepíšou.** Rozhodnutí zadavatele: konkrétní
-> značky se neuvádějí, aby nebylo co řešit se smluvními omezeními. Místo nich
-> se zmiňují jen **odvětví**. Tohle pravidlo platí i pro budoucí texty, loga,
-> případové studie i screenshoty – nic, z čeho by šlo klienta identifikovat.
+> ⚠️ **Client names are not written on the website.** The client's decision: specific
+> brands are not mentioned, so that there is nothing to deal with regarding contractual restrictions. Instead
+> only **industries** are mentioned. This rule also applies to future texts, logos,
+> case studies and screenshots – nothing from which a client could be identified.
 
-**Stat pruh** – velká čísla v mono fontu s neonovým svitem:
+**Stat strip** – large numbers in a mono font with a neon glow:
 
-| Číslo | Popisek |
+| Number | Caption |
 |---|---|
-| `10+` | let praxe |
-| `4` | odvětví |
+| `10+` | let praxe (years of experience) |
+| `4` | odvětví (industries) |
 | `FULL STACK` | frontend · backend · cloud |
 
-**Pruh odvětví** pod textem – jednobarevně (`--cp-muted`), na hoveru zesvětlí,
-nad ním mono popisek `// ODVĚTVÍ, VE KTERÝCH JSEM PRACOVAL`:
-průmyslová výroba, automotive, spotřební zboží, zakázkový vývoj.
+**Industry strip** below the text – monochrome (`--cp-muted`), brightens on hover,
+above it the mono label `// ODVĚTVÍ, VE KTERÝCH JSEM PRACOVAL` (// INDUSTRIES I HAVE WORKED IN):
+industrial manufacturing, automotive, consumer goods, contract development.
 
-### 3.3 Služby
+### 3.3 Services
 
-Mřížka karet (1 sloupec mobil / 2 tablet / 3 desktop). Karta = ikona, název,
-dvě až tři věty, výčet klíčových technologií.
+A grid of cards (1 column mobile / 2 tablet / 3 desktop). Card = icon, title,
+two to three sentences, a list of key technologies.
 
-| Služba | Obsah |
+| Service | Content |
 |---|---|
-| **Webové aplikace na míru** | Návrh a vývoj od nuly – frontend, backend, databáze |
-| **Cloudová řešení (Azure)** | Architektura, nasazení, provoz, optimalizace nákladů |
-| **Integrace a automatizace** | Propojení systémů, API, datové toky, náhrada ruční práce |
-| **Konzultace a code review** | Posouzení architektury, technický audit, doprovod týmu |
+| **Custom web applications** | Design and development from scratch – frontend, backend, database |
+| **Cloud solutions (Azure)** | Architecture, deployment, operations, cost optimization |
+| **Integration and automation** | Connecting systems, APIs, data flows, replacing manual work |
+| **Consulting and code review** | Architecture assessment, technical audit, team guidance |
 
-Karta má zkosený levý horní roh a při hoveru se rozsvítí neonový rámeček.
+The card has a beveled top-left corner and a neon frame lights up on hover.
 
-### 3.4 Vývoj – jak to probíhá
+### 3.4 Development – how it works
 
-**Klíčová sekce webu.** Zákazník, který zvažuje vývoj na míru, se nejvíc bojí,
-že neví, do čeho jde. Tahle sekce mu ukáže celý postup dopředu.
+**The key section of the website.** A customer considering custom development is most afraid
+of not knowing what they are getting into. This section shows them the whole process up front.
 
-Šest kroků, každý s pořadovým číslem v mono fontu (`01`–`06`), názvem, dvěma
-až třemi větami a výstupem, který z kroku vzejde:
+Six steps, each with a sequence number in a mono font (`01`–`06`), a title, two
+to three sentences and the output that comes out of the step:
 
-| # | Krok | Co se děje | Výstup |
+| # | Step | What happens | Output |
 |---|---|---|---|
-| `01` | **Úvodní schůzka** | Sejdeme se a projdeme, co potřebujete a proč. Ptám se hlavně na to, co má výsledek vyřešit, ne na to, jak má vypadat. | Zápis ze schůzky |
-| `02` | **Potvrzení zadání** | Sepíšu požadavky vlastními slovy a potvrdíme si, že jsme se pochopili stejně. | Odsouhlasené zadání |
-| `03` | **Analýza** | Ověřím, že zadání dává technicky i ekonomicky smysl, a navrhnu řešení, rozsah, cenu a termín. | Návrh řešení, cena, termín |
-| `04` | **Demo** | Postavím **mocknuté demo** – proklikatelné, ale zatím bez ostré logiky. Na něm si odsouhlasíme vzhled a toky **dřív, než se napíše drahý kód**. | Proklikatelné demo |
-| `05` | **Hlavní vývoj** | Vzniká ostrá aplikace. Průběžně ji nasazuji na testovací prostředí, kde si ji **testujete ještě před spuštěním**. | Odladěná aplikace na testu |
-| `06` | **Produkce** | Nasazení do ostrého provozu, předání a další podpora. | Běžící aplikace |
+| `01` | **Initial meeting** | We meet and go through what you need and why. I mainly ask about what the result should solve, not about what it should look like. | Meeting notes |
+| `02` | **Confirming the brief** | I write down the requirements in my own words and we confirm that we understood each other the same way. | Agreed brief |
+| `03` | **Analysis** | I verify that the brief makes sense technically and economically, and propose the solution, scope, price and deadline. | Solution proposal, price, deadline |
+| `04` | **Demo** | I build a **mocked demo** – clickable, but without real logic yet. On it we agree on the look and flows **before expensive code gets written**. | Clickable demo |
+| `05` | **Main development** | The real application is built. I continuously deploy it to a test environment, where you **test it even before launch**. | Debugged application on test |
+| `06` | **Production** | Deployment to live operation, handover and further support. | Running application |
 
-**Proč právě takhle** – krátký odstavec pod kroky: díky demu ve čtvrtém kroku se
-změny vzhledu a toků řeší tam, kde jsou levné. Do ostrého vývoje jdeme až s tím,
-co je odsouhlasené.
+**Why this way** – a short paragraph below the steps: thanks to the demo in the fourth step,
+changes to the look and flows are handled where they are cheap. We only go into real development with
+what has been agreed.
 
-**Vzhled:**
-- **Mobil:** svislá časová osa – vlevo neonová linka, na ní číslované uzly,
-  vpravo obsah kroku.
-- **Desktop:** vodorovný HUD stepper, kroky spojené linkou se šipkami.
-- Aktuálně zobrazený krok se při scrollu rozsvítí žlutě, ostatní zůstávají
-  v `--cp-muted` – linka „nabíhá" jako progres.
-- Čísla kroků v `JetBrains Mono` s jemným svitem.
-- Sekci uzavírá CTA `ZAČNEME PRVNÍM KROKEM` → kontakt.
+**Appearance:**
+- **Mobile:** a vertical timeline – a neon line on the left with numbered nodes on it,
+  the step content on the right.
+- **Desktop:** a horizontal HUD stepper, steps connected by a line with arrows.
+- The currently displayed step lights up yellow on scroll, the others stay
+  in `--cp-muted` – the line "fills up" like a progress bar.
+- Step numbers in `JetBrains Mono` with a subtle glow.
+- The section is closed by the CTA `ZAČNEME PRVNÍM KROKEM` (Let's start with the first step) → contact.
 
-### 3.5 Projekty
+### 3.5 Projects
 
-Vlastní produkty jako důkaz schopností. Velké karty přes celou šířku.
+My own products as proof of capability. Large full-width cards.
 
-| Projekt | Stav | Popis | Odkaz |
+| Project | Status | Description | Link |
 |---|---|---|---|
-| **IziWeddy** | Ve vývoji | Svatební plánovač – hosté, přípravy, rozpočet na jednom místě | `/projekty/iziweddy` → `/izi-weddy` |
-| **IziBudgy** | Připravujeme | Rozpočet domácnosti – přehled příjmů, výdajů a úspor | `/projekty/izibudgy` |
+| **IziWeddy** | In development | Wedding planner – guests, preparations, budget in one place | `/projekty/iziweddy` → `/izi-weddy` |
+| **IziBudgy** | In preparation | Household budget – overview of income, expenses and savings | `/projekty/izibudgy` |
 
-Karta obsahuje: náhled aplikace, název, stavový štítek, popis, použité
-technologie a tlačítko. Štítek stavu je barevný **i textový**
-(`VE VÝVOJI` žlutá, `PŘIPRAVUJEME` azurová, `SPUŠTĚNO` zelená).
+The card contains: an application preview, title, status badge, description, technologies
+used and a button. The status badge is conveyed by color **and by text**
+(`VE VÝVOJI` (In development) yellow, `PŘIPRAVUJEME` (Coming soon) cyan, `SPUŠTĚNO` (Launched) green).
 
-### 3.6 Reference *(později)*
+### 3.6 References *(later)*
 
-Zatím se nezobrazuje – nemám reálné citace klientů a smyšlené tam nepatří.
+Not displayed yet – I don't have real client testimonials, and made-up ones don't belong there.
 
-Až budou, sekce se zapne mezi *Vývoj* a *Projekty*: karusel citací (text, jméno,
-pozice, firma, případně logo), nad citací mono popisek `// KLIENT 01`.
-Komponenta `TestimonialCard` a položka menu se přidají zároveň.
+Once they exist, the section will be enabled between *Vývoj* and *Projekty*: a carousel of testimonials (text, name,
+position, company, possibly logo), above the testimonial the mono label `// KLIENT 01` (// CLIENT 01).
+The `TestimonialCard` component and the menu item will be added at the same time.
 
-### 3.7 Kontakt
+### 3.7 Contact
 
-- Formulář: **Jméno**, **E-mail**, **Zpráva** (+ skrytý honeypot proti robotům).
-- Vedle formuláře přímé kontakty – e-mail, LinkedIn, GitHub.
-- Odesílá se `POST /api/contact`; stavy *odesílám → odesláno → chyba* se
-  vypisují jako řádky terminálu.
-- Souhlas se zpracováním osobních údajů s odkazem na zásady.
+- Form: **Jméno** (Name), **E-mail**, **Zpráva** (Message) (+ a hidden honeypot against bots).
+- Next to the form, direct contacts – e-mail, LinkedIn, GitHub.
+- It is submitted via `POST /api/contact`; the states *odesílám → odesláno → chyba* (sending → sent → error) are
+  printed as terminal lines.
+- Consent to the processing of personal data with a link to the policy.
 
-### 3.8 Patička
+### 3.8 Footer
 
-Logo, `© 2026 Libor Fridrich`, IČO, odkaz na zásady ochrany osobních údajů,
-odkaz na produkty. Nad patičkou tenká neonová linka.
+Logo, `© 2026 Libor Fridrich`, IČO (company registration number), a link to the privacy policy,
+a link to the products. A thin neon line above the footer.
 
 ---
 
-## 4. Design systém
+## 4. Design system
 
-Tokeny žijí v `packages/design` jako CSS proměnné, aby je mohly převzít
-i produktové aplikace.
+Tokens live in `packages/design` as CSS variables, so that the product
+applications can adopt them too.
 
-### 4.1 Barvy
+### 4.1 Colors
 
-| Token | Hodnota | Použití |
+| Token | Value | Usage |
 |---|---|---|
-| `--cp-black` | `#050506` | Podklad stránky |
-| `--cp-panel` | `#0E0E11` | Karty, panely, lišta |
-| `--cp-line` | `#1F1F25` | Okraje, oddělovače, mřížka |
-| `--cp-yellow` | `#FCEE0A` | **Signální barva** – CTA, aktivní stav, důrazy |
-| `--cp-cyan` | `#00F0FF` | Sekundární akcent – popisky, odkazy, HUD |
-| `--cp-magenta` | `#FF003C` | Chyby, výstrahy, glitch vrstva |
-| `--cp-green` | `#39FF7A` | Úspěch, stav „spuštěno" |
-| `--cp-text` | `#E8E8EA` | Běžný text |
-| `--cp-muted` | `#8A8A93` | Sekundární text, popisky |
+| `--cp-black` | `#050506` | Page background |
+| `--cp-panel` | `#0E0E11` | Cards, panels, bar |
+| `--cp-line` | `#1F1F25` | Borders, separators, grid |
+| `--cp-yellow` | `#FCEE0A` | **Signal color** – CTA, active state, emphasis |
+| `--cp-cyan` | `#00F0FF` | Secondary accent – captions, links, HUD |
+| `--cp-magenta` | `#FF003C` | Errors, warnings, glitch layer |
+| `--cp-green` | `#39FF7A` | Success, "launched" status |
+| `--cp-text` | `#E8E8EA` | Body text |
+| `--cp-muted` | `#8A8A93` | Secondary text, captions |
 
-**Pravidla:**
-- Žlutá je **jen jedna na obrazovku** – přeplácaná žlutá přestane být signál.
-- Nikdy nekombinovat žlutý text na azurovém podkladu a naopak (nečitelné).
-- Barevný akcent vždy doprovodit **textem nebo ikonou**, ne jen barvou.
+**Rules:**
+- Yellow is **only one per screen** – overused yellow stops being a signal.
+- Never combine yellow text on a cyan background or vice versa (unreadable).
+- Always accompany a color accent with **text or an icon**, not just color.
 
-### 4.2 Typografie
+### 4.2 Typography
 
-| Role | Font | Řez |
+| Role | Font | Weight |
 |---|---|---|
-| Displej / nadpisy | **Rajdhani** | 600, 700 |
-| Alternativa pro velké titulky | **Orbitron** | 700, 800 |
-| Běžný text | **Chakra Petch** | 400, 500 |
-| Mono / HUD / čísla | **JetBrains Mono** | 400 |
+| Display / headings | **Rajdhani** | 600, 700 |
+| Alternative for large titles | **Orbitron** | 700, 800 |
+| Body text | **Chakra Petch** | 400, 500 |
+| Mono / HUD / numbers | **JetBrains Mono** | 400 |
 
-- Všechny fonty jsou z Google Fonts, ale **self-hostované** přes `@fontsource`
-  – bez volání na cizí doménu (GDPR) a bez skoku layoutu.
-- Nadpisy: verzálky, `letter-spacing: 0.04em`–`0.1em`.
-- Běžný text: **nikdy verzálkami**, `line-height: 1.7`, max. `70ch` na řádek.
-- Škála (mobil → desktop, `clamp()`):
+- All fonts are from Google Fonts, but **self-hosted** via `@fontsource`
+  – no calls to a third-party domain (GDPR) and no layout shift.
+- Headings: uppercase, `letter-spacing: 0.04em`–`0.1em`.
+- Body text: **never uppercase**, `line-height: 1.7`, max. `70ch` per line.
+- Scale (mobile → desktop, `clamp()`):
   `h1 2.5→5rem`, `h2 1.75→3rem`, `h3 1.25→1.75rem`, `body 1→1.0625rem`,
-  `mono popisek 0.75rem`.
+  `mono label 0.75rem`.
 
-### 4.3 Tvary a mřížka
+### 4.3 Shapes and grid
 
-- **Zkosené rohy místo zaoblených** – `clip-path: polygon(...)` odřízne
-  1–2 rohy pod 45°. To je nejsilnější tvarový podpis stylu.
-- Rámečky `1px solid var(--cp-line)`, aktivní stav `1px solid var(--cp-yellow)`.
-- Mřížka: 12 sloupců, max. šířka obsahu `1200px`, gutter `24px`
-  (mobil `16px` – nikdy méně).
-- Rozestupy: násobky `8px`; mezi sekcemi `96px` na mobilu, `160px` na desktopu.
+- **Beveled corners instead of rounded ones** – `clip-path: polygon(...)` cuts off
+  1–2 corners at 45°. This is the strongest shape signature of the style.
+- Borders `1px solid var(--cp-line)`, active state `1px solid var(--cp-yellow)`.
+- Grid: 12 columns, max. content width `1200px`, gutter `24px`
+  (mobile `16px` – never less).
+- Spacing: multiples of `8px`; between sections `96px` on mobile, `160px` on desktop.
 
-### 4.4 Neonový svit
+### 4.4 Neon glow
 
 ```css
 .neon-yellow {
@@ -263,130 +265,130 @@ i produktové aplikace.
 }
 ```
 
-Svit je **decentní** – slouží ke zvýraznění interaktivního prvku, ne jako
-dekorace všeho.
+The glow is **subtle** – it serves to highlight an interactive element, not as
+decoration for everything.
 
 ---
 
-## 5. Efekty a animace
+## 5. Effects and animations
 
-| Efekt | Kde | Jak |
+| Effect | Where | How |
 |---|---|---|
-| **Glitch nadpis** | Hero, nadpisy sekcí | Dvě `::before`/`::after` kopie textu v azurové a magentě, posunuté o 2–3 px, animované přes `clip-path`. Spouští se jednou při zobrazení, ne ve smyčce. |
-| **Scanlines** | Hero, obrázky | `repeating-linear-gradient` overlay, `opacity: 0.05`, `pointer-events: none` |
-| **Šum / CRT** | Pozadí | SVG `feTurbulence` jako `data:` URI, `opacity: 0.03` |
-| **Typewriter** | Hero, stavy formuláře | Postupné vypisování znaků s blikajícím kurzorem `▌` |
-| **Odhalení sekce** | Všechny sekce | `IntersectionObserver` → posun zdola o 24 px + fade, `240 ms` |
-| **Nabíhající osa** | Sekce Vývoj | Linka mezi kroky se vykresluje podle pozice scrollu |
-| **Hover glitch** | Menu, tlačítka | Krátký posun `±2 px` + přebarvení, `120 ms` |
-| **Počítadla** | Sekce O mně | Odpočet čísel od nuly při zobrazení |
+| **Glitch heading** | Hero, section headings | Two `::before`/`::after` copies of the text in cyan and magenta, offset by 2–3 px, animated via `clip-path`. Triggered once on display, not in a loop. |
+| **Scanlines** | Hero, images | `repeating-linear-gradient` overlay, `opacity: 0.05`, `pointer-events: none` |
+| **Noise / CRT** | Background | SVG `feTurbulence` as a `data:` URI, `opacity: 0.03` |
+| **Typewriter** | Hero, form states | Characters typed out progressively with a blinking cursor `▌` |
+| **Section reveal** | All sections | `IntersectionObserver` → shift up from 24 px below + fade, `240 ms` |
+| **Filling timeline** | Development section | The line between steps is drawn according to the scroll position |
+| **Hover glitch** | Menu, buttons | Short shift `±2 px` + recoloring, `120 ms` |
+| **Counters** | About me section | Numbers count up from zero on display |
 
-**Pravidla:**
-- Žádná animace neběží ve smyčce mimo viewport (šetří baterii).
-- Přechody `120–320 ms`, `cubic-bezier(0.2, 0, 0, 1)`.
-- `@media (prefers-reduced-motion: reduce)` vypíná glitch, scanlines,
-  typewriter i nabíhající osu – obsah se zobrazí rovnou.
+**Rules:**
+- No animation runs in a loop outside the viewport (saves battery).
+- Transitions `120–320 ms`, `cubic-bezier(0.2, 0, 0, 1)`.
+- `@media (prefers-reduced-motion: reduce)` turns off glitch, scanlines,
+  typewriter and the filling timeline – content is displayed immediately.
 
 ---
 
-## 6. Obrázky a média
+## 6. Images and media
 
-### Co je potřeba
+### What is needed
 
-| Asset | Popis | Formát |
+| Asset | Description | Format |
 |---|---|---|
-| Hero pozadí | Tmavé neonové město / abstraktní tech scéna | AVIF + WebP, 1920×1080 a 960×540 |
-| Portrét | Fotka s duotone filtrem (žlutá/azurová) | AVIF + WebP, čtverec 800×800 |
-| Náhledy projektů | Snímky obrazovek IziWeddy / IziBudgy v rámečku telefonu | AVIF + WebP, 1200×800 |
-| Ikony služeb | Tenké linkové ikony, `currentColor` | inline SVG |
-| Logo | Monogram `LF` v hranatém stylu | inline SVG |
-| Favicon | Z loga | SVG + PNG 180×180 |
-| Textury | Šum, scanlines, hex mřížka | inline SVG / CSS gradienty |
+| Hero background | Dark neon city / abstract tech scene | AVIF + WebP, 1920×1080 and 960×540 |
+| Portrait | Photo with a duotone filter (yellow/cyan) | AVIF + WebP, square 800×800 |
+| Project previews | Screenshots of IziWeddy / IziBudgy in a phone frame | AVIF + WebP, 1200×800 |
+| Service icons | Thin line icons, `currentColor` | inline SVG |
+| Logo | Monogram `LF` in an angular style | inline SVG |
+| Favicon | From the logo | SVG + PNG 180×180 |
+| Textures | Noise, scanlines, hex grid | inline SVG / CSS gradients |
 
-### Pravidla
+### Rules
 
-- **Nepoužívat oficiální assety hry Cyberpunk 2077** – logo, font *Refrigerator
-  Deluxe*, screenshoty ani postavy. Jsou chráněné (CD Projekt). Inspirujeme se
-  stylem, nekopírujeme majetek.
-- **Loga klientů** používat jen v rozsahu, který dovoluje smlouva – viz
-  upozornění v [kap. 3.2](#32-o-mně).
-- Vždy `<picture>` s AVIF → WebP → JPEG a explicitní `width`/`height`
-  (žádný skok layoutu).
-- Vše kromě hero obrázku `loading="lazy"` + `decoding="async"`.
-- Duotone se dělá **v CSS** (`filter` + `mix-blend-mode`), ne zapečený v souboru –
-  jde pak měnit bez přeexportu.
-- Dekorativní obrázky `alt=""`, obsahové s popisem.
+- **Do not use official assets of the game Cyberpunk 2077** – the logo, the font *Refrigerator
+  Deluxe*, screenshots or characters. They are protected (CD Projekt). We draw inspiration from
+  the style, we do not copy property.
+- **Client logos** may only be used to the extent permitted by the contract – see
+  the warning in [section 3.2](#32-about-me).
+- Always `<picture>` with AVIF → WebP → JPEG and explicit `width`/`height`
+  (no layout shift).
+- Everything except the hero image `loading="lazy"` + `decoding="async"`.
+- Duotone is done **in CSS** (`filter` + `mix-blend-mode`), not baked into the file –
+  that way it can be changed without re-exporting.
+- Decorative images `alt=""`, content images with a description.
 
 ---
 
-## 7. Komponenty
+## 7. Components
 
-Komponenty specifické pro portál žijí v `apps/portal/src/components`, obecné
-(tlačítko, pole, dialog) v `packages/ui`.
+Portal-specific components live in `apps/portal/src/components`, generic ones
+(button, field, dialog) in `packages/ui`.
 
-| Komponenta | Popis |
+| Component | Description |
 |---|---|
-| `GlitchHeading` | Nadpis s glitch efektem, prop `level` |
-| `NeonPanel` | Panel se zkosenými rohy a volitelným svitem |
-| `HudFrame` | Rohové HUD značky kolem obsahu |
-| `SectionLabel` | Mono popisek `// SEKCE 01` |
-| `TypewriterText` | Postupně vypisovaný text |
-| `CyberButton` | Tlačítko, varianty `primary` / `ghost` |
-| `StatCounter` | Číslo s odpočtem a popiskem |
-| `ServiceCard` | Karta služby |
-| `ProcessTimeline` | Osa kroků vývoje – svislá na mobilu, vodorovná na desktopu |
-| `ProcessStep` | Jeden krok osy (číslo, název, popis, výstup) |
-| `ProjectCard` | Velká karta produktu se stavovým štítkem |
-| `BrandStrip` | Pruh log značek |
-| `ContactForm` | Kontaktní formulář s validací a stavy |
-| `SiteNav` | Horní lišta včetně mobilního overlaye |
-| `SiteFooter` | Patička |
-| `TestimonialCard` | *(později – až budou reference)* |
+| `GlitchHeading` | Heading with a glitch effect, prop `level` |
+| `NeonPanel` | Panel with beveled corners and an optional glow |
+| `HudFrame` | HUD corner marks around content |
+| `SectionLabel` | Mono label `// SEKCE 01` (// SECTION 01) |
+| `TypewriterText` | Progressively typed-out text |
+| `CyberButton` | Button, variants `primary` / `ghost` |
+| `StatCounter` | Number with a count-up and a caption |
+| `ServiceCard` | Service card |
+| `ProcessTimeline` | Timeline of development steps – vertical on mobile, horizontal on desktop |
+| `ProcessStep` | A single timeline step (number, title, description, output) |
+| `ProjectCard` | Large product card with a status badge |
+| `BrandStrip` | Strip of brand logos |
+| `ContactForm` | Contact form with validation and states |
+| `SiteNav` | Top bar including the mobile overlay |
+| `SiteFooter` | Footer |
+| `TestimonialCard` | *(later – once there are references)* |
 
-Texty sekcí nejsou natvrdo v komponentách, ale v `apps/portal/src/content/*.ts` –
-jde je upravit bez zásahu do rozvržení a později přeložit.
-
----
-
-## 8. Přístupnost
-
-Tmavé neonové téma snadno sklouzne k nečitelnosti. Proto:
-
-- Kontrast běžného textu **min. 4.5:1**, velkých nadpisů **3:1**.
-  `--cp-muted` na `--cp-panel` splňuje 4.5:1 – tmavší šedou už nepoužívat.
-- Viditelný stav `:focus-visible` – žlutý obrys `2px` s odsazením `2px`.
-  Nikdy `outline: none` bez náhrady.
-- Dotykové cíle **min. 44 × 44 px**.
-- Sémantické HTML – `<nav>`, `<main>`, `<section>` s `aria-labelledby`.
-  Kroky vývoje jako `<ol>`, ne jako změť `<div>`.
-- Odkaz „Přeskočit na obsah" jako první prvek v pořadí tabulátoru.
-- Formulář: `<label>` u každého pole, chyby textem i barvou, `aria-describedby`.
-- `prefers-reduced-motion` vypíná pohyb (viz [kap. 5](#5-efekty-a-animace)).
-- Web musí být plně ovladatelný klávesnicí včetně mobilního menu.
+Section texts are not hardcoded in the components but in `apps/portal/src/content/*.ts` –
+they can be edited without touching the layout and translated later.
 
 ---
 
-## 9. Výkon a SEO
+## 8. Accessibility
 
-| Metrika | Cíl |
+A dark neon theme easily slips into unreadability. Therefore:
+
+- Body text contrast **min. 4.5:1**, large headings **3:1**.
+  `--cp-muted` on `--cp-panel` meets 4.5:1 – do not use a darker gray.
+- A visible `:focus-visible` state – a yellow `2px` outline with a `2px` offset.
+  Never `outline: none` without a replacement.
+- Touch targets **min. 44 × 44 px**.
+- Semantic HTML – `<nav>`, `<main>`, `<section>` with `aria-labelledby`.
+  Development steps as an `<ol>`, not as a jumble of `<div>`s.
+- A "Přeskočit na obsah" (Skip to content) link as the first element in the tab order.
+- Form: a `<label>` for every field, errors conveyed by text as well as color, `aria-describedby`.
+- `prefers-reduced-motion` turns off motion (see [section 5](#5-effects-and-animations)).
+- The website must be fully operable by keyboard, including the mobile menu.
+
+---
+
+## 9. Performance and SEO
+
+| Metric | Target |
 |---|---|
-| Lighthouse Performance | ≥ 90 (mobil) |
-| LCP | < 2,5 s |
-| CLS | < 0,1 |
+| Lighthouse Performance | ≥ 90 (mobile) |
+| LCP | < 2.5 s |
+| CLS | < 0.1 |
 | JS bundle (gzip) | < 150 kB |
 
-- Fonty self-hostované, `font-display: swap`, přednačtený jen displejový řez.
-- Hero obrázek `fetchpriority="high"`, zbytek lazy.
-- Efekty čistě v CSS – žádná animační knihovna kvůli glitchi.
-- SEO: unikátní `<title>` a `description`, Open Graph a Twitter karty,
-  `JSON-LD` schéma `Person` + `ProfessionalService`, `sitemap.xml`, `robots.txt`,
-  kanonická URL `https://www.fridrich.cloud/`.
-- Web běží bez cookies třetích stran; analytika bez osobních údajů
-  (viz [otevřená otázka #2](#11-otevřené-otázky)).
+- Fonts self-hosted, `font-display: swap`, only the display weight preloaded.
+- Hero image `fetchpriority="high"`, the rest lazy.
+- Effects purely in CSS – no animation library just for the glitch.
+- SEO: unique `<title>` and `description`, Open Graph and Twitter cards,
+  `JSON-LD` schema `Person` + `ProfessionalService`, `sitemap.xml`, `robots.txt`,
+  canonical URL `https://www.fridrich.cloud/`.
+- The website runs without third-party cookies; analytics without personal data
+  (see [open question #2](#11-open-questions)).
 
 ---
 
-## 10. Struktura aplikace
+## 10. Application structure
 
 ```
 apps/portal/
@@ -395,8 +397,8 @@ apps/portal/
 │   └── sitemap.xml
 ├── src/
 │   ├── assets/
-│   │   ├── images/            # hero, portrét, náhledy projektů
-│   │   └── icons/             # SVG ikony služeb, loga značek, logo
+│   │   ├── images/            # hero, portrait, project previews
+│   │   └── icons/             # service SVG icons, brand logos, logo
 │   ├── components/            # GlitchHeading, NeonPanel, CyberButton, …
 │   ├── sections/              # HeroSection, AboutSection, ServicesSection,
 │   │                          # ProcessSection, ProjectsSection, ContactSection
@@ -406,33 +408,33 @@ apps/portal/
 │   ├── views/                 # HomeView, ProjectView, LoginView, RegisterView
 │   ├── App.vue
 │   ├── main.ts
-│   └── style.css              # import @fridrich/design + styly portálu
+│   └── style.css              # import @fridrich/design + portal styles
 ├── index.html
 ├── staticwebapp.config.json
 └── vite.config.ts
 ```
 
-Technologie: **Vue 3** (`<script setup lang="ts">`), **Vite**, **TypeScript**,
-**Vue Router**. Pinia jen tam, kde je opravdu sdílený stav (přihlášený uživatel).
-Styly v čistém CSS s proměnnými z `@fridrich/design` – žádný utility framework,
-protože zkosené tvary a glitch vrstvy se stejně píšou ručně.
+Technologies: **Vue 3** (`<script setup lang="ts">`), **Vite**, **TypeScript**,
+**Vue Router**. Pinia only where there is truly shared state (the logged-in user).
+Styles in plain CSS with variables from `@fridrich/design` – no utility framework,
+because the beveled shapes and glitch layers are written by hand anyway.
 
 ---
 
-## 11. Otevřené otázky
+## 11. Open questions
 
-| # | Otázka | Návrh |
+| # | Question | Proposal |
 |---|---|---|
-| 1 | Analytika? | Bez cookies – Azure Application Insights nebo Plausible |
-| 2 | Blog / články? | Zatím ne; kdyby ano, přibude položka menu a routa `/blog` |
-| 3 | Kontaktní formulář – kam chodí zpráva? | Na e-mail přes Azure Communication Services + kopie do Cosmos DB |
-| 4 | Fotka na portrét a IČO do patičky? | Potřebuji dodat |
+| 1 | Analytics? | Cookieless – Azure Application Insights or Plausible |
+| 2 | Blog / articles? | Not for now; if yes, a menu item and the route `/blog` will be added |
+| 3 | Contact form – where does the message go? | To e-mail via Azure Communication Services + a copy in Cosmos DB |
+| 4 | Portrait photo and IČO for the footer? | I need to supply them |
 
-### Zodpovězeno
+### Answered
 
-| Otázka | Rozhodnutí |
+| Question | Decision |
 |---|---|
-| Menu: *Vývoj*, nebo *Projekty*? | **Obojí.** *Vývoj* popisuje postup spolupráce, *Projekty* vlastní produkty. |
-| Reference | Zatím se neřeší, sekce se nezobrazuje. |
-| Texty o mně | 10 let praxe, full stack, projekty pro velké mezinárodní firmy + menší vývoj na míru. |
-| Jména klientů na webu | **Neuvádět.** Web zmiňuje jen odvětví – žádné názvy, loga ani identifikovatelné případové studie. |
+| Menu: *Vývoj* or *Projekty*? | **Both.** *Vývoj* describes the collaboration process, *Projekty* my own products. |
+| References | Not being addressed for now, the section is not displayed. |
+| Texts about me | 10 years of experience, full stack, projects for large international companies + smaller custom development. |
+| Client names on the website | **Do not mention.** The website mentions only industries – no names, logos or identifiable case studies. |

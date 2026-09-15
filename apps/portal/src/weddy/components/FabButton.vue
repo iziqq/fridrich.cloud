@@ -4,7 +4,7 @@ defineEmits<{ click: [] }>();
 </script>
 
 <template>
-  <!-- Hlavní akce stránky jako plovoucí tlačítko v dosahu palce (kap. 6.3). -->
+  <!-- Hlavní akce stránky jako plovoucí tlačítko v dosahu palce (doc/wiki/domains/weddy.md). -->
   <button type="button" class="fab" @click="$emit('click')">
     <span class="plus" aria-hidden="true">+</span>
     <span class="label">{{ label }}</span>

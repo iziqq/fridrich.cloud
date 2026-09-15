@@ -5,17 +5,17 @@ import { RouterLink, useRouter } from 'vue-router';
 import EmptyState from '@/weddy/components/EmptyState.vue';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
-import { useAuthStore } from '@/stores/auth';
-import { useWeddingsStore } from '@/weddy/stores/weddings';
+import { useAuthStore } from '@/identity/auth.store';
 import { weddyPath } from '@/weddy/routes';
+import { useWeddingStore } from './wedding.store';
 
-const weddings = useWeddingsStore();
+const weddings = useWeddingStore();
 const auth = useAuthStore();
 const router = useRouter();
 
 /* Po odhlášení nemá plánovač co zobrazit, tak se jde na portál. */
 async function signOut(): Promise<void> {
-  await auth.logout();
+  await auth.signOut();
   await router.push('/');
 }
 

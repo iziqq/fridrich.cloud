@@ -4,9 +4,8 @@ import { RouterLink } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
 import AuthField from '@/components/AuthField.vue';
 import CyberButton from '@/components/CyberButton.vue';
-import { ApiError, useAuthStore } from '@/stores/auth';
-
-const auth = useAuthStore();
+import { ApiError } from '@/api/http';
+import { register } from './endpoints/register.endpoint';
 
 const displayName = ref('');
 const email = ref('');
@@ -15,7 +14,7 @@ const generalError = ref('');
 const done = ref('');
 const busy = ref(false);
 
-// Backend hlásí chyby s prefixem pole, frontend je zobrazuje u konkrétního vstupu.
+// Chyby chodí po polích – ze schématu ještě před odesláním, nebo z backendu.
 const nameError = computed(() => fieldErrors.value['displayName']);
 const emailError = computed(() => fieldErrors.value['email']);
 
@@ -25,10 +24,11 @@ async function submit(): Promise<void> {
   busy.value = true;
 
   try {
-    done.value = await auth.register({
-      displayName: displayName.value.trim(),
-      email: email.value.trim(),
+    const response = await register({
+      displayName: displayName.value,
+      email: email.value,
     });
+    done.value = response.message;
   } catch (cause) {
     if (cause instanceof ApiError && cause.details.length > 0) {
       fieldErrors.value = cause.fieldErrors;

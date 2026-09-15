@@ -1,21 +1,31 @@
-# raw/ – neměnné zdroje
+# raw/ – immutable sources
 
-Vrstva **zdrojů** LLM Wiki: zadání, specifikace a rozhodnutí tak, jak je
-dodal zadavatel. Agent je čte, ale **nikdy je neupravuje** – ani kvůli
-zastaralé informaci nebo rozbitému odkazu. Aktuální, zkompilované znalosti
-jsou ve [wiki/](../wiki/index.md); při rozporu platí wiki a rozpor se zapíše
-do [wiki/log.md](../wiki/log.md).
+The **sources** layer of the LLM Wiki: briefs, specifications and decisions as
+the project owner supplied them. The agent reads them but **never edits their
+content** – not even to fix an outdated fact or a broken link. Current, compiled
+knowledge lives in the [wiki/](../wiki/index.md); when they disagree, the wiki
+wins and the discrepancy is recorded in [wiki/log.md](../wiki/log.md).
 
-Nový zdroj = nový soubor (`RRRR-MM-DD-nazev.md` u zadání s datem) a operace
-**ingest** podle [CLAUDE.md](../../CLAUDE.md#knowledge-base-llm-wiki).
+All sources are stored **in English**. Input the owner gives in Czech is saved
+as a faithful English translation (see [CLAUDE.md](../../CLAUDE.md#knowledge-base-llm-wiki)).
 
-| Zdroj | Obsah | Zpracováno do |
+A new source = a new file with a camelCase name (`YYYY-MM-DD-shortName.md` for
+dated briefs, e.g. `2026-09-15-domainArchitecture.md`) and an **ingest** operation.
+
+| Source | Content | Compiled into |
 |---|---|---|
-| [iziweddy-specifikace.md](iziweddy-specifikace.md) | Původní specifikace svatebního plánovače. Kap. 3, 7, 9–11 popisují ještě samostatný repozitář a jsou překonané. | [domeny/weddy*.md](../wiki/domeny/weddy.md) |
-| [portal-specifikace.md](portal-specifikace.md) | Specifikace portálu – obsah, navigace, cyberpunkový design systém. | [domeny/portal.md](../wiki/domeny/portal.md) |
-| [izibudgy-zadani.md](izibudgy-zadani.md) | Hrubé zadání rozpočtu domácnosti a otázky před specifikací. | [domeny/budgy.md](../wiki/domeny/budgy.md) |
-| [2026-09-15-domenova-architektura.md](2026-09-15-domenova-architektura.md) | Požadavek na doménovou architekturu FE i BE, soubor na endpoint, Valibot a LLM Wiki. | [architektura/](../wiki/architektura/domeny.md) |
+| [iziweddySpec.md](iziweddySpec.md) | Original wedding planner specification. Chapters 3, 7 and 9–11 still describe a standalone repository and are superseded. | [domains/weddy*.md](../wiki/domains/weddy.md) |
+| [portalSpec.md](portalSpec.md) | Portal specification – content, navigation, cyberpunk design system. | [domains/portal.md](../wiki/domains/portal.md) |
+| [izibudgyBrief.md](izibudgyBrief.md) | Rough brief of the household budget app and questions before the spec. | [domains/budgy.md](../wiki/domains/budgy.md) |
+| [2026-09-15-domainArchitecture.md](2026-09-15-domainArchitecture.md) | Request for domain architecture on FE and BE, one file per endpoint, Valibot, LLM Wiki. | [architecture/](../wiki/architecture/domains.md) |
+| [2026-09-15-docsInEnglish.md](2026-09-15-docsInEnglish.md) | All documentation in English, including anything given in Czech. | [CLAUDE.md](../../CLAUDE.md), whole wiki |
+| [2026-09-15-camelCaseFileNames.md](2026-09-15-camelCaseFileNames.md) | Documentation file names in camelCase, recorded in the docs. | [CLAUDE.md](../../CLAUDE.md#page-conventions), [decisions.md](../wiki/decisions.md) |
 
-> ℹ️ Odkazy uvnitř zdrojů míří na dokumenty v podobě, v jaké byly napsané
-> (např. `architecture.md`). Ty už neexistují – jejich obsah je rozpuštěný
-> ve wiki, původní text je v historii gitu (commit `8db5e0a`).
+> ℹ️ Links inside the sources point to documents as they existed when the
+> source was written (e.g. `architecture.md`, `iziweddy.md`). Those files no
+> longer exist – their content has been compiled into the wiki, and the
+> original text is in git history (commit `8db5e0a`).
+>
+> The three specifications were translated from Czech on 2026-09-15. Literal
+> Czech UI texts (labels, buttons) are kept in Czech with an English gloss,
+> because they are product content.

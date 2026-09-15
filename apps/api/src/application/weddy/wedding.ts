@@ -1,22 +1,24 @@
-import type { Wedding as WeddingData, WeddingSummary } from '@fridrich/weddy-shared';
+import type { Wedding as WeddingData, WeddingInput, WeddingSummary } from '@fridrich/weddy-shared';
 import { calculateBudget, calculateGuestStats, daysUntil } from '@fridrich/weddy-shared';
-import { Wedding } from '../../domain/weddy/Wedding.js';
 import { DomainError } from '../../domain/shared/DomainError.js';
+import { Wedding } from '../../domain/weddy/wedding/Wedding.js';
 import type { WeddyDeps } from './deps.js';
+
+/*
+ * Use-casy subdomény `wedding` – plánování jako celek a snoubenci.
+ */
 
 /**
  * Načte svatbu a rovnou ověří, že na ni uživatel má právo.
  *
- * Používají to všechny use-casy modulu – kontrola přístupu tak nemůže nikde
- * vypadnout tím, že by ji někdo zapomněl napsat do handleru.
+ * Používají to use-casy všech subdomén weddy – kontrola přístupu tak nemůže
+ * nikde vypadnout tím, že by ji někdo zapomněl napsat do endpointu.
  */
 export async function loadWeddingFor(
   deps: WeddyDeps,
-  weddingId: string | undefined,
+  weddingId: string,
   userId: string,
 ): Promise<Wedding> {
-  if (!weddingId) throw DomainError.notFound('Plánování');
-
   const wedding = await deps.weddings.findById(weddingId);
   if (!wedding) throw DomainError.notFound('Plánování');
 
@@ -24,7 +26,7 @@ export async function loadWeddingFor(
   return wedding;
 }
 
-/** Seznam plánování pro dashboard včetně souhrnů (doc/iziweddy.md, kap. 5.1). */
+/** Seznam plánování pro dashboard včetně souhrnu hostů a rozpočtu. */
 export async function listWeddings(deps: WeddyDeps, userId: string): Promise<WeddingSummary[]> {
   const weddings = await deps.weddings.listForOwner(userId);
 
@@ -45,7 +47,7 @@ export async function listWeddings(deps: WeddyDeps, userId: string): Promise<Wed
         budgetTotal: budget.total,
       };
 
-      const days = daysUntil(wedding.weddingDate);
+      const days = daysUntil(wedding.weddingDate, deps.clock.now());
       if (days !== undefined) summary.daysUntilWedding = days;
 
       return summary;
@@ -55,7 +57,7 @@ export async function listWeddings(deps: WeddyDeps, userId: string): Promise<Wed
 
 export async function getWedding(
   deps: WeddyDeps,
-  weddingId: string | undefined,
+  weddingId: string,
   userId: string,
 ): Promise<WeddingData> {
   const wedding = await loadWeddingFor(deps, weddingId, userId);
@@ -64,12 +66,12 @@ export async function getWedding(
 
 export async function createWedding(
   deps: WeddyDeps,
-  raw: unknown,
+  input: WeddingInput,
   userId: string,
 ): Promise<WeddingData> {
   const wedding = Wedding.create({
     id: deps.ids.next(),
-    raw,
+    wedding: input,
     ownerId: userId,
     clock: deps.clock,
   });
@@ -80,12 +82,12 @@ export async function createWedding(
 
 export async function updateWedding(
   deps: WeddyDeps,
-  weddingId: string | undefined,
-  raw: unknown,
+  weddingId: string,
+  input: WeddingInput,
   userId: string,
 ): Promise<WeddingData> {
   const wedding = await loadWeddingFor(deps, weddingId, userId);
-  wedding.update(raw, deps.clock);
+  wedding.update(input, deps.clock);
 
   await deps.weddings.save(wedding);
   return wedding.toPublic();
@@ -101,7 +103,7 @@ export async function updateWedding(
  */
 export async function deleteWedding(
   deps: WeddyDeps,
-  weddingId: string | undefined,
+  weddingId: string,
   userId: string,
 ): Promise<void> {
   const wedding = await loadWeddingFor(deps, weddingId, userId);

@@ -1,20 +1,21 @@
+import * as v from 'valibot';
 import type { ApiErrorDetail } from './api.js';
 
-export type ValidationError = ApiErrorDetail;
-
 /**
- * Lehká validace pro okamžitou zpětnou vazbu ve formulářích.
+ * Stavební kameny validace nad Valibotem.
  *
- * Závazná je vždy validace v doméně na backendu – tohle jen šetří uživateli
- * zbytečné kolečko na server (doc/architecture.md, kap. 6).
+ * Z nich se skládají schémata domén (`@fridrich/weddy-shared`, `identity.ts`)
+ * i schémata endpointů. Stejné pravidlo tak platí ve formuláři na frontendu,
+ * při parsování požadavku na backendu i v doméně – je napsané jen jednou.
  */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const EMAIL_MAX = 254;
 
 export function isValidEmail(value: string): boolean {
   const trimmed = value.trim();
-  return trimmed.length <= 254 && EMAIL_RE.test(trimmed);
+  return trimmed.length <= EMAIL_MAX && EMAIL_RE.test(trimmed);
 }
 
 export function isValidHttpUrl(value: string): boolean {
@@ -33,13 +34,102 @@ export function isValidIsoDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-/** Ořízne text; prázdný řetězec převede na `undefined`. */
-export function optionalText(value: unknown): string | undefined {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  return trimmed === '' ? undefined : trimmed;
+/** Povinný text – ořízne mezery, prázdný neprojde, dlouhý taky ne. */
+export function requiredText(requiredMessage: string, max: number, tooLongMessage: string) {
+  return v.pipe(
+    v.string(requiredMessage),
+    v.trim(),
+    v.nonEmpty(requiredMessage),
+    v.maxLength(max, tooLongMessage),
+  );
 }
 
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+/** Nepovinný text – ořízne mezery a prázdný řetězec převede na `undefined`. */
+export function optionalText(max: number, tooLongMessage: string) {
+  return v.optional(
+    v.pipe(
+      v.string(),
+      v.trim(),
+      v.maxLength(max, tooLongMessage),
+      v.transform((value) => (value === '' ? undefined : value)),
+    ),
+  );
+}
+
+/** E-mail normalizovaný na malá písmena – `Jan@…` a `jan@…` je tatáž adresa. */
+export function emailText(message: string) {
+  return v.pipe(
+    v.string(message),
+    v.trim(),
+    v.toLowerCase(),
+    v.nonEmpty(message),
+    v.maxLength(EMAIL_MAX, message),
+    v.regex(EMAIL_RE, message),
+  );
+}
+
+/** Nepovinný e-mail – prázdné pole projde jako `undefined`. */
+export function optionalEmailText(message: string) {
+  return v.optional(
+    v.pipe(
+      v.string(message),
+      v.trim(),
+      v.toLowerCase(),
+      v.transform((value) => (value === '' ? undefined : value)),
+      v.check((value) => value === undefined || isValidEmail(value), message),
+    ),
+  );
+}
+
+/** Nepovinný odkaz – jen `http://` a `https://`, ať se do stránky nedostane `javascript:`. */
+export function optionalHttpUrl(max: number, message: string) {
+  return v.optional(
+    v.pipe(
+      v.string(message),
+      v.trim(),
+      v.transform((value) => (value === '' ? undefined : value)),
+      v.check(
+        (value) => value === undefined || (value.length <= max && isValidHttpUrl(value)),
+        message,
+      ),
+    ),
+  );
+}
+
+/** Nepovinné datum ve tvaru YYYY-MM-DD; kontroluje i to, že den v kalendáři existuje. */
+export function optionalIsoDate(message: string) {
+  return v.optional(
+    v.pipe(
+      v.string(message),
+      v.trim(),
+      v.transform((value) => (value === '' ? undefined : value)),
+      v.check((value) => value === undefined || isValidIsoDate(value), message),
+    ),
+  );
+}
+
+/**
+ * Převede issues z Valibotu na detaily chybové odpovědi API.
+ *
+ * Pole se pojmenuje tečkovou cestou (`groom.firstName`), takže ho formulář
+ * najde bez překládání. Na jedno pole se bere jen první chyba – uživatel ji
+ * opraví a teprve pak má smysl ukazovat další.
+ *
+ * Úplně chybějící klíč hlásí Valibot za objekt, ne za pole – hláška ze
+ * schématu pole se nepoužije a výchozí je anglicky. Nahradí se obecnou českou.
+ */
+export function issuesToDetails(issues: readonly v.BaseIssue<unknown>[]): ApiErrorDetail[] {
+  const details: ApiErrorDetail[] = [];
+  const seen = new Set<string>();
+
+  for (const issue of issues) {
+    const field = v.getDotPath(issue) ?? '';
+    if (seen.has(field)) continue;
+
+    const missingKey = issue.kind === 'schema' && issue.type === 'object' && field !== '';
+    seen.add(field);
+    details.push({ field, message: missingKey ? 'Vyplňte toto pole' : issue.message });
+  }
+
+  return details;
 }

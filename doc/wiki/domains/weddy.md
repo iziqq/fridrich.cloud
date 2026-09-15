@@ -1,88 +1,90 @@
 ---
-title: Doména weddy – IziWeddy
-type: domena
+title: weddy domain – IziWeddy
+type: domain
 sources:
-  - raw/iziweddy-specifikace.md (kap. 1, 4, 5, 6, 12)
-  - raw/2026-09-15-domenova-architektura.md
-  - kód: apps/api/src/*/weddy, apps/portal/src/weddy, packages/weddy-shared
+  - raw/iziweddySpec.md (ch. 1, 4, 5, 6, 12)
+  - raw/2026-09-15-domainArchitecture.md
+  - code: apps/api/src/*/weddy, apps/portal/src/weddy, packages/weddy-shared
 updated: 2026-09-15
 ---
 
-# Doména `weddy` – IziWeddy, svatební plánovač
+# `weddy` domain – IziWeddy, the wedding planner
 
-> Mobilní webová aplikace pro plánování svatby: snoubenci, hosté (i celé
-> rodiny), sekce přípravy s položkami od dodavatelů a automaticky počítaný
-> rozpočet. Běží pod portálem na `www.fridrich.cloud/izi-weddy` se společným
-> účtem fridrich.cloud.
+> A mobile web application for planning a wedding: the couple, guests (including
+> whole families), preparation sections with vendor items and an automatically
+> calculated budget. Runs under the portal at `www.fridrich.cloud/izi-weddy`
+> with the shared fridrich.cloud account.
 
 | | |
 |---|---|
-| **Adresa** | `/izi-weddy` (konstanta `WEDDY_BASE`) |
+| **Address** | `/izi-weddy` (constant `WEDDY_BASE`) |
 | **API** | `/api/weddy/*` |
 | **Frontend** | `apps/portal/src/weddy` |
-| **Sdílené jádro** | `packages/weddy-shared` |
-| **Měna** | CZK |
-| **Platforma** | mobile-first, funkční i na desktopu |
-| **Stav** | ✅ hotovo |
+| **Shared kernel** | `packages/weddy-shared` |
+| **Currency** | CZK |
+| **Platform** | mobile-first, works on desktop too |
+| **Status** | ✅ done |
+| **UI language** | Czech |
 
-## Subdomény
+## Subdomains
 
-| Subdoména | Obsah | Stránka |
+| Subdomain | Content | Page |
 |---|---|---|
-| `wedding` | Plánování jako celek: název, datum, snoubenci, vlastníci, přístup; dashboard | [weddy-wedding.md](weddy-wedding.md) |
-| `guests` | Hosté, rodiny, filtry, řazení, statistiky | [weddy-guests.md](weddy-guests.md) |
-| `planning` | 11 sekcí přípravy a položky v nich | [weddy-planning.md](weddy-planning.md) |
-| `budget` | Rozpočet ze všech položek | [weddy-budget.md](weddy-budget.md) |
+| `wedding` | The plan as a whole: title, date, couple, owners, access; dashboard | [weddyWedding.md](weddyWedding.md) |
+| `guests` | Guests, families, filters, sorting, statistics | [weddyGuests.md](weddyGuests.md) |
+| `planning` | 11 preparation sections and their items | [weddyPlanning.md](weddyPlanning.md) |
+| `budget` | Budget from all items | [weddyBudget.md](weddyBudget.md) |
 
 ```mermaid
 erDiagram
-    WEDDING ||--|| PERSON : "ženich"
-    WEDDING ||--|| PERSON : "nevěsta"
-    WEDDING ||--o{ GUEST : "hosté"
-    WEDDING ||--o{ PLANNING_ITEM : "položky"
-    GUEST }o--o| FAMILY : "rodina (bez vlastního záznamu)"
+    WEDDING ||--|| PERSON : "groom"
+    WEDDING ||--|| PERSON : "bride"
+    WEDDING ||--o{ GUEST : "guests"
+    WEDDING ||--o{ PLANNING_ITEM : "items"
+    GUEST }o--o| FAMILY : "family (no record of its own)"
 ```
 
-**Přístup:** každá svatba má `ownerIds`. Všechny use-casy všech subdomén
-začínají `loadWeddingFor(deps, weddingId, userId)` – neexistující svatba
-`404`, cizí `403`. Endpoint kontrolu nepíše.
+**Access:** every wedding has `ownerIds`. All use cases of all subdomains start
+with `loadWeddingFor(deps, weddingId, userId)` – a missing wedding is `404`,
+someone else's `403`. Endpoints do not write this check.
 
-## Routy
+## Routes
 
-Relativně k `/izi-weddy`; odkazy skládá `weddyPath()`.
+Relative to `/izi-weddy`; links are built with `weddyPath()`.
 
-| Routa | Obrazovka | Subdoména |
+| Route | Screen | Subdomain |
 |---|---|---|
 | `/` | Dashboard | wedding |
-| `/weddings/new` | Nové plánování | wedding |
-| `/weddings/:weddingId` | → přesměrování na `couple` | wedding |
-| `/weddings/:weddingId/couple` | Snoubenci | wedding |
-| `/weddings/:weddingId/guests` | Hosté | guests |
-| `/weddings/:weddingId/planning` | Přehled sekcí | planning |
-| `/weddings/:weddingId/planning/:category` | Detail sekce | planning |
-| `/weddings/:weddingId/budget` | Rozpočet | budget |
+| `/weddings/new` | New plan | wedding |
+| `/weddings/:weddingId` | → redirect to `couple` | wedding |
+| `/weddings/:weddingId/couple` | Couple | wedding |
+| `/weddings/:weddingId/guests` | Guests | guests |
+| `/weddings/:weddingId/planning` | Section overview | planning |
+| `/weddings/:weddingId/planning/:category` | Section detail | planning |
+| `/weddings/:weddingId/budget` | Budget | budget |
 
-Detail svatby (`WeddingLayout`) má horní lištu s názvem a **spodní navigaci**
-se čtyřmi záložkami: 💑 Snoubenci · 👥 Hosté · 📋 Plánování · 💰 Rozpočet.
+The wedding detail (`WeddingLayout`) has a top bar with the title and a **bottom
+navigation** with four tabs: 💑 Snoubenci (Couple) · 👥 Hosté (Guests) ·
+📋 Plánování (Planning) · 💰 Rozpočet (Budget).
 
-## Zásady UI (mobile-first)
+## UI principles (mobile-first)
 
-- Návrh od šířky **360 px**, desktop přes media queries.
-- Dotykové prvky min. **44 × 44 px**.
-- Primární akce jako **plovoucí tlačítko (FAB)** vpravo dole.
-- Formuláře jako **bottom sheet** (`BottomSheet.vue`) nebo celá obrazovka.
-- Stav vždy **barvou i textem** (`StatusBadge.vue`).
-- Číselná pole `inputmode="numeric"`.
-- Vzhled produktu jen pod třídou `.weddy` – viz [frontend.md](../architektura/frontend.md#routing-a-vzhled-produktu).
+- Design starts at **360 px** width, desktop via media queries.
+- Touch targets at least **44 × 44 px**.
+- Primary action as a **floating action button (FAB)** bottom right.
+- Forms as a **bottom sheet** (`BottomSheet.vue`) or full screen.
+- Status always shown by **colour and text** (`StatusBadge.vue`).
+- Numeric fields use `inputmode="numeric"`.
+- Product styles only under the `.weddy` class – see [frontend.md](../architecture/frontend.md#routing-and-product-look).
 
-## Otevřené otázky a rozšíření
+## Open questions and extensions
 
-Otevřené otázky jsou v [rozhodnuti.md](../rozhodnuti.md#otevřené-otázky).
-Možná rozšíření ze zadání: cílový rozpočet, zálohy a platby, checklist úkolů
-s termíny, zasedací pořádek, dietní omezení, export CSV, připomínky hostům,
-tmavý režim.
+Open questions are in [decisions.md](../decisions.md#open-questions).
+Possible extensions from the brief: budget target, deposits and payments, task
+checklist with deadlines, seating plan, dietary restrictions, CSV export, guest
+reminders, dark mode.
 
-## Související
+## Related
 
-- [Doménová architektura](../architektura/domeny.md)
-- Zdroj: [raw/iziweddy-specifikace.md](../../raw/iziweddy-specifikace.md)
+- [Domain architecture](../architecture/domains.md)
+- Source: [raw/iziweddySpec.md](../../raw/iziweddySpec.md)

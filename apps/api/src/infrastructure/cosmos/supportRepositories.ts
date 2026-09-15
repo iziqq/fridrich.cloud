@@ -27,7 +27,7 @@ interface RateLimitDocument {
  *
  * Sdílený stav je tu podstatný – kdyby počítadlo žilo v paměti instance,
  * stačilo by útočníkovi poslat požadavky tak, aby je Azure rozhodil na víc
- * instancí, a limit by neplatil (doc/architecture.md, kap. 5).
+ * instancí, a limit by neplatil (doc/wiki/domains/identity.md).
  */
 export const cosmosRateLimiter: RateLimiter = {
   async consume(key, limit, windowMs) {

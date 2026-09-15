@@ -1,13 +1,18 @@
-import type {
-  PlanningCategory,
-  PlanningItem,
-  PlanningItemInput,
-  PlanningItemStatus,
-} from '@fridrich/weddy-shared';
+import type { PlanningCategory, PlanningItem, PlanningItemStatus } from '@fridrich/weddy-shared';
 import { PLANNING_CATEGORIES, calculateBudget } from '@fridrich/weddy-shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { itemsApi } from '@/weddy/api';
+import { changePlanningItemStatus } from './endpoints/changePlanningItemStatus.endpoint';
+import {
+  createPlanningItem,
+  type CreatePlanningItemRequest,
+} from './endpoints/createPlanningItem.endpoint';
+import { deletePlanningItem } from './endpoints/deletePlanningItem.endpoint';
+import { listPlanningItems } from './endpoints/listPlanningItems.endpoint';
+import {
+  updatePlanningItem,
+  type UpdatePlanningItemRequest,
+} from './endpoints/updatePlanningItem.endpoint';
 
 export interface CategoryOverview {
   category: PlanningCategory;
@@ -16,6 +21,7 @@ export interface CategoryOverview {
   total: number;
 }
 
+/** Stav subdomény `planning` – položky všech sekcí jedné svatby. */
 export const usePlanningStore = defineStore('planning', () => {
   const items = ref<PlanningItem[]>([]);
   const loading = ref(false);
@@ -23,8 +29,8 @@ export const usePlanningStore = defineStore('planning', () => {
   const loadedWeddingId = ref<string | null>(null);
 
   /**
-   * Rozpočet se počítá tady stejnou funkcí jako na backendu, takže se čísla
-   * nemůžou rozejít a přepočet po každé změně je okamžitý (kap. 5.5).
+   * Součty sekcí se počítají tady stejnou funkcí jako na backendu, takže se
+   * čísla nemůžou rozejít a přepočet po každé změně je okamžitý.
    */
   const budget = computed(() => calculateBudget(items.value));
 
@@ -50,7 +56,7 @@ export const usePlanningStore = defineStore('planning', () => {
     loading.value = true;
     error.value = null;
     try {
-      items.value = await itemsApi.list(weddingId);
+      items.value = await listPlanningItems(weddingId);
       loadedWeddingId.value = weddingId;
     } catch (cause) {
       error.value = (cause as Error).message;
@@ -59,17 +65,17 @@ export const usePlanningStore = defineStore('planning', () => {
     }
   }
 
-  async function create(weddingId: string, input: PlanningItemInput): Promise<void> {
-    const item = await itemsApi.create(weddingId, input);
+  async function create(weddingId: string, request: CreatePlanningItemRequest): Promise<void> {
+    const item = await createPlanningItem(weddingId, request);
     items.value = [...items.value, item];
   }
 
   async function update(
     weddingId: string,
     itemId: string,
-    input: PlanningItemInput,
+    request: UpdatePlanningItemRequest,
   ): Promise<void> {
-    const item = await itemsApi.update(weddingId, itemId, input);
+    const item = await updatePlanningItem(weddingId, itemId, request);
     items.value = items.value.map((existing) => (existing.id === itemId ? item : existing));
   }
 
@@ -82,7 +88,7 @@ export const usePlanningStore = defineStore('planning', () => {
     items.value = items.value.map((item) => (item.id === itemId ? { ...item, status } : item));
 
     try {
-      const updated = await itemsApi.setStatus(weddingId, itemId, status);
+      const updated = await changePlanningItemStatus(weddingId, itemId, { status });
       items.value = items.value.map((item) => (item.id === itemId ? updated : item));
     } catch (cause) {
       items.value = previous;
@@ -91,7 +97,7 @@ export const usePlanningStore = defineStore('planning', () => {
   }
 
   async function remove(weddingId: string, itemId: string): Promise<void> {
-    await itemsApi.remove(weddingId, itemId);
+    await deletePlanningItem(weddingId, itemId);
     items.value = items.value.filter((item) => item.id !== itemId);
   }
 

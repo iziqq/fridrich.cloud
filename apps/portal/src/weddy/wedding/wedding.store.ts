@@ -1,9 +1,14 @@
-import type { Wedding, WeddingInput, WeddingSummary } from '@fridrich/weddy-shared';
+import type { Wedding, WeddingSummary } from '@fridrich/weddy-shared';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { weddingsApi } from '@/weddy/api';
+import { createWedding, type CreateWeddingRequest } from './endpoints/createWedding.endpoint';
+import { deleteWedding } from './endpoints/deleteWedding.endpoint';
+import { getWedding } from './endpoints/getWedding.endpoint';
+import { listWeddings } from './endpoints/listWeddings.endpoint';
+import { updateWedding, type UpdateWeddingRequest } from './endpoints/updateWedding.endpoint';
 
-export const useWeddingsStore = defineStore('weddings', () => {
+/** Stav subdomény `wedding` – seznam plánování na dashboardu a právě otevřená svatba. */
+export const useWeddingStore = defineStore('wedding', () => {
   const summaries = ref<WeddingSummary[]>([]);
   const current = ref<Wedding | null>(null);
   const loading = ref(false);
@@ -13,7 +18,7 @@ export const useWeddingsStore = defineStore('weddings', () => {
     loading.value = true;
     error.value = null;
     try {
-      summaries.value = await weddingsApi.list();
+      summaries.value = await listWeddings();
     } catch (cause) {
       error.value = (cause as Error).message;
     } finally {
@@ -28,7 +33,7 @@ export const useWeddingsStore = defineStore('weddings', () => {
     loading.value = true;
     error.value = null;
     try {
-      current.value = await weddingsApi.get(weddingId);
+      current.value = await getWedding(weddingId);
     } catch (cause) {
       error.value = (cause as Error).message;
       current.value = null;
@@ -37,20 +42,20 @@ export const useWeddingsStore = defineStore('weddings', () => {
     }
   }
 
-  async function create(input: WeddingInput): Promise<Wedding> {
-    const wedding = await weddingsApi.create(input);
+  async function create(request: CreateWeddingRequest): Promise<Wedding> {
+    const wedding = await createWedding(request);
     current.value = wedding;
     return wedding;
   }
 
-  async function update(weddingId: string, input: WeddingInput): Promise<Wedding> {
-    const wedding = await weddingsApi.update(weddingId, input);
+  async function update(weddingId: string, request: UpdateWeddingRequest): Promise<Wedding> {
+    const wedding = await updateWedding(weddingId, request);
     current.value = wedding;
     return wedding;
   }
 
   async function remove(weddingId: string): Promise<void> {
-    await weddingsApi.remove(weddingId);
+    await deleteWedding(weddingId);
     summaries.value = summaries.value.filter((summary) => summary.id !== weddingId);
     if (current.value?.id === weddingId) current.value = null;
   }

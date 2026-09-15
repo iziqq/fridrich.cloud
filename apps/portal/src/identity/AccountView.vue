@@ -5,7 +5,7 @@ import CyberButton from '@/components/CyberButton.vue';
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
 import { projects } from '@/content/site';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from './auth.store';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -13,7 +13,7 @@ const busy = ref(false);
 
 async function signOut(): Promise<void> {
   busy.value = true;
-  await auth.logout();
+  await auth.signOut();
   await router.push('/');
 }
 </script>

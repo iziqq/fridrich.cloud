@@ -1,19 +1,18 @@
-import type { LoginCodeRequest, LoginRequest, RegisterRequest, User } from '@fridrich/shared';
+import type { User } from '@fridrich/shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { ApiError, http } from '@/api/client';
-
-interface MessageResponse {
-  message: string;
-}
+import { getCurrentUser } from './endpoints/getCurrentUser.endpoint';
+import { logout } from './endpoints/logout.endpoint';
+import { verifyEmail } from './endpoints/verifyEmail.endpoint';
+import { verifyLoginCode, type VerifyLoginCodeRequest } from './endpoints/verifyLoginCode.endpoint';
 
 /**
- * Přihlášený uživatel.
+ * Přihlášený uživatel – sdílený stav domény identity.
  *
  * Session drží httpOnly cookie, kterou JavaScript nepřečte – stav se proto
- * zjišťuje dotazem na `/api/auth/me`, ne čtením tokenu. Hesla v systému
- * nejsou: totožnost prokazuje přístup ke schránce, ať už odkazem
- * z registrace, nebo kódem při přihlášení.
+ * zjišťuje dotazem na `/api/auth/me`, ne čtením tokenu. Store drží jen akce,
+ * které přihlášení mění; registraci a vyžádání kódu volají obrazovky rovnou
+ * přes endpoint, protože stav nemění.
  */
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
@@ -27,7 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (loaded.value) return;
     pending ??= (async () => {
       try {
-        user.value = await http.get<User>('/auth/me');
+        user.value = await getCurrentUser();
       } catch {
         // 401 je běžný stav, ne chyba – uživatel prostě není přihlášený.
         user.value = null;
@@ -40,26 +39,21 @@ export const useAuthStore = defineStore('auth', () => {
     return pending;
   }
 
-  async function register(input: RegisterRequest): Promise<string> {
-    const response = await http.post<MessageResponse>('/auth/register', input);
-    return response.message;
-  }
-
-  /** První krok přihlášení – nechá si poslat kód na e-mail. */
-  async function requestLoginCode(input: LoginRequest): Promise<string> {
-    const response = await http.post<MessageResponse>('/auth/login', input);
-    return response.message;
-  }
-
   /** Druhý krok přihlášení – ověří opsaný kód a založí session. */
-  async function submitLoginCode(input: LoginCodeRequest): Promise<void> {
-    user.value = await http.post<User>('/auth/login/verify', input);
+  async function signInWithCode(request: VerifyLoginCodeRequest): Promise<void> {
+    user.value = await verifyLoginCode(request);
     loaded.value = true;
   }
 
-  async function logout(): Promise<void> {
+  /** Aktivace účtu z odkazu v e-mailu – zároveň přihlašuje. */
+  async function activateAccount(token: string): Promise<void> {
+    user.value = await verifyEmail({ token });
+    loaded.value = true;
+  }
+
+  async function signOut(): Promise<void> {
     try {
-      await http.post<void>('/auth/logout', {});
+      await logout();
     } finally {
       // I když volání selže, lokálně uživatele odhlásíme.
       user.value = null;
@@ -67,23 +61,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  /** Aktivace účtu z odkazu v e-mailu – zároveň přihlašuje. */
-  async function verifyEmail(token: string): Promise<void> {
-    user.value = await http.post<User>('/auth/verify-email', { token });
-    loaded.value = true;
-  }
-
-  return {
-    user,
-    loaded,
-    isAuthenticated,
-    load,
-    register,
-    requestLoginCode,
-    submitLoginCode,
-    logout,
-    verifyEmail,
-  };
+  return { user, loaded, isAuthenticated, load, signInWithCode, activateAccount, signOut };
 });
-
-export { ApiError };

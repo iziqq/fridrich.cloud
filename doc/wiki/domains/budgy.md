@@ -1,46 +1,45 @@
 ---
-title: Doména budgy – IziBudgy (TODO)
-type: domena
+title: budgy domain – IziBudgy (TODO)
+type: domain
 sources:
-  - raw/izibudgy-zadani.md
+  - raw/izibudgyBrief.md
 updated: 2026-09-15
 ---
 
-# Doména `budgy` – IziBudgy, rozpočet domácnosti
+# `budgy` domain – IziBudgy, household budget
 
-> **Stav: TODO.** Jen hrubé zadání. Specifikace se dopíše, až zadavatel
-> odpoví na otázky níže; implementace pak půjde stejným vzorem jako
-> [weddy](weddy.md).
+> **Status: TODO.** Only a rough brief. The specification will be written once
+> the owner answers the questions below; implementation will then follow the
+> same pattern as [weddy](weddy.md).
 
 | | |
 |---|---|
-| **Adresa** | `www.fridrich.cloud/izi-budgy` |
+| **Address** | `www.fridrich.cloud/izi-budgy` |
 | **API** | `/api/budgy/*` |
-| **Frontend** | `apps/portal/src/budgy/<subdoména>/` |
-| **Sdílené jádro** | `packages/budgy-shared` (vznikne) |
-| **Identita** | společný účet – [identity.md](identity.md) |
+| **Frontend** | `apps/portal/src/budgy/<subdomain>/` |
+| **Shared kernel** | `packages/budgy-shared` (to be created) |
+| **Identity** | shared account – [identity.md](identity.md) |
 
-## Předpokládané jádro (nepotvrzené)
+## Expected core (unconfirmed)
 
-Kandidáti na subdomény: **domácnost** (sdílená více uživateli), **účty**
-(běžný, spořicí, hotovost), **kategorie**, **transakce** (příjem/výdaj),
-**pravidelné platby**, **měsíční rozpočet** (plán vs. skutečnost),
-**přehledy**.
+Candidate subdomains: **household** (shared by several users), **accounts**
+(current, savings, cash), **categories**, **transactions** (income/expense),
+**recurring payments**, **monthly budget** (plan vs. actual), **reports**.
 
-## Otázky před specifikací
+## Questions before the specification
 
-| # | Otázka |
+| # | Question |
 |---|---|
-| 1 | Ruční zadávání, nebo import bankovního výpisu (CSV / API banky)? |
-| 2 | Sdílí rozpočet víc lidí, nebo je jednouživatelský? |
-| 3 | Jen CZK, nebo víc měn? |
-| 4 | Úvěry a splátky, nebo jen příjmy a výdaje? |
-| 5 | Spořicí cíle („na dovolenou 60 000 Kč")? |
-| 6 | Jak daleko do minulosti počítat historii a přehledy? |
+| 1 | Manual entry, or bank statement import (CSV / bank API)? |
+| 2 | Is the budget shared by several people, or single-user? |
+| 3 | CZK only, or multiple currencies? |
+| 4 | Loans and instalments, or just income and expenses? |
+| 5 | Savings goals ("60,000 CZK for a holiday")? |
+| 6 | How far back should history and reports go? |
 
-## Až se začne
+## When work starts
 
-1. Odpovědi → nový zdroj v `doc/raw/` → ingest do této stránky a stránek subdomén.
-2. `packages/budgy-shared` se schématy podle [valibot.md](../architektura/valibot.md).
-3. Doména, use-casy a endpointy podle [endpointy.md](../architektura/endpointy.md).
-4. Kontejnery do sdílené databáze `izi-db` (limit 25 kontejnerů) – [data-cosmos.md](../architektura/data-cosmos.md).
+1. Answers → a new source in `doc/raw/` → ingest into this page and subdomain pages.
+2. `packages/budgy-shared` with schemas according to [valibot.md](../architecture/valibot.md).
+3. Domain, use cases and endpoints according to [endpoints.md](../architecture/endpoints.md).
+4. Containers in the shared `izi-db` database (limit 25 containers) – [dataCosmos.md](../architecture/dataCosmos.md).

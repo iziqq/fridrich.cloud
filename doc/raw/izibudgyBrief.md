@@ -1,43 +1,45 @@
-# 💰 IziBudgy – rozpočet domácnosti
+# 💰 IziBudgy – household budget
 
-> **Stav: TODO.** Zatím jen zadání a hrubý směr. Specifikace se dopisuje až po
-> dokončení portálu a IziWeddy.
+> Translated from the Czech original; the Czech text is in git history (commit 8db5e0a, file doc/izibudgy.md).
 
-Aplikace na rozpočet domácnosti – přehled příjmů, výdajů a úspor.
+> **Status: TODO.** Only a brief and a rough direction so far. The specification
+> will be written after the portal and IziWeddy are finished.
+
+An application for a household budget – an overview of income, expenses and savings.
 
 | | |
 |---|---|
-| **Adresa** | `www.fridrich.cloud/izi-budgy` |
-| **Modul API** | `/api/budgy/*` |
-| **Frontend** | `apps/portal/src/budgy` – podstrom portálu, stejně jako [IziWeddy](iziweddy.md) |
-| **Sdílené typy** | `packages/budgy-shared` |
-| **Identita** | Společný účet `fridrich.cloud` – viz [architecture.md, kap. 5](architecture.md#5-identita-registrace-a-přihlášení) |
+| **Address** | `www.fridrich.cloud/izi-budgy` |
+| **API module** | `/api/budgy/*` |
+| **Frontend** | `apps/portal/src/budgy` – a subtree of the portal, same as [IziWeddy](iziweddy.md) |
+| **Shared types** | `packages/budgy-shared` |
+| **Identity** | Shared `fridrich.cloud` account – see [architecture.md, ch. 5](architecture.md#5-identita-registrace-a-přihlášení) |
 
 ---
 
-## Hrubý směr
+## Rough direction
 
-Předpokládané jádro aplikace – **nutno potvrdit a rozpracovat**:
+Expected core of the application – **to be confirmed and elaborated**:
 
-- **Domácnost** – jednotka, kterou může sdílet víc uživatelů.
-- **Účty** – běžný účet, spořicí účet, hotovost.
-- **Kategorie** – bydlení, jídlo, doprava, děti, zábava…
-- **Transakce** – příjem / výdaj, částka, datum, kategorie, účet, poznámka.
-- **Pravidelné platby** – nájem, energie, předplatné; opakování a připomenutí.
-- **Měsíční rozpočet** – plánovaná částka na kategorii vs. skutečnost.
-- **Přehledy** – vývoj v čase, rozpad podle kategorií, zůstatek.
+- **Household** – a unit that can be shared by several users.
+- **Accounts** – current account, savings account, cash.
+- **Categories** – housing, food, transport, children, entertainment…
+- **Transactions** – income / expense, amount, date, category, account, note.
+- **Recurring payments** – rent, utilities, subscriptions; recurrence and reminders.
+- **Monthly budget** – planned amount per category vs. actual spending.
+- **Reports** – development over time, breakdown by category, balance.
 
-## Otázky k zodpovězení před psaním specifikace
+## Questions to answer before writing the specification
 
-| # | Otázka |
+| # | Question |
 |---|---|
-| 1 | Zadává se všechno ručně, nebo se má importovat bankovní výpis (CSV / API banky)? |
-| 2 | Sdílí rozpočet víc lidí (partneři), nebo je to jednouživatelská aplikace? |
-| 3 | Jen jedna měna (CZK), nebo víc měn? |
-| 4 | Jsou potřeba úvěry a splátky, nebo stačí příjmy a výdaje? |
-| 5 | Řeší se spořicí cíle („na dovolenou 60 000 Kč")? |
-| 6 | Jak daleko do minulosti se má počítat historie a přehledy? |
+| 1 | Is everything entered manually, or should a bank statement be imported (CSV / bank API)? |
+| 2 | Is the budget shared by several people (partners), or is it a single-user application? |
+| 3 | Only one currency (CZK), or multiple currencies? |
+| 4 | Are loans and instalments needed, or are income and expenses enough? |
+| 5 | Are savings goals handled ("60,000 CZK for a holiday")? |
+| 6 | How far back should history and reports be calculated? |
 
-Až budou odpovědi, vznikne dokument ve stejné struktuře jako
-[iziweddy.md](iziweddy.md) – doménový model, funkční specifikace, REST API,
-validační pravidla, ukládání dat.
+Once there are answers, a document with the same structure as
+[iziweddy.md](iziweddy.md) will be created – domain model, functional
+specification, REST API, validation rules, data storage.

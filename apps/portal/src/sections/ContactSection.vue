@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import { issuesToDetails } from '@fridrich/shared';
+import * as v from 'valibot';
 import { reactive, ref } from 'vue';
+import {
+  SubmitContactMessageRequest,
+  submitContactMessage,
+} from '@/contact/endpoints/submitContactMessage.endpoint';
 import CyberButton from '@/components/CyberButton.vue';
 import GlitchHeading from '@/components/GlitchHeading.vue';
 import SectionLabel from '@/components/SectionLabel.vue';
@@ -21,18 +27,17 @@ const STATUS_TEXT: Record<Status, string> = {
   error: '> odeslání se nepodařilo. Zkuste to prosím znovu nebo napište přímo na e-mail.',
 };
 
+/** Stejné schéma parsuje i API – formulář jen ukáže chyby dřív, než se odešle. */
 function validate(): boolean {
   for (const key of Object.keys(errors)) delete errors[key];
 
-  if (form.name.trim() === '') errors['name'] = 'Vyplňte prosím jméno';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) {
-    errors['email'] = 'Zadejte platný e-mail';
-  }
-  if (form.message.trim().length < 10) {
-    errors['message'] = 'Napište prosím alespoň pár vět o tom, co potřebujete';
-  }
+  const result = v.safeParse(SubmitContactMessageRequest, form);
+  if (result.success) return true;
 
-  return Object.keys(errors).length === 0;
+  for (const detail of issuesToDetails(result.issues)) {
+    errors[detail.field] = detail.message;
+  }
+  return false;
 }
 
 async function submit(): Promise<void> {
@@ -46,17 +51,7 @@ async function submit(): Promise<void> {
 
   status.value = 'sending';
   try {
-    const response = await fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        message: form.message.trim(),
-      }),
-    });
-
-    if (!response.ok) throw new Error(String(response.status));
+    await submitContactMessage({ name: form.name, email: form.email, message: form.message });
 
     status.value = 'sent';
     form.name = '';

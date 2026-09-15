@@ -3,11 +3,11 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
-import WeddingForm from '@/weddy/components/WeddingForm.vue';
-import { useWeddingsStore } from '@/weddy/stores/weddings';
+import WeddingForm from './WeddingForm.vue';
+import { useWeddingStore } from './wedding.store';
 
 const route = useRoute();
-const weddings = useWeddingsStore();
+const weddings = useWeddingStore();
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 </script>

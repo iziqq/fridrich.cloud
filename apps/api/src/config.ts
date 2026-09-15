@@ -85,7 +85,7 @@ export function getCosmosConfig(): CosmosConfig {
 
   // Bez klíče se sáhne po managed identity. Na spravovaných funkcích Static
   // Web Apps ta ale není k dispozici, takže tam musí být klíč vyplněný
-  // (doc/architecture.md, kap. 9); identita zbývá pro samostatný Function App.
+  // (doc/wiki/operations/deployment.md); identita zbývá pro samostatný Function App.
   const key = process.env['COSMOS_KEY'];
   if (key) config.key = key;
 

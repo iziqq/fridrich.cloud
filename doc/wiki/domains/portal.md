@@ -1,85 +1,85 @@
 ---
-title: Portál www.fridrich.cloud
-type: domena
+title: Portal www.fridrich.cloud
+type: domain
 sources:
-  - raw/portal-specifikace.md
-  - kód: apps/portal/src/{components,sections,content,views}, packages/design
+  - raw/portalSpec.md
+  - code: apps/portal/src/{components,sections,content,views}, packages/design
 updated: 2026-09-15
 ---
 
-# Portál `www.fridrich.cloud`
+# Portal `www.fridrich.cloud`
 
-> Prezentační web Libora Fridricha – **vývoj na míru**. Hlavní cíl je
-> poptávka přes kontaktní formulář; zároveň vstupní brána k produktům.
-> Vizuální styl inspirovaný **Cyberpunk 2077**. Portál není business doména,
-> ale obsah a vzhled; jeho jediné volání API je [contact](contact.md)
-> a přihlášení ([identity](identity.md)).
+> Presentation website of Libor Fridrich – **custom software development**. The
+> main goal is an enquiry through the contact form; it is also the gateway to the
+> products. Visual style inspired by **Cyberpunk 2077**. The portal is not a
+> business domain but content and look; its only API calls are
+> [contact](contact.md) and sign-in ([identity](identity.md)). Website texts are Czech.
 
-Úplné znění specifikace (texty sekcí, efekty, assety) je ve zdroji
-[raw/portal-specifikace.md](../../raw/portal-specifikace.md). Tahle stránka
-drží pravidla, která musí dodržet každá změna.
+The full specification (section copy, effects, assets) is in the source
+[raw/portalSpec.md](../../raw/portalSpec.md). This page holds the rules every
+change must respect.
 
-## Obsah a navigace
+## Content and navigation
 
-Menu: *O mně · Služby · Vývoj · Projekty · Kontakt · Přihlásit se*
-(po přihlášení jméno uživatele → účet). Aktivní sekce se zvýrazní podle
-scrollu (`useActiveSection`).
+Menu: *O mně · Služby · Vývoj · Projekty · Kontakt · Přihlásit se* (About me ·
+Services · Development · Projects · Contact · Sign in); after sign-in the user's
+name → account. The active section is highlighted while scrolling (`useActiveSection`).
 
-| Sekce | Obsah |
+| Section | Content |
 |---|---|
-| Hero | `LIBOR FRIDRICH` / `VÝVOJ NA MÍRU`, CTA `MÁM PROJEKT` → kontakt, `JAK PRACUJI` → vývoj |
-| O mně | 10+ let full stack, velké mezinárodní firmy i menší vývoj na míru, pruh odvětví |
-| Služby | Webové aplikace na míru · Cloud (Azure) · Integrace a automatizace · Konzultace a code review |
-| Vývoj | **Klíčová sekce** – 6 kroků: úvodní schůzka → potvrzení zadání → analýza → mocknuté demo → hlavní vývoj s testovacím prostředím → produkce |
-| Projekty | IziWeddy (ve vývoji), IziBudgy (připravujeme) |
-| Kontakt | Formulář jméno/e-mail/zpráva + honeypot, přímé kontakty |
+| Hero | `LIBOR FRIDRICH` / `VÝVOJ NA MÍRU` (custom development), CTA `MÁM PROJEKT` (I have a project) → contact, `JAK PRACUJI` (how I work) → development |
+| About me | 10+ years full stack, large international companies as well as smaller custom development, industries strip |
+| Services | Custom web applications · Cloud (Azure) · Integration and automation · Consulting and code review |
+| Development | **Key section** – 6 steps: kick-off meeting → brief confirmation → analysis → mocked demo → main development with a test environment → production |
+| Projects | IziWeddy (in development), IziBudgy (coming soon) |
+| Contact | Form name/e-mail/message + honeypot, direct contacts |
 
-Texty nejsou v komponentách, ale v `apps/portal/src/content/site.ts`.
+Copy is not hard-coded in components but lives in `apps/portal/src/content/site.ts`.
 
-## Závazná pravidla
+## Binding rules
 
-> ⚠️ **Jména klientů se na web nepíšou** – ani loga, případové studie nebo
-> screenshoty, ze kterých by šel klient poznat. Zmiňují se jen odvětví
-> (průmyslová výroba, automotive, spotřební zboží, zakázkový vývoj).
+> ⚠️ **Client names are never published on the website** – nor logos, case
+> studies or screenshots that would identify a client. Only industries are
+> mentioned (industrial manufacturing, automotive, consumer goods, contract development).
 
-- **Reference** se nezobrazují, dokud nejsou skutečné citace.
-- **Žádné oficiální assety hry** (logo, font Refrigerator Deluxe, screenshoty) –
-  inspirace stylem, ne kopie.
-- **Signální žlutá jen jednou na obrazovku**; nikdy žlutý text na azurové a naopak;
-  barva vždy doprovozená textem nebo ikonou.
-- **Běžný text nikdy verzálkami**, `line-height: 1.7`, max. `70ch`.
-- **Zkosené rohy místo zaoblených** (`clip-path`), mřížka 12 sloupců, max. šířka `1200px`, gutter 24 px (mobil 16 px).
-- **Animace** 120–320 ms, nikdy ve smyčce mimo viewport; `prefers-reduced-motion` vypne glitch, scanlines, typewriter i nabíhající osu.
-- **Fonty self-hostované** (`@fontsource`) – žádná volání cizí domény.
+- **Testimonials** are not shown until there are real quotes.
+- **No official game assets** (logo, the Refrigerator Deluxe font, screenshots) –
+  inspired by the style, not copied.
+- **Signal yellow only once per screen**; never yellow text on cyan or vice versa;
+  colour always accompanied by text or an icon.
+- **Body text never in uppercase**, `line-height: 1.7`, max. `70ch`.
+- **Bevelled corners instead of rounded** (`clip-path`), 12-column grid, max. width `1200px`, gutter 24 px (mobile 16 px).
+- **Animations** 120–320 ms, never looping outside the viewport; `prefers-reduced-motion` disables glitch, scanlines, typewriter and the growing timeline.
+- **Self-hosted fonts** (`@fontsource`) – no calls to third-party domains.
 
-## Design tokeny (`packages/design`)
+## Design tokens (`packages/design`)
 
-| Token | Hodnota | Použití |
+| Token | Value | Use |
 |---|---|---|
-| `--cp-black` | `#050506` | podklad |
-| `--cp-panel` | `#0E0E11` | karty, panely |
-| `--cp-line` | `#1F1F25` | okraje |
-| `--cp-yellow` | `#FCEE0A` | signální – CTA, aktivní stav |
-| `--cp-cyan` | `#00F0FF` | sekundární akcent, HUD |
-| `--cp-magenta` | `#FF003C` | chyby, glitch |
-| `--cp-green` | `#39FF7A` | úspěch |
+| `--cp-black` | `#050506` | background |
+| `--cp-panel` | `#0E0E11` | cards, panels |
+| `--cp-line` | `#1F1F25` | borders |
+| `--cp-yellow` | `#FCEE0A` | signal – CTA, active state |
+| `--cp-cyan` | `#00F0FF` | secondary accent, HUD |
+| `--cp-magenta` | `#FF003C` | errors, glitch |
+| `--cp-green` | `#39FF7A` | success |
 | `--cp-text` | `#E8E8EA` | text |
-| `--cp-muted` | `#8A8A93` | sekundární text (tmavší šedou nepoužívat – kontrast) |
+| `--cp-muted` | `#8A8A93` | secondary text (do not use a darker grey – contrast) |
 
-Typografie: Rajdhani (nadpisy), Chakra Petch (text), JetBrains Mono (HUD, čísla).
+Typography: Rajdhani (headings), Chakra Petch (body), JetBrains Mono (HUD, numbers).
 
-## Přístupnost a výkon
+## Accessibility and performance
 
-- Kontrast textu min. 4.5:1, nadpisů 3:1; viditelný `:focus-visible` (žlutý obrys 2 px).
-- Dotykové cíle min. 44 × 44 px; skip link „Přeskočit na obsah"; formulář s `<label>` a `aria-describedby`.
-- Cíle: Lighthouse mobil ≥ 90, LCP < 2,5 s, CLS < 0,1, JS gzip < 150 kB.
-- SEO: unikátní title/description, Open Graph, JSON-LD `Person` + `ProfessionalService`, `sitemap.xml`, `robots.txt`.
+- Text contrast at least 4.5:1, headings 3:1; visible `:focus-visible` (2 px yellow outline).
+- Touch targets at least 44 × 44 px; "Přeskočit na obsah" (skip to content) link; form with `<label>` and `aria-describedby`.
+- Targets: Lighthouse mobile ≥ 90, LCP < 2.5 s, CLS < 0.1, JS gzip < 150 kB.
+- SEO: unique title/description, Open Graph, JSON-LD `Person` + `ProfessionalService`, `sitemap.xml`, `robots.txt`.
 
-## Otevřené body
+## Open items
 
-Analytika bez cookies, blog, fotka na portrét a IČO do patičky – viz
-[rozhodnuti.md](../rozhodnuti.md#otevřené-otázky).
+Cookieless analytics, blog, portrait photo and company registration number in
+the footer – see [decisions.md](../decisions.md#open-questions).
 
-## Související
+## Related
 
-- [Frontend](../architektura/frontend.md) · [contact](contact.md)
+- [Frontend](../architecture/frontend.md) · [contact](contact.md)

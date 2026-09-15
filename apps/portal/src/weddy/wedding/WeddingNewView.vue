@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { Wedding } from '@fridrich/weddy-shared';
 import { RouterLink, useRouter } from 'vue-router';
-import WeddingForm from '@/weddy/components/WeddingForm.vue';
-import { useWeddingsStore } from '@/weddy/stores/weddings';
 import { weddyPath } from '@/weddy/routes';
+import WeddingForm from './WeddingForm.vue';
+import { useWeddingStore } from './wedding.store';
 
-const weddings = useWeddingsStore();
+const weddings = useWeddingStore();
 const router = useRouter();
 
 async function onSaved(wedding: Wedding): Promise<void> {

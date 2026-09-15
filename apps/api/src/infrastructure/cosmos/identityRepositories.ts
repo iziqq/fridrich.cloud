@@ -16,7 +16,7 @@ import { getContainer, isNotFound, stripSystemFields } from './client.js';
  * Implementace portů modulu identity nad Cosmos DB.
  *
  * Mapování mezi doménovým objektem a dokumentem (partition key, `id`, TTL)
- * je výhradně tady – doména o Cosmos DB neví (CLAUDE.md, pravidlo 5).
+ * je výhradně tady – doména o Cosmos DB neví (CLAUDE.md, Backend layers).
  */
 
 export const userCosmosRepository: UserRepository = {

@@ -1,48 +1,48 @@
 ---
-title: Doména contact
-type: domena
+title: contact domain
+type: domain
 sources:
-  - raw/portal-specifikace.md (kap. 3.7)
-  - kód: apps/api/src/{domain,application,endpoints}/contact, apps/portal/src/contact, apps/portal/src/sections/ContactSection.vue
+  - raw/portalSpec.md (ch. 3.7)
+  - code: apps/api/src/{domain,application,endpoints}/contact, apps/portal/src/contact, apps/portal/src/sections/ContactSection.vue
 updated: 2026-09-15
 ---
 
-# Doména `contact`
+# `contact` domain
 
-> Kontaktní formulář portálu – hlavní obchodní cíl webu (poptávka).
-> **Jediný veřejný (nepřihlášený) zápisový endpoint**, proto má vlastní ochranu.
+> The portal contact form – the main business goal of the website (an enquiry).
+> **The only public (unauthenticated) write endpoint**, so it has its own protection.
 
-## Pravidla
+## Rules
 
-| Pole | Pravidlo (`ContactMessageInputSchema`) |
+| Field | Rule (`ContactMessageInputSchema`) |
 |---|---|
-| `name` | povinné, max. 100 znaků |
-| `email` | platný e-mail, uloží se malými písmeny |
-| `message` | 10–5000 znaků |
+| `name` | required, max. 100 characters |
+| `email` | valid e-mail, stored lowercase |
+| `message` | 10–5000 characters |
 
-- **Honeypot** – skryté pole `website`; vyplněné = robot, formulář se tváří
-  úspěšně a nic neodešle (řeší `ContactSection.vue`).
-- **Rate limit** 5 zpráv za hodinu na IP (use-case).
-- Zpráva se **uloží do `contactMessages` a zároveň pošle e-mailem** na
-  `CONTACT_INBOX` – výpadek pošty ji neztratí. Obsah se v HTML e-mailu escapuje.
+- **Honeypot** – hidden field `website`; filled in = a bot, the form pretends
+  success and sends nothing (handled in `ContactSection.vue`).
+- **Rate limit** 5 messages per hour per IP (use case).
+- The message is **saved to `contactMessages` and also e-mailed** to
+  `CONTACT_INBOX` – a mail outage does not lose it. Content is escaped in the HTML e-mail.
 
-## Kód
+## Code
 
-| Vrstva | Soubor |
+| Layer | File |
 |---|---|
-| Schéma | `packages/shared/src/contact.ts` |
-| Doména | `apps/api/src/domain/contact/ContactMessage.ts` (+ `ContactMessageRepository`) |
-| Use-case | `apps/api/src/application/contact/submitContactMessage.ts` |
-| Endpoint BE | `apps/api/src/endpoints/contact/submitContactMessage.endpoint.ts` |
-| Endpoint FE | `apps/portal/src/contact/endpoints/submitContactMessage.endpoint.ts` |
-| UI | `apps/portal/src/sections/ContactSection.vue` – validuje stejným schématem před odesláním |
+| Schema | `packages/shared/src/contact.ts` |
+| Domain | `apps/api/src/domain/contact/ContactMessage.ts` (+ `ContactMessageRepository`) |
+| Use case | `apps/api/src/application/contact/submitContactMessage.ts` |
+| BE endpoint | `apps/api/src/endpoints/contact/submitContactMessage.endpoint.ts` |
+| FE endpoint | `apps/portal/src/contact/endpoints/submitContactMessage.endpoint.ts` |
+| UI | `apps/portal/src/sections/ContactSection.vue` – validates with the same schema before sending |
 
 ## Endpoint
 
-| Endpoint | Metoda a cesta | Request → Response |
+| Endpoint | Method and path | Request → Response |
 |---|---|---|
 | `submitContactMessage` | `POST /api/contact` | `{ name, email, message }` → `202 { message }` |
 
-## Související
+## Related
 
-- [Portál](portal.md) · [Endpointy](../architektura/endpointy.md)
+- [Portal](portal.md) · [Endpoints](../architecture/endpoints.md)

@@ -9,7 +9,7 @@ import { computed } from 'vue';
 
 const props = defineProps<{ status: GuestStatus | PlanningItemStatus }>();
 
-// Stav se rozlisuje barvou i textem, ne jen barvou (doc/iziweddy.md, kap. 6.3).
+// Stav se rozlisuje barvou i textem, ne jen barvou (doc/wiki/domains/weddy.md).
 const label = computed(
   () =>
     GUEST_STATUS_LABELS[props.status as GuestStatus] ??

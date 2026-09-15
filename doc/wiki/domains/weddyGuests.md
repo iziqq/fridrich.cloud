@@ -1,83 +1,84 @@
 ---
-title: weddy / guests – hosté a rodiny
-type: domena
+title: weddy / guests – guests and families
+type: domain
 sources:
-  - raw/iziweddy-specifikace.md (kap. 4.2, 5.3, 7.2, 8)
-  - kód: packages/weddy-shared/src/guests.ts, apps/api/src/domain/weddy/guests, apps/portal/src/weddy/guests
+  - raw/iziweddySpec.md (ch. 4.2, 5.3, 7.2, 8)
+  - code: packages/weddy-shared/src/guests.ts, apps/api/src/domain/weddy/guests, apps/portal/src/weddy/guests
 updated: 2026-09-15
 ---
 
-# `weddy / guests` – hosté a rodiny
+# `weddy / guests` – guests and families
 
-> Seznam hostů jedné svatby se stavem pozvánky. Hosty jde zadávat jednotlivě
-> i **celou rodinu najednou**. Rodina nemá vlastní záznam – je to skupina hostů
-> se stejným `family.id`.
+> The guest list of one wedding with invitation status. Guests can be entered
+> one by one or **a whole family at once**. A family has no record of its own –
+> it is a group of guests with the same `family.id`.
 
-## Výčty
+## Enums
 
-| Výčet | Hodnoty (popisek) |
+| Enum | Values (UI label) |
 |---|---|
-| `GuestSide` | `groom` (Ženich), `bride` (Nevěsta) |
-| `AgeGroup` | `adult` (Dospělý), `child` (Dítě) |
-| `GuestStatus` | `draft` (Návrh), `requested` (Pozván), `accepted` (Přijal), `rejected` (Odmítl) |
+| `GuestSide` | `groom` (Ženich – groom), `bride` (Nevěsta – bride) |
+| `AgeGroup` | `adult` (Dospělý – adult), `child` (Dítě – child) |
+| `GuestStatus` | `draft` (Návrh – draft), `requested` (Pozván – invited), `accepted` (Přijal – accepted), `rejected` (Odmítl – declined) |
 
-Běžný tok `draft → requested → accepted / rejected`, ale **přechody se
-nevynucují** – uživatel musí jít opravit chybu.
+The usual flow is `draft → requested → accepted / rejected`, but **transitions
+are not enforced** – the user must be able to fix a mistake.
 
-## Host
+## Guest
 
-| Pole | Pravidlo | Výchozí (doména) |
+| Field | Rule | Default (domain) |
 |---|---|---|
-| `firstName` | povinné, 1–100 | |
-| `lastName` | nepovinné, max. 100 (u členů rodiny se nevyplňuje) | |
-| `side` | povinné | u člena rodiny ho určuje rodina |
-| `ageGroup` | nepovinné v requestu | `adult` |
-| `status` | nepovinné v requestu | `draft` |
-| `family` | `{ id, name }` – nastavuje jen use-case rodin | |
-| `note` | nepovinné, max. 2000 | |
+| `firstName` | required, 1–100 | |
+| `lastName` | optional, max. 100 (left empty for family members) | |
+| `side` | required | for a family member it is set by the family |
+| `ageGroup` | optional in the request | `adult` |
+| `status` | optional in the request | `draft` |
+| `family` | `{ id, name }` – set only by the family use cases | |
+| `note` | optional, max. 2000 | |
 
-## Rodina
+## Family
 
-Zadání: název, strana pro celou rodinu, seznam členů (jméno, věková skupina).
+Input: name, side for the whole family, list of members (first name, age group).
 
-- **Strana patří rodině** – `Guest.joinFamily` ji přepíše všem členům, takže
-  se strana rodiny nemůže rozejít s členy a statistiky sedí.
-- **Seznam členů je při úpravě úplný:** člen s `id` se upraví, bez `id`
-  vznikne, kdo chybí, přestává být hostem (`rewriteFamily` v
-  `domain/weddy/guests/Family.ts`).
-- Stav pozvánky má **každý člen zvlášť**.
-- Smazání rodiny smaže všechny členy. Rodina bez členů neprojde schématem
-  (1–30 členů, název 1–100).
-- Úprava hosta přes běžný formulář ho **z rodiny nevyřadí**.
-- Cena modelu: přejmenování nebo přesun rodiny přepíše všechny členy.
+- **The side belongs to the family** – `Guest.joinFamily` writes it to every
+  member, so the family side cannot drift from its members and statistics stay correct.
+- **The member list is complete on update:** a member with an `id` is updated,
+  one without an `id` is created, anyone missing stops being a guest
+  (`rewriteFamily` in `domain/weddy/guests/Family.ts`).
+- **Each member** keeps their own invitation status.
+- Deleting a family deletes all members. A family without members does not pass
+  the schema (1–30 members, name 1–100).
+- Editing a guest through the regular form **does not remove them from the family**.
+- Model trade-off: renaming or moving a family rewrites all its members.
 
-## Seznam na obrazovce
+## List on screen
 
-- Filtry: strana, věková skupina, stav; vyhledávání podle jména i názvu rodiny
-  (bez ohledu na diakritiku). Filtruje se na klientu.
-- Řazení podle příjmení (výchozí) nebo jména; není to filtr, „Zrušit filtry"
-  ho nechá. Při shodě rozhoduje druhé jméno, porovnává se česky (`Čermák` za `Cach`).
-- Jméno se vypisuje v pořadí řazení (`Novák Petr`).
-- Strana je **sekce** (Ženich / Nevěsta), ne štítek. V sekci nejdřív rodiny jako
-  bloky, pod nimi jednotlivci.
-- Rodiny jsou **sbalené** se souhrnem (`4 členové · 2 děti`); při hledání nebo
-  filtru se rozbalí všechny.
-- Rychlá změna stavu klikem na štítek (optimisticky, při chybě se vrátí).
-- Na úzkém displeji karty, na širším hutnější řádky.
+- Filters: side, age group, status; search by name and family name
+  (diacritics-insensitive). Filtering happens on the client.
+- Sort by last name (default) or first name; it is not a filter, "Zrušit filtry"
+  (Clear filters) keeps it. Ties are broken by the other name, compared with Czech
+  collation (`Čermák` after `Cach`).
+- Names are shown in sort order (`Novák Petr`).
+- The side is a **section** (Groom / Bride), not a tag. Within a section families
+  come first as blocks, individuals below.
+- Families are **collapsed** with a summary (`4 členové · 2 děti` – 4 members · 2 children);
+  all expand while searching or filtering.
+- Quick status change by clicking the badge (optimistic, reverted on error).
+- Cards on narrow screens, denser rows on wider ones.
 
-## Statistiky (`calculateGuestStats`)
+## Statistics (`calculateGuestStats`)
 
-| Statistika | Výpočet |
+| Statistic | Calculation |
 |---|---|
-| `total` | všichni kromě `rejected` |
-| `accepted`, `requested`, `draft`, `rejected` | počty podle stavu |
-| `groom`, `bride`, `adults`, `children` | rozdělení bez odmítnutých |
+| `total` | everyone except `rejected` |
+| `accepted`, `requested`, `draft`, `rejected` | counts by status |
+| `groom`, `bride`, `adults`, `children` | split, excluding declined guests |
 
-Počítají se vždy ze **všech** hostů – filtr mění jen seznam.
+Always computed from **all** guests – the filter only changes the list.
 
-## Endpointy
+## Endpoints
 
-| Endpoint | Metoda a cesta | Request → Response |
+| Endpoint | Method and path | Request → Response |
 |---|---|---|
 | `listGuests` | `GET …/weddings/{weddingId}/guests` | query `side?`, `ageGroup?`, `status?` → `{ guests: Guest[], stats: GuestStats }` |
 | `createGuest` | `POST …/guests` | `GuestInput` → `201 Guest` |
@@ -85,11 +86,11 @@ Počítají se vždy ze **všech** hostů – filtr mění jen seznam.
 | `changeGuestStatus` | `PATCH …/guests/{guestId}/status` | `{ status }` → `Guest` |
 | `deleteGuest` | `DELETE …/guests/{guestId}` | → `204` |
 | `createFamily` | `POST …/families` | `FamilyInput` → `201 Family` |
-| `updateFamily` | `PUT …/families/{familyId}` | `FamilyInput` (členové s `id`) → `Family` |
+| `updateFamily` | `PUT …/families/{familyId}` | `FamilyInput` (members with `id`) → `Family` |
 | `deleteFamily` | `DELETE …/families/{familyId}` | → `204` |
 
-Prefix `…` = `/api/weddy/weddings/{weddingId}`. Čtecí endpoint pro rodiny
-neexistuje – skládají se ze seznamu přes `groupIntoFamilies()`.
+Prefix `…` = `/api/weddy/weddings/{weddingId}`. There is no read endpoint for
+families – they are assembled from the list via `groupIntoFamilies()`.
 
 ```jsonc
 // POST /api/weddy/weddings/{weddingId}/families
@@ -103,18 +104,18 @@ neexistuje – skládají se ze seznamu přes `groupIntoFamilies()`.
 }
 ```
 
-## Kód
+## Code
 
-| Vrstva | Soubor |
+| Layer | File |
 |---|---|
-| Sdílené jádro | `packages/weddy-shared/src/guests.ts` – výčty, `GuestSchema`, `GuestInputSchema`, `FamilyInputSchema`, `FamilySchema`, `GuestStatsSchema`, `calculateGuestStats`, `groupIntoFamilies`, `guestFullName` |
-| Doména | `apps/api/src/domain/weddy/guests/Guest.ts`, `Family.ts`, `GuestRepository.ts` |
-| Use-casy | `apps/api/src/application/weddy/guests.ts` (hosté i rodiny) |
-| Endpointy | `apps/api/src/endpoints/weddy/guests/`, `apps/portal/src/weddy/guests/endpoints/` |
+| Shared kernel | `packages/weddy-shared/src/guests.ts` – enums, `GuestSchema`, `GuestInputSchema`, `FamilyInputSchema`, `FamilySchema`, `GuestStatsSchema`, `calculateGuestStats`, `groupIntoFamilies`, `guestFullName` |
+| Domain | `apps/api/src/domain/weddy/guests/Guest.ts`, `Family.ts`, `GuestRepository.ts` |
+| Use cases | `apps/api/src/application/weddy/guests.ts` (guests and families) |
+| Endpoints | `apps/api/src/endpoints/weddy/guests/`, `apps/portal/src/weddy/guests/endpoints/` |
 | Store | `guests.store.ts` – `filters`, `sort`, `filtered`, `sections`, `stats`, `create`, `update`, `setStatus`, `remove`, `addFamily`, `editFamily`, `removeFamily` |
 | UI | `GuestsView.vue` |
-| Úložiště | kontejner `guests`, PK `/weddingId` |
+| Storage | container `guests`, PK `/weddingId` |
 
-## Související
+## Related
 
-- [weddy](weddy.md) · [wedding](weddy-wedding.md)
+- [weddy](weddy.md) · [wedding](weddyWedding.md)

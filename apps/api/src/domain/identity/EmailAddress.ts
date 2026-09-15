@@ -1,30 +1,25 @@
+import { AccountEmailSchema } from '@fridrich/shared';
+import * as v from 'valibot';
 import { DomainError } from '../shared/DomainError.js';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const MAX_LENGTH = 254;
 
 /**
  * E-mailová adresa jako hodnotový objekt.
  *
  * Normalizace na malá písmena je tu schválně na jednom místě – jinak by se
  * dřív nebo později stalo, že se uživatel registruje jako `Jan@…` a pak se
- * marně přihlašuje jako `jan@…`.
+ * marně přihlašuje jako `jan@…`. Pravidla tvaru jsou schéma
+ * `AccountEmailSchema`, stejné, jaké používá formulář i endpoint.
  */
 export class EmailAddress {
   private constructor(readonly value: string) {}
 
-  static create(raw: unknown, field = 'email'): EmailAddress {
-    if (typeof raw !== 'string' || raw.trim() === '') {
-      throw DomainError.field(field, 'Vyplňte e-mail');
+  static create(raw: string, field = 'email'): EmailAddress {
+    const result = v.safeParse(AccountEmailSchema, raw);
+    if (!result.success) {
+      throw DomainError.field(field, result.issues[0].message);
     }
 
-    const normalized = raw.trim().toLowerCase();
-
-    if (normalized.length > MAX_LENGTH || !EMAIL_RE.test(normalized)) {
-      throw DomainError.field(field, 'Zadejte platný e-mail');
-    }
-
-    return new EmailAddress(normalized);
+    return new EmailAddress(result.output);
   }
 
   /** Načtení z databáze – hodnota je už normalizovaná, jen ji zabalíme. */

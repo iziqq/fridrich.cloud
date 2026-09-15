@@ -24,24 +24,24 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/prihlaseni',
     name: 'login',
-    component: () => import('@/views/LoginView.vue'),
+    component: () => import('@/identity/LoginView.vue'),
     meta: { guestOnly: true },
   },
   {
     path: '/registrace',
     name: 'register',
-    component: () => import('@/views/RegisterView.vue'),
+    component: () => import('@/identity/RegisterView.vue'),
     meta: { guestOnly: true },
   },
   {
     path: '/overeni-emailu',
     name: 'verify-email',
-    component: () => import('@/views/VerifyEmailView.vue'),
+    component: () => import('@/identity/VerifyEmailView.vue'),
   },
   {
     path: '/ucet',
     name: 'account',
-    component: () => import('@/views/AccountView.vue'),
+    component: () => import('@/identity/AccountView.vue'),
     meta: { requiresAuth: true },
   },
   // Produkty jsou části portálu s vlastním vzhledem, ne samostatné aplikace.

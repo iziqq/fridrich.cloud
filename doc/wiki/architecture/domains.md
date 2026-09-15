@@ -1,102 +1,104 @@
 ---
-title: Doménová architektura
-type: koncept
+title: Domain architecture
+type: concept
 sources:
-  - raw/2026-09-15-domenova-architektura.md
-  - kód: apps/api/src, apps/portal/src, packages/*-shared
+  - raw/2026-09-15-domainArchitecture.md
+  - code: apps/api/src, apps/portal/src, packages/*-shared
 updated: 2026-09-15
 ---
 
-# Doménová architektura
+# Domain architecture
 
-> Backend i frontend se člení **podle domén, ne podle technických vrstev**.
-> Stejná doména má stejné jméno a stejné subdomény v `apps/api`, `apps/portal`
-> i ve sdíleném jádru `packages/*-shared`. Business logika je vždy v doméně.
+> Backend and frontend are organised **by domain, not by technical layer**.
+> A domain has the same name and the same subdomains in `apps/api`,
+> `apps/portal` and the shared kernel `packages/*-shared`. Business logic always
+> lives in the domain.
 
-## Mapa domén
+## Domain map
 
-| Doména | Subdomény | Co řeší | API prefix |
+| Domain | Subdomains | Responsibility | API prefix |
 |---|---|---|---|
-| `identity` | – | Registrace, bezheslové přihlášení, session | `/api/auth/*` |
-| `contact` | – | Kontaktní formulář portálu | `/api/contact` |
-| `weddy` | `wedding`, `guests`, `planning`, `budget` | Svatební plánovač IziWeddy | `/api/weddy/*` |
-| `budgy` | *(TODO)* | Rozpočet domácnosti IziBudgy | `/api/budgy/*` |
+| `identity` | – | Registration, passwordless login, sessions | `/api/auth/*` |
+| `contact` | – | Portal contact form | `/api/contact` |
+| `weddy` | `wedding`, `guests`, `planning`, `budget` | IziWeddy wedding planner | `/api/weddy/*` |
+| `budgy` | *(TODO)* | IziBudgy household budget | `/api/budgy/*` |
 
-Portál (prezentační web) není business doména – je to obsah a vzhled, viz
-[domeny/portal.md](../domeny/portal.md).
+The portal (presentation website) is not a business domain – it is content and
+look, see [domains/portal.md](../domains/portal.md).
 
-### Subdomény `weddy`
+### `weddy` subdomains
 
-| Subdoména | Obsah | Obrazovky | Stránka |
+| Subdomain | Content | Screens | Page |
 |---|---|---|---|
-| `wedding` | Agregát `Wedding` – kořen celé domény: název, datum, **snoubenci**, vlastníci a kontrola přístupu. Dashboard. | Dashboard, Nové plánování, Snoubenci, layout detailu | [weddy-wedding.md](../domeny/weddy-wedding.md) |
-| `guests` | Hosté a **rodiny** (skupiny hostů), statistiky | Hosté | [weddy-guests.md](../domeny/weddy-guests.md) |
-| `planning` | Sekce přípravy a položky od dodavatelů | Plánování, Detail sekce | [weddy-planning.md](../domeny/weddy-planning.md) |
-| `budget` | Rozpočet počítaný z položek | Rozpočet | [weddy-budget.md](../domeny/weddy-budget.md) |
+| `wedding` | The `Wedding` aggregate – root of the whole domain: title, date, **the couple**, owners and access control. Dashboard. | Dashboard, New plan, Couple, wedding detail layout | [weddyWedding.md](../domains/weddyWedding.md) |
+| `guests` | Guests and **families** (groups of guests), statistics | Guests | [weddyGuests.md](../domains/weddyGuests.md) |
+| `planning` | Preparation sections and vendor items | Planning, Section detail | [weddyPlanning.md](../domains/weddyPlanning.md) |
+| `budget` | Budget calculated from the items | Budget | [weddyBudget.md](../domains/weddyBudget.md) |
 
-> **Proč snoubenci nejsou samostatná subdoména `couple`:** ženich a nevěsta
-> nemají vlastní identitu ani životní cyklus – jsou to hodnotové objekty
-> uvnitř agregátu `Wedding`, ukládají se v jednom dokumentu a edituje se s nimi
-> i název a datum v jednom formuláři přes jeden endpoint
-> (`PUT /weddings/{id}`). Kdyby snoubenci dostali vlastní data nebo endpointy
-> (sdílení, profil), vznikne `weddy/couple` podle stejného vzoru.
+> **Why the couple is not a separate `couple` subdomain:** the groom and bride
+> have no identity or lifecycle of their own – they are value objects inside the
+> `Wedding` aggregate, stored in one document and edited together with the
+> title and date in one form through one endpoint (`PUT /weddings/{id}`). If
+> the couple ever gets its own data or endpoints (sharing, profile),
+> `weddy/couple` will be created following the same pattern.
 
-## Kde doména žije
+## Where a domain lives
 
 ```
-packages/weddy-shared/src/<subdoména>.ts      # sdílené jádro: schémata, výčty, čisté výpočty
+packages/weddy-shared/src/<subdomain>.ts      # shared kernel: schemas, enums, pure calculations
 apps/api/src/
-  domain/weddy/<subdoména>/                   # entity, doménové funkce, porty (repozitáře)
-  application/weddy/<subdoména>.ts            # use-casy: načti → ověř přístup → doména → ulož
-  endpoints/weddy/<subdoména>/*.endpoint.ts   # HTTP kontrakt, 1 soubor = 1 endpoint
-  infrastructure/cosmos/weddyRepositories.ts  # implementace portů nad Cosmos DB
-apps/portal/src/weddy/<subdoména>/
-  endpoints/*.endpoint.ts                     # volání API, 1 soubor = 1 endpoint
-  <subdoména>.store.ts                        # Pinia – sdílený stav subdomény (je-li potřeba)
-  *View.vue, *.vue                            # obrazovky a komponenty subdomény
+  domain/weddy/<subdomain>/                   # entities, domain functions, ports (repositories)
+  application/weddy/<subdomain>.ts            # use cases: load → check access → domain → save
+  endpoints/weddy/<subdomain>/*.endpoint.ts   # HTTP contract, 1 file = 1 endpoint
+  infrastructure/cosmos/weddyRepositories.ts  # port implementations on Cosmos DB
+apps/portal/src/weddy/<subdomain>/
+  endpoints/*.endpoint.ts                     # API calls, 1 file = 1 endpoint
+  <subdomain>.store.ts                        # Pinia – shared state of the subdomain (if needed)
+  *View.vue, *.vue                            # screens and components of the subdomain
 ```
 
-Domény bez subdomén (`identity`, `contact`) mají o úroveň méně:
+Domains without subdomains (`identity`, `contact`) have one level less:
 `domain/identity/`, `endpoints/identity/`, `apps/portal/src/identity/`.
 
-## Vrstvy a kam patří logika
+## Layers and where logic belongs
 
-| Co | Kam | Příklad |
+| What | Where | Example |
 |---|---|---|
-| Tvar dat po drátě, pravidla polí (povinné, délka, formát, rozsah) | Valibot schéma ve sdíleném jádru | `GuestInputSchema`, `PlanningItemInputSchema` |
-| Čisté výpočty, které potřebuje i frontend | Sdílené jádro | `calculateBudget`, `calculateGuestStats`, `groupIntoFamilies` |
-| Invarianty a chování nad stavem | Doménový objekt / doménová funkce | `Wedding.assertAccessibleBy`, `Guest.joinFamily`, `rewriteFamily`, `LoginCode.verify` |
-| Výchozí hodnoty, bezpečnostní pravidla | Doména | nový host `draft` + `adult`; jednotná chyba přihlášení |
-| Orchestrace (načti, zkontroluj přístup, zavolej doménu, ulož) | Use-case v `application/` | `updateFamily` |
-| HTTP: metoda, cesta, parsování vstupu, stavový kód, cookie | Endpoint soubor | `createGuest.endpoint.ts` |
-| Cosmos DB, e-maily, kryptografie | `infrastructure/` | `guestCosmosRepository` |
-| Stav obrazovek, optimistické změny, filtry a řazení | Frontendový store / view | `useGuestsStore` |
+| Wire data shape, field rules (required, length, format, range) | Valibot schema in the shared kernel | `GuestInputSchema`, `PlanningItemInputSchema` |
+| Pure calculations the frontend needs too | Shared kernel | `calculateBudget`, `calculateGuestStats`, `groupIntoFamilies` |
+| Invariants and behaviour over state | Domain object / domain function | `Wedding.assertAccessibleBy`, `Guest.joinFamily`, `rewriteFamily`, `LoginCode.verify` |
+| Default values, security rules | Domain | new guest is `draft` + `adult`; uniform login error |
+| Orchestration (load, check access, call domain, save) | Use case in `application/` | `updateFamily` |
+| HTTP: method, path, input parsing, status code, cookie | Endpoint file | `createGuest.endpoint.ts` |
+| Cosmos DB, e-mails, cryptography | `infrastructure/` | `guestCosmosRepository` |
+| Screen state, optimistic updates, filters and sorting | Frontend store / view | `useGuestsStore` |
 
-Sdílené jádro (`packages/*-shared`) je **součást domény** (shared kernel):
-co je v něm, platí stejně na frontendu i backendu a nesmí záviset na ničem
-z `apps/`, databázi ani UI.
+The shared kernel (`packages/*-shared`) **is part of the domain**: whatever is
+in it applies to both frontend and backend, and it must not depend on anything
+in `apps/`, the database or the UI.
 
-## Pravidla závislostí
+## Dependency rules
 
-1. **Domény se nevolají navzájem.** Jediné, co sdílejí, je identita
-   uživatele (`userId`) předaná obálkou endpointu. Kdyby modul vyrostl, jde
-   vyříznout bez zásahu do ostatních.
-2. **Subdomény weddy smí záviset na `wedding`** (kořen) – každý use-case volá
-   `loadWeddingFor()`, které ověří přístup. Mezi `guests`, `planning`
-   a `budget` přímé závislosti nejsou; `budget` čte položky plánování přes
-   port repozitáře, frontend ho načítá vlastním endpointem.
-3. **Směr závislostí na backendu:** `endpoints → application → domain ← infrastructure`.
-   Doména nezná HTTP, Azure Functions ani Cosmos SDK.
-4. **Frontend:** view → store → endpoint soubor → `api/http.ts`. Komponenta
-   nevolá `fetch` ani `callEndpoint` přímo, vždy přes endpoint soubor.
-   Obrazovka smí zavolat endpoint bez store, když výsledek nesdílí s nikým
-   dalším (např. registrace, rozpočet).
-5. **Kompozice, ne dědičnost** – žádné abstraktní třídy mezi doménovými
-   objekty; sdílené chování se skládá z funkcí a hodnotových objektů.
+1. **Domains do not call each other.** The only thing they share is the user
+   identity (`userId`) passed by the endpoint wrapper. If a domain grows, it can
+   be cut out without touching the others.
+2. **`weddy` subdomains may depend on `wedding`** (the root) – every use case
+   calls `loadWeddingFor()`, which checks access. There are no direct
+   dependencies between `guests`, `planning` and `budget`; `budget` reads
+   planning items through the repository port, the frontend loads it via its
+   own endpoint.
+3. **Backend dependency direction:** `endpoints → application → domain ← infrastructure`.
+   The domain knows nothing about HTTP, Azure Functions or the Cosmos SDK.
+4. **Frontend:** view → store → endpoint file → `api/http.ts`. A component never
+   calls `fetch` or `callEndpoint` directly, always through an endpoint file. A
+   screen may call an endpoint without a store when it shares the result with
+   nobody else (e.g. registration, budget).
+5. **Composition, not inheritance** – no abstract classes between domain
+   objects; shared behaviour is composed from functions and value objects.
 
-## Související
+## Related
 
-- [Endpointy](endpointy.md) – konvence souboru endpointu na FE i BE
-- [Valibot](valibot.md) – typy a validace
+- [Endpoints](endpoints.md) – the endpoint file convention on FE and BE
+- [Valibot](valibot.md) – types and validation
 - [Backend](backend.md), [Frontend](frontend.md)
-- [Rozhodnutí](../rozhodnuti.md) – proč je architektura taková
+- [Decisions](../decisions.md) – why the architecture looks like this

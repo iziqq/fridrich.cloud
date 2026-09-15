@@ -1,13 +1,11 @@
 import type { Guest as GuestData, PlanningItem as ItemData } from '@fridrich/weddy-shared';
 import { CONTAINERS } from '../../config.js';
-import { Guest } from '../../domain/weddy/Guest.js';
-import { PlanningItem } from '../../domain/weddy/PlanningItem.js';
-import { Wedding, type WeddingState } from '../../domain/weddy/Wedding.js';
-import type {
-  GuestRepository,
-  PlanningItemRepository,
-  WeddingRepository,
-} from '../../domain/weddy/ports.js';
+import { Guest } from '../../domain/weddy/guests/Guest.js';
+import type { GuestRepository } from '../../domain/weddy/guests/GuestRepository.js';
+import { PlanningItem } from '../../domain/weddy/planning/PlanningItem.js';
+import type { PlanningItemRepository } from '../../domain/weddy/planning/PlanningItemRepository.js';
+import { Wedding, type WeddingState } from '../../domain/weddy/wedding/Wedding.js';
+import type { WeddingRepository } from '../../domain/weddy/wedding/WeddingRepository.js';
 import { getContainer, isNotFound, stripSystemFields } from './client.js';
 
 /** Implementace portů modulu weddy nad Cosmos DB. */

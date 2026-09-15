@@ -1,26 +1,47 @@
 <script setup lang="ts">
-import { PLANNING_CATEGORIES, PLANNING_CATEGORY_LABELS, formatCurrency } from '@fridrich/weddy-shared';
-import { computed, onMounted, watch } from 'vue';
+import {
+  PLANNING_CATEGORIES,
+  PLANNING_CATEGORY_LABELS,
+  calculateBudget,
+  formatCurrency,
+  type BudgetSummary,
+} from '@fridrich/weddy-shared';
+import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
-import { usePlanningStore } from '@/weddy/stores/planning';
 import { weddyPath } from '@/weddy/routes';
+import { getBudget } from './endpoints/getBudget.endpoint';
 
 const route = useRoute();
-const store = usePlanningStore();
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
 
-onMounted(() => store.load(weddingId.value));
-watch(weddingId, (id) => store.load(id));
-
 /*
- * Rozpočet se nikam neukládá – počítá se ze stejných položek, které
- * uživatel právě upravoval (doc/iziweddy.md, kap. 5.5). Proto se po
- * návratu ze sekce nemusí nic načítat znovu.
+ * Rozpočet se nikam neukládá – backend ho spočítá z aktuálních položek.
+ * Stav nesdílí žádná jiná obrazovka, takže nepotřebuje store: načte se při
+ * každém otevření a je tak vždy čerstvý i po úpravách v plánování.
  */
-const budget = computed(() => store.budget);
+const summary = ref<BudgetSummary | null>(null);
+const loading = ref(false);
+const error = ref<string | null>(null);
+
+async function load(id: string): Promise<void> {
+  loading.value = true;
+  error.value = null;
+  try {
+    summary.value = await getBudget(id);
+  } catch (cause) {
+    error.value = (cause as Error).message;
+  } finally {
+    loading.value = false;
+  }
+}
+
+watch(weddingId, (id) => id && load(id), { immediate: true });
+
+/** Než odpověď dorazí, ukazuje se prázdný rozpočet – stejný tvar, nulové součty. */
+const budget = computed(() => summary.value ?? calculateBudget([]));
 
 /** Sekce bez jediné položky by v rozpisu jen zabíraly místo. */
 const usedCategories = computed(() =>
@@ -39,8 +60,8 @@ function share(amount: number): string {
 
 <template>
   <div>
-    <LoadingBlock v-if="store.loading && store.items.length === 0" />
-    <ErrorBlock v-else-if="store.error" :message="store.error" />
+    <LoadingBlock v-if="loading && !summary" />
+    <ErrorBlock v-else-if="error" :message="error" />
 
     <template v-else>
       <section class="total card">

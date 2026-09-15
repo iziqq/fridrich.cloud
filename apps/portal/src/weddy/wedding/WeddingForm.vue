@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Wedding, WeddingInput } from '@fridrich/weddy-shared';
 import { reactive, ref } from 'vue';
+import { ApiError } from '@/api/http';
 import FormField from '@/weddy/components/FormField.vue';
-import { ApiError } from '@/weddy/api';
 
 const props = defineProps<{
   wedding?: Wedding | null;

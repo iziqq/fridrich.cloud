@@ -1,17 +1,17 @@
-# doc/ – znalostní báze (LLM Wiki)
+# doc/ – knowledge base (LLM Wiki)
 
-Dokumentace projektu je vedená podle konceptu **LLM Wiki** Andreje Karpathyho:
-znalosti se nedohledávají pokaždé znovu v kódu a starých dokumentech, ale
-agent je průběžně kompiluje do provázaných stránek, které udržuje aktuální.
+Project documentation follows Andrej Karpathy's **LLM Wiki** concept: knowledge
+is not re-derived from code and old documents every time; instead the agent
+continuously compiles it into interlinked pages and keeps them up to date.
 
-| Vrstva | Kde | Kdo píše | K čemu |
+| Layer | Where | Written by | Purpose |
 |---|---|---|---|
-| **Zdroje** | [raw/](raw/README.md) | zadavatel | Neměnná zadání a specifikace. Agent je čte, nikdy neupravuje. |
-| **Wiki** | [wiki/](wiki/index.md) | agent | Stránky o architektuře, doménách a provozu. Aktuální pravda o projektu. |
-| **Schéma** | [CLAUDE.md](../CLAUDE.md) | zadavatel + agent | Jak je wiki organizovaná, jak se do ní zapisuje a jaká jsou pravidla kódu. |
+| **Sources** | [raw/](raw/README.md) | the owner | Immutable briefs and specifications. The agent reads them, never edits them. |
+| **Wiki** | [wiki/](wiki/index.md) | the agent | Pages about architecture, domains and operations. The current truth about the project. |
+| **Schema** | [CLAUDE.md](../CLAUDE.md) | owner + agent | How the wiki is organised, how it is written to, and the code rules. |
 
-Začni v **[wiki/index.md](wiki/index.md)** (katalog stránek), historie změn
-je ve **[wiki/log.md](wiki/log.md)**.
+Start at **[wiki/index.md](wiki/index.md)** (page catalog); change history is in
+**[wiki/log.md](wiki/log.md)**.
 
-Stránky jsou obyčejný Markdown s YAML hlavičkou a relativními odkazy – čtou se
-na GitHubu, ve VS Code i v Obsidianu (otevřít `doc/` jako vault).
+All documentation is in English. Pages are plain Markdown with a YAML header and
+relative links – they read on GitHub, in VS Code and in Obsidian (open `doc/` as a vault).

@@ -1,54 +1,92 @@
-# Log wiki
+# Wiki log
 
-Chronologický záznam operací nad znalostní bází – **jen se připisuje na konec**,
-starší záznamy se nemění. Formát nadpisu je pevný, aby šel filtrovat:
+Chronological record of operations on the knowledge base – **append only**,
+older entries are never changed. The heading format is fixed so it can be filtered:
 
 ```
-## [RRRR-MM-DD] <ingest|query|lint|change> | <krátký název>
+## [YYYY-MM-DD] <ingest|query|lint|change> | <short title>
 ```
 
-Posledních pět záznamů: `grep "^## \[" doc/wiki/log.md | tail -5`
+Last five entries: `grep "^## \[" doc/wiki/log.md | tail -5`
 
 ---
 
-## [2026-09-15] ingest | Založení wiki z dosavadní dokumentace
+## [2026-09-15] ingest | Wiki created from the existing documentation
 
-- Zavedena struktura LLM Wiki: `doc/raw/` (zdroje), `doc/wiki/` (stránky,
-  `index.md`, `log.md`), schéma v `CLAUDE.md`.
-- Do `raw/` přesunuty beze změny: `iziweddy.md` → `iziweddy-specifikace.md`,
-  `portal.md` → `portal-specifikace.md`, `izibudgy.md` → `izibudgy-zadani.md`.
-- `doc/architecture.md` a `doc/README.md` rozpuštěny do stránek
-  `architektura/*`, `domeny/identity.md`, `provoz/*`, `prehled.md`,
-  `rozhodnuti.md` a smazány (původní text: commit `8db5e0a`).
-- Opravené rozpory proti kódu: sekcí plánování je 11, ne 8; e-maily jdou přes
-  SMTP (ACS je alternativa); session platí 30 dní; kapitoly iziweddy o
-  samostatném repozitáři označeny jako překonané.
+- Introduced the LLM Wiki structure: `doc/raw/` (sources), `doc/wiki/` (pages,
+  `index.md`, `log.md`), schema in `CLAUDE.md`.
+- Moved to `raw/` unchanged: `iziweddy.md`, `portal.md`, `izibudgy.md`.
+- `doc/architecture.md` and `doc/README.md` were dissolved into the pages
+  `architecture/*`, `domains/identity.md`, `operations/*`, `overview.md`,
+  `decisions.md` and deleted (original text: commit `8db5e0a`).
+- Fixed contradictions with the code: there are 11 planning sections, not 8;
+  e-mails go through SMTP (ACS is an alternative); a session lasts 30 days;
+  IziWeddy chapters about a standalone repository marked as superseded.
 
-## [2026-09-15] ingest | Doménová architektura, endpointy a Valibot
+## [2026-09-15] ingest | Domain architecture, endpoints and Valibot
 
-Zdroj: [raw/2026-09-15-domenova-architektura.md](../raw/2026-09-15-domenova-architektura.md)
+Source: [raw/2026-09-15-domainArchitecture.md](../raw/2026-09-15-domainArchitecture.md)
 
-Rozhodnutí (detail v [rozhodnuti.md](rozhodnuti.md)):
-- Doménové členění FE i BE: `identity`, `contact`, `weddy/{wedding,guests,planning,budget}`.
-  Zadání zmiňovalo doménu *Couple* – snoubenci zůstali v `wedding`
-  (hodnotové objekty agregátu), zdůvodnění v [architektura/domeny.md](architektura/domeny.md).
-- Jeden soubor `<jméno>.endpoint.ts` na endpoint na FE i BE.
-- Všechny typy dat z Valibot schémat; validace na BE (params/query/body)
-  i na FE (request před odesláním, response po přijetí).
+Decisions (details in [decisions.md](decisions.md)):
+- Domain-oriented FE and BE: `identity`, `contact`, `weddy/{wedding,guests,planning,budget}`.
+  The brief mentioned a *Couple* domain – the couple stays in `wedding`
+  (value objects of the aggregate), reasoning in [architecture/domains.md](architecture/domains.md).
+- One `<name>.endpoint.ts` file per endpoint on FE and BE.
+- All data types from Valibot schemas; validation on BE (params/query/body)
+  and on FE (request before sending, response after receiving).
 
-Změny v kódu:
-- `packages/shared`, `packages/weddy-shared` přepsány na Valibot, jeden soubor
-  na subdoménu (`wedding.ts`, `guests.ts`, `planning.ts`, `budget.ts`).
-- API: `http/endpoint.ts` (`defineEndpoint`, `registerEndpoints`), 26 souborů
-  v `src/endpoints/`, doména rozdělená do `domain/weddy/{wedding,guests,planning}`,
-  pravidla rodin přesunuta z use-casu do `domain/weddy/guests/Family.ts`,
-  use-casy přijímají typovaný vstup místo `raw: unknown`. Smazány
-  `functions/*.ts` a `http/handler.ts`.
-- Portál: `api/http.ts` (`callEndpoint`), doménové složky `identity/`,
-  `contact/`, `weddy/{wedding,guests,planning,budget}/` s `endpoints/`
-  a `*.store.ts`. Smazán `weddy/api.ts`. `BudgetView` čte `getBudget`.
-- Testy: 78 → 97 (nové `schemas.test.ts`, `endpoint.test.ts`).
+Code changes:
+- `packages/shared`, `packages/weddy-shared` rewritten with Valibot, one file per
+  subdomain (`wedding.ts`, `guests.ts`, `planning.ts`, `budget.ts`).
+- API: `http/endpoint.ts` (`defineEndpoint`, `registerEndpoints`), 26 files in
+  `src/endpoints/`, domain split into `domain/weddy/{wedding,guests,planning}`,
+  family rules moved from the use case to `domain/weddy/guests/Family.ts`,
+  use cases take typed input instead of `raw: unknown`. Removed
+  `functions/*.ts` and `http/handler.ts`.
+- Portal: `api/http.ts` (`callEndpoint`), domain folders `identity/`,
+  `contact/`, `weddy/{wedding,guests,planning,budget}/` with `endpoints/` and
+  `*.store.ts`. Removed `weddy/api.ts`. `BudgetView` reads `getBudget`.
+- Tests: 78 → 97 (new `schemas.test.ts`, `endpoint.test.ts`).
 
-Nové stránky: `architektura/domeny.md`, `architektura/endpointy.md`,
-`architektura/valibot.md`, `architektura/backend.md`, `architektura/frontend.md`
-a všechny `domeny/*`.
+New pages: `architecture/domains.md`, `architecture/endpoints.md`,
+`architecture/valibot.md`, `architecture/backend.md`, `architecture/frontend.md`
+and all `domains/*`.
+
+## [2026-09-15] change | All documentation translated to English
+
+Source: [raw/2026-09-15-docsInEnglish.md](../raw/2026-09-15-docsInEnglish.md)
+
+- The whole wiki, `doc/README.md`, `doc/raw/README.md`, the root `README.md`
+  and `CLAUDE.md` are now in English. The two earlier log entries above were
+  translated as well (content unchanged).
+- Raw sources translated to English with a note pointing to the Czech original
+  in git history; literal Czech UI strings kept with an English gloss.
+  The owner authorised this one-time edit of the raw layer.
+- Files and folders renamed: `architektura/` → `architecture/`, `domeny/` →
+  `domains/`, `provoz/` → `operations/`, `prehled.md` → `overview.md`,
+  `rozhodnuti.md` → `decisions.md`, `domeny.md` → `domains.md`, `endpointy.md` →
+  `endpoints.md`, `lokalni-vyvoj.md` → `local-development.md`, `nasazeni.md` →
+  `deployment.md`; raw: `iziweddy-spec.md`, `portal-spec.md`,
+  `izibudgy-brief.md`, `2026-09-15-domain-architecture.md`.
+- New rule in `CLAUDE.md`: documentation in English, Czech input stored in
+  English; product UI texts and validation messages stay Czech.
+- Code comments that link to wiki pages updated to the new paths.
+
+## [2026-09-15] change | Documentation file names in camelCase
+
+Source: [raw/2026-09-15-camelCaseFileNames.md](../raw/2026-09-15-camelCaseFileNames.md)
+
+- New convention: documentation file names are camelCase
+  (`weddyGuests.md`, `localDevelopment.md`, `iziweddySpec.md`). Dated raw sources
+  keep the ISO date prefix for sorting: `2026-09-15-domainArchitecture.md`.
+  Conventional names stay as they are: `README.md`, `CLAUDE.md`, `index.md`, `log.md`.
+- Renamed: `architecture/data-cosmos.md` → `dataCosmos.md`,
+  `domains/weddy-{wedding,guests,planning,budget}.md` → `weddy{Wedding,Guests,Planning,Budget}.md`,
+  `operations/local-development.md` → `localDevelopment.md`; raw:
+  `iziweddy-spec.md` → `iziweddySpec.md`, `portal-spec.md` → `portalSpec.md`,
+  `izibudgy-brief.md` → `izibudgyBrief.md`,
+  `2026-09-15-domain-architecture.md` → `2026-09-15-domainArchitecture.md`,
+  `2026-09-15-docs-in-english.md` → `2026-09-15-docsInEnglish.md`.
+- All links (wiki, READMEs, code comments) updated; link targets inside older
+  log entries were updated too so they keep working.
+- Rule recorded in `CLAUDE.md` (Page conventions), `doc/raw/README.md` and `decisions.md`.

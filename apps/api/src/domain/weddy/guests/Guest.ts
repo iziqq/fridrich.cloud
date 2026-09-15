@@ -2,17 +2,13 @@ import type {
   AgeGroup,
   Guest as GuestData,
   GuestFamily,
+  GuestInput,
   GuestSide,
   GuestStatus,
 } from '@fridrich/weddy-shared';
-import { isAgeGroup, isGuestSide, isGuestStatus } from '@fridrich/weddy-shared';
-import type { Clock } from '../shared/Clock.js';
-import { DomainError } from '../shared/DomainError.js';
+import type { Clock } from '../../shared/Clock.js';
 
-const NAME_MAX = 100;
-const NOTE_MAX = 2000;
-
-interface ParsedGuest {
+interface GuestDetails {
   firstName: string;
   lastName: string | undefined;
   side: GuestSide;
@@ -26,27 +22,24 @@ interface ParsedGuest {
  * Host svatby.
  *
  * Přechody mezi stavy pozvánky se schválně nevynucují – uživatel musí mít
- * možnost opravit překlep, i když tím jde „proti toku" (doc/iziweddy.md,
- * kap. 4.2).
+ * možnost opravit překlep, i když tím jde „proti toku".
+ *
+ * Rodina nemá vlastní záznam: host do ní patří přes `family` a stranu dostává
+ * od rodiny jako celku (`joinFamily`). Vstup je už rozparsovaný schématem
+ * `GuestInputSchema`; výchozí hodnoty doplňuje až doména.
  */
 export class Guest {
   private constructor(
     readonly id: string,
     readonly weddingId: string,
-    private data: ParsedGuest,
+    private details: GuestDetails,
     readonly createdAt: string,
     private updatedAtValue: string,
   ) {}
 
-  static create(input: {
-    id: string;
-    weddingId: string;
-    raw: unknown;
-    clock: Clock;
-  }): Guest {
-    const parsed = Guest.parse(input.raw);
+  static create(input: { id: string; weddingId: string; guest: GuestInput; clock: Clock }): Guest {
     const now = input.clock.now().toISOString();
-    return new Guest(input.id, input.weddingId, parsed, now, now);
+    return new Guest(input.id, input.weddingId, Guest.detailsFrom(input.guest), now, now);
   }
 
   static fromState(state: GuestData): Guest {
@@ -67,97 +60,45 @@ export class Guest {
     );
   }
 
-  private static parse(raw: unknown): ParsedGuest {
-    const input = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
-    const details: { field: string; message: string }[] = [];
-
-    const firstName = Guest.text(input['firstName'], 'firstName', 'jméno', details);
-
-    /*
-     * Příjmení je nepovinné. U členů rodiny ho uživatel obvykle nevyplňuje –
-     * pod jménem rodiny („Novákovi") by bylo jen opakování.
-     */
-    let lastName: string | undefined;
-    if (input['lastName'] !== undefined && String(input['lastName']).trim() !== '') {
-      lastName = Guest.text(input['lastName'], 'lastName', 'příjmení', details);
-    }
-
-    if (!isGuestSide(input['side'])) {
-      details.push({ field: 'side', message: 'Vyberte, na čí straně host je' });
-    }
-
-    // Věková skupina i stav mají výchozí hodnotu, ale nesmyslnou hodnotu
-    // nespolkneme potichu – to by skrylo chybu na frontendu.
-    if (input['ageGroup'] !== undefined && !isAgeGroup(input['ageGroup'])) {
-      details.push({ field: 'ageGroup', message: 'Neplatná věková skupina' });
-    }
-    if (input['status'] !== undefined && !isGuestStatus(input['status'])) {
-      details.push({ field: 'status', message: 'Neplatný stav hosta' });
-    }
-
-    let note: string | undefined;
-    const rawNote = input['note'];
-    if (typeof rawNote === 'string' && rawNote.trim() !== '') {
-      note = rawNote.trim();
-      if (note.length > NOTE_MAX) {
-        details.push({ field: 'note', message: 'Poznámka je příliš dlouhá' });
-      }
-    }
-
-    if (details.length > 0) throw DomainError.validation(details);
-
+  /** Nový host je dospělý a jen navržený, dokud uživatel neřekne jinak. */
+  private static detailsFrom(guest: GuestInput): GuestDetails {
     return {
-      firstName,
-      lastName,
-      side: isGuestSide(input['side']) ? input['side'] : 'groom',
-      ageGroup: isAgeGroup(input['ageGroup']) ? input['ageGroup'] : 'adult',
-      status: isGuestStatus(input['status']) ? input['status'] : 'draft',
+      firstName: guest.firstName,
+      lastName: guest.lastName,
+      side: guest.side,
+      ageGroup: guest.ageGroup ?? 'adult',
+      status: guest.status ?? 'draft',
       // Rodinu nastavuje use-case pro rodiny, z běžného formuláře nechodí.
       family: undefined,
-      note,
+      note: guest.note,
     };
   }
 
-  private static text(
-    raw: unknown,
-    field: string,
-    label: string,
-    details: { field: string; message: string }[],
-  ): string {
-    if (typeof raw !== 'string' || raw.trim() === '') {
-      details.push({ field, message: `Vyplňte ${label}` });
-      return '';
-    }
-
-    const trimmed = raw.trim();
-    if (trimmed.length > NAME_MAX) {
-      details.push({ field, message: `Pole může mít nejvýše ${NAME_MAX} znaků` });
-    }
-
-    return trimmed;
+  get firstName(): string {
+    return this.details.firstName;
   }
 
   get status(): GuestStatus {
-    return this.data.status;
+    return this.details.status;
   }
 
   get side(): GuestSide {
-    return this.data.side;
+    return this.details.side;
   }
 
   get family(): GuestFamily | undefined {
-    return this.data.family;
+    return this.details.family;
   }
 
   get updatedAt(): string {
     return this.updatedAtValue;
   }
 
-  update(raw: unknown, clock: Clock): void {
-    const family = this.data.family;
-    this.data = Guest.parse(raw);
+  update(guest: GuestInput, clock: Clock): void {
+    const family = this.details.family;
+    this.details = Guest.detailsFrom(guest);
     // Úprava hosta ho z rodiny nevyřadí – k tomu slouží úprava rodiny.
-    this.data.family = family;
+    this.details.family = family;
     this.touch(clock);
   }
 
@@ -169,18 +110,15 @@ export class Guest {
    * a rozbila statistiky.
    */
   joinFamily(family: GuestFamily, side: GuestSide, clock: Clock): void {
-    this.data.family = family;
-    this.data.side = side;
+    this.details.family = family;
+    this.details.side = side;
     this.touch(clock);
   }
 
-  changeStatus(raw: unknown, clock: Clock): void {
-    if (!isGuestStatus(raw)) {
-      throw DomainError.field('status', 'Neplatný stav hosta');
-    }
-    if (this.data.status === raw) return;
+  changeStatus(status: GuestStatus, clock: Clock): void {
+    if (this.details.status === status) return;
 
-    this.data.status = raw;
+    this.details.status = status;
     this.touch(clock);
   }
 
@@ -192,17 +130,17 @@ export class Guest {
     const state: GuestData = {
       id: this.id,
       weddingId: this.weddingId,
-      firstName: this.data.firstName,
-      side: this.data.side,
-      ageGroup: this.data.ageGroup,
-      status: this.data.status,
+      firstName: this.details.firstName,
+      side: this.details.side,
+      ageGroup: this.details.ageGroup,
+      status: this.details.status,
       createdAt: this.createdAt,
       updatedAt: this.updatedAtValue,
     };
 
-    if (this.data.lastName) state.lastName = this.data.lastName;
-    if (this.data.family) state.family = this.data.family;
-    if (this.data.note) state.note = this.data.note;
+    if (this.details.lastName) state.lastName = this.details.lastName;
+    if (this.details.family) state.family = this.details.family;
+    if (this.details.note) state.note = this.details.note;
     return state;
   }
 }

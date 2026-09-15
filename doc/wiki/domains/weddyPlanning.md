@@ -1,64 +1,63 @@
 ---
-title: weddy / planning – sekce a položky
-type: domena
+title: weddy / planning – sections and items
+type: domain
 sources:
-  - raw/iziweddy-specifikace.md (kap. 4.2, 5.4, 7.3, 8)
-  - kód: packages/weddy-shared/src/planning.ts, apps/api/src/domain/weddy/planning, apps/portal/src/weddy/planning
+  - raw/iziweddySpec.md (ch. 4.2, 5.4, 7.3, 8)
+  - code: packages/weddy-shared/src/planning.ts, apps/api/src/domain/weddy/planning, apps/portal/src/weddy/planning
 updated: 2026-09-15
 ---
 
-# `weddy / planning` – sekce přípravy a položky
+# `weddy / planning` – preparation sections and items
 
-> Jedenáct pevných sekcí přípravy. V každé libovolný počet **položek** –
-> variant od dodavatelů, mezi kterými se rozhoduje. Položka může mít odkaz
-> a cenu a je buď návrh, nebo schválená.
+> Eleven fixed preparation sections. Each holds any number of **items** –
+> vendor options being decided between. An item may have a link and a price and
+> is either a draft or accepted.
 
-## Sekce (`PlanningCategory`, pořadí = `PLANNING_CATEGORIES`)
+## Sections (`PlanningCategory`, order = `PLANNING_CATEGORIES`)
 
-| # | Hodnota | Popisek |
+| # | Value | UI label |
 |---|---|---|
-| 1 | `ceremonyVenue` | Místo obřadu |
-| 2 | `receptionVenue` | Místo veselky |
-| 3 | `food` | Jídlo |
-| 4 | `drinks` | Pití |
-| 5 | `flowers` | Květiny |
-| 6 | `decorations` | Výzdoba |
-| 7 | `suit` | Oblek |
-| 8 | `dress` | Šaty |
-| 9 | `rings` | Prstýnky |
-| 10 | `bachelorParty` | Rozlučka |
-| 11 | `otherActivities` | Další aktivity |
+| 1 | `ceremonyVenue` | Místo obřadu (ceremony venue) |
+| 2 | `receptionVenue` | Místo veselky (reception venue) |
+| 3 | `food` | Jídlo (food) |
+| 4 | `drinks` | Pití (drinks) |
+| 5 | `flowers` | Květiny (flowers) |
+| 6 | `decorations` | Výzdoba (decorations) |
+| 7 | `suit` | Oblek (suit) |
+| 8 | `dress` | Šaty (dress) |
+| 9 | `rings` | Prstýnky (rings) |
+| 10 | `bachelorParty` | Rozlučka (bachelor / bachelorette party) |
+| 11 | `otherActivities` | Další aktivity (other activities) |
 
-Pořadí je tematické, ne abecední: jídlo a pití za místem veselky, prstýnky
-za oblekem a šaty. Ikony sekcí jsou v `PlanningView.vue` (typované výčtem,
-nová sekce bez ikony neprojde typecheckem).
+The order is thematic, not alphabetical: food and drinks follow the reception
+venue they belong to, rings follow suit and dress. Section icons are in
+`PlanningView.vue` (typed by the enum, a new section without an icon fails typecheck).
 
-> ⚠️ Původní specifikace uváděla 8 sekcí; platí 11 (přidané `food`, `drinks`, `rings`).
+> ⚠️ The original specification listed 8 sections; 11 apply (`food`, `drinks`, `rings` were added).
 
-## Položka
+## Item
 
-| Pole | Pravidlo | Výchozí (doména) |
+| Field | Rule | Default (domain) |
 |---|---|---|
-| `category` | jedna z 11 sekcí | |
-| `name` | povinné, 1–200 | |
-| `url` | nepovinné, jen `http://` / `https://`, max. 2000; otevírá se v nové záložce | |
-| `price` | nepovinné, číslo 0 – 100 000 000 Kč, **zaokrouhlí se na koruny** | |
-| `status` | `draft` (Návrh) / `accepted` (Schváleno) | `draft` |
+| `category` | one of the 11 sections | |
+| `name` | required, 1–200 | |
+| `url` | optional, only `http://` / `https://`, max. 2000; opens in a new tab | |
+| `price` | optional, number 0 – 100,000,000 CZK, **rounded to whole crowns** | |
+| `status` | `draft` (Návrh – draft) / `accepted` (Schváleno – accepted) | `draft` |
 
-- Cena je nepovinná schválně – dokud dodavatel nepošle nabídku, položka je
-  bez ceny a rozpočet ji vede jako „bez ceny".
-- V jedné sekci může být schválených víc položek (otevřená otázka, zatím povoleno).
+- The price is optional on purpose – until a vendor sends a quote, the item has
+  no price and the budget counts it as "without price".
+- A section may contain several accepted items (open question, allowed for now).
 
-## Funkce
+## Features
 
-- Přehled sekcí: u každé počet položek, počet schválených a součet cen
-  (počítá `planning.store` přes `calculateBudget`, bez volání API).
-- Detail sekce: přidání, úprava, smazání položky, přepnutí stavu klikem
-  (optimisticky).
+- Section overview: for each section the number of items, number of accepted
+  items and sum of prices (computed by `planning.store` via `calculateBudget`, no API call).
+- Section detail: add, edit, delete an item, toggle status by click (optimistic).
 
-## Endpointy
+## Endpoints
 
-| Endpoint | Metoda a cesta | Request → Response |
+| Endpoint | Method and path | Request → Response |
 |---|---|---|
 | `listPlanningItems` | `GET …/items` | query `category?` → `PlanningItem[]` |
 | `createPlanningItem` | `POST …/items` | `PlanningItemInput` → `201 PlanningItem` |
@@ -68,18 +67,18 @@ nová sekce bez ikony neprojde typecheckem).
 
 Prefix `…` = `/api/weddy/weddings/{weddingId}`.
 
-## Kód
+## Code
 
-| Vrstva | Soubor |
+| Layer | File |
 |---|---|
-| Sdílené jádro | `packages/weddy-shared/src/planning.ts` – výčty a popisky, `PlanningItemSchema`, `PlanningItemInputSchema` |
-| Doména | `apps/api/src/domain/weddy/planning/PlanningItem.ts`, `PlanningItemRepository.ts` |
-| Use-casy | `apps/api/src/application/weddy/planning.ts` |
-| Endpointy | `apps/api/src/endpoints/weddy/planning/`, `apps/portal/src/weddy/planning/endpoints/` |
-| Store | `planning.store.ts` – `items`, `budget` (součty sekcí), `overview`, `byCategory`, `load`, `create`, `update`, `setStatus`, `remove` |
+| Shared kernel | `packages/weddy-shared/src/planning.ts` – enums and labels, `PlanningItemSchema`, `PlanningItemInputSchema` |
+| Domain | `apps/api/src/domain/weddy/planning/PlanningItem.ts`, `PlanningItemRepository.ts` |
+| Use cases | `apps/api/src/application/weddy/planning.ts` |
+| Endpoints | `apps/api/src/endpoints/weddy/planning/`, `apps/portal/src/weddy/planning/endpoints/` |
+| Store | `planning.store.ts` – `items`, `budget` (section totals), `overview`, `byCategory`, `load`, `create`, `update`, `setStatus`, `remove` |
 | UI | `PlanningView.vue`, `PlanningCategoryView.vue` |
-| Úložiště | kontejner `planningItems`, PK `/weddingId` |
+| Storage | container `planningItems`, PK `/weddingId` |
 
-## Související
+## Related
 
-- [weddy](weddy.md) · [budget](weddy-budget.md)
+- [weddy](weddy.md) · [budget](weddyBudget.md)

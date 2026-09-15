@@ -1,16 +1,35 @@
-import { PLANNING_CATEGORIES, type PlanningCategory } from './enums.js';
-import type { PlanningItem } from './models.js';
+import * as v from 'valibot';
+import { PLANNING_CATEGORIES, type PlanningCategory, type PlanningItem } from './planning.js';
 
-export interface BudgetBreakdown {
-  total: number;
-  accepted: number;
-  draft: number;
-  itemsWithoutPrice: number;
-}
+/*
+ * Subdoména `budget` – rozpočet počítaný z položek plánování.
+ *
+ * Rozpočet se nikde neukládá, vždy se počítá z aktuálních položek. Výpočet
+ * je tady, ve sdíleném jádru, aby backend (endpoint `getBudget`) i frontend
+ * (okamžitý přepočet v přehledu sekcí) počítaly totéž.
+ */
 
-export interface BudgetSummary extends BudgetBreakdown {
-  byCategory: Record<PlanningCategory, BudgetBreakdown>;
-}
+export const BudgetBreakdownSchema = v.object({
+  total: v.number(),
+  accepted: v.number(),
+  draft: v.number(),
+  itemsWithoutPrice: v.number(),
+});
+export type BudgetBreakdown = v.InferOutput<typeof BudgetBreakdownSchema>;
+
+/*
+ * Rozpis má klíč pro každou sekci, i prázdnou. `v.record` s výčtem klíčů by
+ * z nich udělal nepovinné, takže se objekt skládá výčtem sekcí.
+ */
+const byCategoryEntries = Object.fromEntries(
+  PLANNING_CATEGORIES.map((category) => [category, BudgetBreakdownSchema]),
+) as Record<PlanningCategory, typeof BudgetBreakdownSchema>;
+
+export const BudgetSummarySchema = v.object({
+  ...BudgetBreakdownSchema.entries,
+  byCategory: v.object(byCategoryEntries),
+});
+export type BudgetSummary = v.InferOutput<typeof BudgetSummarySchema>;
 
 function emptyBreakdown(): BudgetBreakdown {
   return { total: 0, accepted: 0, draft: 0, itemsWithoutPrice: 0 };
@@ -26,11 +45,7 @@ function emptyByCategory(): Record<PlanningCategory, BudgetBreakdown> {
  * Sečte ceny všech položek plánování.
  *
  * Položky bez ceny se do součtů nezapočítávají, jen se počítají
- * v `itemsWithoutPrice`. Rozpočet se nikde neukládá – počítá se vždy
- * dynamicky z aktuálních položek (doc/iziweddy.md, kap. 5.5).
- *
- * Stejná funkce běží na backendu (endpoint `/budget`) i na frontendu
- * (okamžitý přepočet bez volání API), takže čísla nikdy nemůžou rozejít.
+ * v `itemsWithoutPrice` – upozornění, že rozpočet nemusí být úplný.
  */
 export function calculateBudget(items: readonly PlanningItem[]): BudgetSummary {
   const summary: BudgetSummary = { ...emptyBreakdown(), byCategory: emptyByCategory() };

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AgeGroup, Family, Guest, GuestInput, GuestStatus } from '@fridrich/weddy-shared';
+import type { AgeGroup, Family, Guest, GuestStatus } from '@fridrich/weddy-shared';
 import {
   AGE_GROUP_LABELS,
   GUEST_SIDE_LABELS,
@@ -8,7 +8,7 @@ import {
 } from '@fridrich/weddy-shared';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { ApiError } from '@/weddy/api';
+import { ApiError } from '@/api/http';
 import BottomSheet from '@/weddy/components/BottomSheet.vue';
 import ChoiceField from '@/weddy/components/ChoiceField.vue';
 import EmptyState from '@/weddy/components/EmptyState.vue';
@@ -17,7 +17,8 @@ import FabButton from '@/weddy/components/FabButton.vue';
 import FormField from '@/weddy/components/FormField.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
-import { GUEST_SORT_LABELS, useGuestsStore } from '@/weddy/stores/guests';
+import type { CreateGuestRequest } from './endpoints/createGuest.endpoint';
+import { GUEST_SORT_LABELS, useGuestsStore } from './guests.store';
 
 const route = useRoute();
 const store = useGuestsStore();
@@ -82,7 +83,7 @@ async function submit(): Promise<void> {
     ageGroup: form.ageGroup,
     status: form.status,
     note: form.note.trim() || undefined,
-  } as GuestInput;
+  } as CreateGuestRequest;
 
   try {
     if (editing.value) {
@@ -109,7 +110,7 @@ async function removeGuest(guest: Guest): Promise<void> {
   if (editing.value?.id === guest.id) sheetOpen.value = false;
 }
 
-/** Rychlá změna stavu přímo ze seznamu, bez otevírání formuláře (kap. 5.3). */
+/** Rychlá změna stavu přímo ze seznamu, bez otevírání formuláře (doc/wiki/domains/weddyGuests.md). */
 async function cycleStatus(guest: Guest): Promise<void> {
   const order: GuestStatus[] = ['draft', 'requested', 'accepted', 'rejected'];
   const next = order[(order.indexOf(guest.status) + 1) % order.length];
@@ -238,13 +239,13 @@ async function submitFamily(): Promise<void> {
         firstName: member.firstName.trim(),
         ageGroup: member.ageGroup,
       })),
-  } as Parameters<typeof store.createFamily>[1];
+  } as Parameters<typeof store.addFamily>[1];
 
   try {
     if (editingFamily.value) {
-      await store.updateFamily(weddingId.value, editingFamily.value.id, input);
+      await store.editFamily(weddingId.value, editingFamily.value.id, input);
     } else {
-      await store.createFamily(weddingId.value, input);
+      await store.addFamily(weddingId.value, input);
     }
     familySheetOpen.value = false;
   } catch (cause) {
@@ -375,7 +376,7 @@ async function removeFamily(family: Family): Promise<void> {
 
       <!--
         Strana není štítek u jména, ale celá sekce. Uvnitř stojí rodiny
-        jako jeden blok a pod nimi jednotlivci (doc/iziweddy.md, kap. 5.3).
+        jako jeden blok a pod nimi jednotlivci (doc/wiki/domains/weddyGuests.md).
       -->
       <template v-else>
         <section v-for="group in store.sections" :key="group.side" class="side">
@@ -820,7 +821,7 @@ select {
   margin-top: var(--space-2);
 }
 
-/* Na mobilu karty, na širších displejích hutnější řádky (kap. 5.3). */
+/* Na mobilu karty, na širších displejích hutnější řádky (doc/wiki/domains/weddyGuests.md). */
 .guest {
   display: flex;
   flex-wrap: wrap;

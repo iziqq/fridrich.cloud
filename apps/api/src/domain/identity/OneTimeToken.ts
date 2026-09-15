@@ -1,7 +1,7 @@
 import type { Clock } from '../shared/Clock.js';
 import { DomainError } from '../shared/DomainError.js';
 
-/** Doba platnosti ověřovacího odkazu podle doc/architecture.md, kap. 5. */
+/** Doba platnosti ověřovacího odkazu (doc/wiki/domains/identity.md). */
 export const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hodin
 
 export interface OneTimeTokenState {

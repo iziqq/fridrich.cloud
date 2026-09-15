@@ -5,8 +5,8 @@ import { computed, onMounted, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
-import { usePlanningStore } from '@/weddy/stores/planning';
 import { weddyPath } from '@/weddy/routes';
+import { usePlanningStore } from './planning.store';
 
 const route = useRoute();
 const store = usePlanningStore();

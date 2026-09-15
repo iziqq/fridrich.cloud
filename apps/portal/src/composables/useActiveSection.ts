@@ -2,7 +2,7 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 
 /**
  * Sleduje, která sekce je právě na obrazovce – podle toho se v navigaci
- * zvýrazní odpovídající položka (doc/portal.md, kap. 2).
+ * zvýrazní odpovídající položka (doc/wiki/domains/portal.md).
  *
  * Sleduje se skutečná pozice, ne poslední kliknutí, aby zvýraznění sedělo
  * i při ručním scrollování.

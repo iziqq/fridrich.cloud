@@ -1,59 +1,60 @@
 ---
-title: Nasazení
-type: provoz
+title: Deployment
+type: operations
 sources:
-  - kód: .github/workflows/azure-static-web-apps.yml, apps/api/scripts/build-deploy.mjs, apps/portal/public/staticwebapp.config.json
-  - historie: doc/architecture.md kap. 9 (commit 8db5e0a)
+  - code: .github/workflows/azure-static-web-apps.yml, apps/api/scripts/build-deploy.mjs, apps/portal/public/staticwebapp.config.json
+  - history: doc/architecture.md ch. 9 (commit 8db5e0a)
 updated: 2026-09-15
 ---
 
-# Nasazení
+# Deployment
 
-> Jedna **Azure Static Web App (Free)** na `www.fridrich.cloud`: web z
-> `apps/portal/dist` a API jako **spravované funkce** z `apps/api/deploy`.
-> Nasazuje GitHub Actions přes SWA CLI. Cíl: vejít se do bezplatných tierů.
+> One **Azure Static Web App (Free)** on `www.fridrich.cloud`: the website from
+> `apps/portal/dist` and the API as **managed functions** from `apps/api/deploy`.
+> Deployed by GitHub Actions via the SWA CLI. Goal: stay within free tiers.
 
-## Služby
+## Services
 
-| Část | Služba | Tier |
+| Part | Service | Tier |
 |---|---|---|
 | Frontend | Azure Static Web App `LiborFridrich` (resource group `lf-page`) | Free |
-| API | spravované funkce téže SWA na `/api` | součást Free |
-| Databáze | Cosmos DB `lf-page-db`, sdílená kapacita databáze | Free tier (1000 RU/s, 25 GB) |
-| E-maily | SMTP | vlastní schránka |
+| API | managed functions of the same SWA on `/api` | part of Free |
+| Database | Cosmos DB `lf-page-db`, database-level shared capacity | Free tier (1000 RU/s, 25 GB) |
+| E-mails | SMTP | own mailbox |
 
-> ⚠️ **API nesmí být samostatný Function App** – připojení vlastní Functions
-> aplikace je funkce Standard plánu (~9 $/měsíc). Důsledky: žádná managed
-> identity (Cosmos přes `COSMOS_KEY`), žádné Key Vault reference, jen HTTP
-> triggery, runtime `node:20` z `staticwebapp.config.json`.
+> ⚠️ **The API must not be a standalone Function App** – linking your own
+> Functions app is a Standard plan feature (~$9/month). Consequences: no managed
+> identity (Cosmos via `COSMOS_KEY`), no Key Vault references, HTTP triggers only,
+> runtime `node:20` from `staticwebapp.config.json`.
 
 ## Pipeline (`.github/workflows/azure-static-web-apps.yml`)
 
-1. `npm ci` (postaví sdílené balíčky)
+1. `npm ci` (builds the shared packages)
 2. `npm run typecheck`, `npm run lint`, `npm run test`
-3. **Pojistka: aspoň 60 testů API** – `node --test` bez nalezených souborů
-   skončí nulou testů s kódem 0. Dnes 97 testů.
-4. `npm run build` → `apps/portal/dist` (včetně `staticwebapp.config.json` z `public/`)
+3. **Safeguard: at least 60 API tests** – `node --test` with no files found ends
+   with zero tests and exit code 0. 97 tests today.
+4. `npm run build` → `apps/portal/dist` (including `staticwebapp.config.json` from `public/`)
 5. `npm run build:api` → `apps/api/deploy`
-6. `npx @azure/static-web-apps-cli@2 deploy` – PR do prostředí `pr-<číslo>`
-   (Azure z něj udělá `pr123`, Free zvládne 3), `main` do `production`.
-   Spustit jde i ručně (`workflow_dispatch`).
+6. `npx @azure/static-web-apps-cli@2 deploy` – a PR goes to environment `pr-<number>`
+   (Azure turns it into `pr123`, Free supports 3), `main` to `production`.
+   Can also be triggered manually (`workflow_dispatch`).
 
-Jediné tajemství: `AZURE_STATIC_WEB_APPS_API_TOKEN` (Manage deployment token).
+The only secret: `AZURE_STATIC_WEB_APPS_API_TOKEN` (Manage deployment token).
 
-> ⚠️ **Nasazuje SWA CLI, ne akce `Azure/static-web-apps-deploy@v1`** – ta
-> neumí přeskočit build API a padala na `An unknown exception has occurred`.
+> ⚠️ **Deployment uses the SWA CLI, not the `Azure/static-web-apps-deploy@v1` action** –
+> the action cannot skip the API build and failed with `An unknown exception has occurred`.
 
-## API jako soběstačný balíček
+## The API as a self-contained bundle
 
-Spravované funkce závislosti nedoinstalují a workspace balíčky nejsou na npm.
-`scripts/build-deploy.mjs` proto esbuildem spojí **všechno** (kód, `@fridrich/*`,
-`valibot`, Azure SDK) do jednoho `index.js`; venku zůstává jen `@azure/functions`.
+Managed functions do not install dependencies and the workspace packages are not
+on npm. `scripts/build-deploy.mjs` therefore uses esbuild to combine
+**everything** (code, `@fridrich/*`, `valibot`, Azure SDK) into one `index.js`;
+only `@azure/functions` stays external.
 
-- Posílat `node_modules` nejde: 87 MB / 13 000 souborů → nasazení padá. Bundle ~3 MB.
-- Bundle potřebuje shim `createRequire` (CommonJS závislosti Azure SDK volají `require`).
+- Shipping `node_modules` does not work: 87 MB / 13,000 files → deployment fails. The bundle is ~3 MB.
+- The bundle needs a `createRequire` shim (CommonJS dependencies of the Azure SDK call `require`).
 
-Ruční nasazení při ladění:
+Manual deployment while debugging:
 
 ```bash
 npm run build && npm run build:api
@@ -63,26 +64,26 @@ npx @azure/static-web-apps-cli@2 deploy apps/portal/dist \
   --env production --no-use-keychain
 ```
 
-## Nastavení v Azure (Application settings)
+## Azure settings (Application settings)
 
-| Klíč | Hodnota |
+| Key | Value |
 |---|---|
 | `NODE_ENV` | `production` |
-| `COSMOS_ENDPOINT`, `COSMOS_KEY` | účet `lf-page-db` |
+| `COSMOS_ENDPOINT`, `COSMOS_KEY` | account `lf-page-db` |
 | `COSMOS_DATABASE` | `izi-db` |
-| `COSMOS_THROUGHPUT` | `400` (prázdné na serverless účtu) |
+| `COSMOS_THROUGHPUT` | `400` (empty on a serverless account) |
 | `ALLOWED_ORIGINS`, `APP_URL` | `https://www.fridrich.cloud` |
-| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | schránka |
-| `CONTACT_INBOX` | adresa pro poptávky |
+| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | mailbox |
+| `CONTACT_INBOX` | address for enquiries |
 
-`COOKIE_DOMAIN` zůstává prázdný (jeden origin).
+`COOKIE_DOMAIN` stays empty (single origin).
 
 ## `staticwebapp.config.json`
 
-Jeden `navigationFallback` na `index.html` (Vue Router si routu najde),
-`exclude` pro `/api/*`, `/assets/*` a soubory – chybějící obrázek pak vrátí
-poctivou 404, ne HTML.
+A single `navigationFallback` to `index.html` (Vue Router resolves the route),
+with `exclude` for `/api/*`, `/assets/*` and files – a missing image then returns
+an honest 404 instead of HTML.
 
-## Související
+## Related
 
-- [Lokální vývoj](lokalni-vyvoj.md) · [Monorepo](../architektura/monorepo.md) · [Data v Cosmos DB](../architektura/data-cosmos.md)
+- [Local development](localDevelopment.md) · [Monorepo](../architecture/monorepo.md) · [Data in Cosmos DB](../architecture/dataCosmos.md)

@@ -1,10 +1,6 @@
-import { isValidIsoDate } from '@fridrich/shared';
-import type { Wedding as WeddingData } from '@fridrich/weddy-shared';
-import type { Clock } from '../shared/Clock.js';
-import { DomainError } from '../shared/DomainError.js';
-import { Person } from './Person.js';
-
-const TITLE_MAX = 200;
+import type { Person, Wedding as WeddingData, WeddingInput } from '@fridrich/weddy-shared';
+import type { Clock } from '../../shared/Clock.js';
+import { DomainError } from '../../shared/DomainError.js';
 
 export interface WeddingState extends WeddingData {
   /** ID uživatelů, kteří k plánování mají přístup. */
@@ -12,11 +8,14 @@ export interface WeddingState extends WeddingData {
 }
 
 /**
- * Agregát plánování svatby.
+ * Agregát plánování svatby – kořen celé domény IziWeddy.
  *
- * Drží si i seznam vlastníků – oprávnění jsou vlastnost svatby, ne něco,
- * co by měl řešit HTTP handler. Kontrola přístupu je proto metoda
- * `isAccessibleBy()`, kterou volají všechny use-casy modulu.
+ * Drží název, datum, oba snoubence a seznam vlastníků. Oprávnění jsou
+ * vlastnost svatby, ne něco, co by měl řešit HTTP handler – kontrolu přístupu
+ * proto volají všechny use-casy všech subdomén přes `assertAccessibleBy()`.
+ *
+ * Vstup je už rozparsovaný schématem `WeddingInputSchema` (tvar a pravidla
+ * polí); agregát nese chování nad ním.
  */
 export class Wedding {
   private constructor(
@@ -30,16 +29,15 @@ export class Wedding {
     private updatedAtValue: string,
   ) {}
 
-  static create(input: { id: string; raw: unknown; ownerId: string; clock: Clock }): Wedding {
-    const parsed = Wedding.parse(input.raw, input.clock);
+  static create(input: { id: string; wedding: WeddingInput; ownerId: string; clock: Clock }): Wedding {
     const now = input.clock.now().toISOString();
 
     return new Wedding(
       input.id,
-      parsed.title,
-      parsed.weddingDate,
-      parsed.groom,
-      parsed.bride,
+      input.wedding.title,
+      input.wedding.weddingDate,
+      { ...input.wedding.groom },
+      { ...input.wedding.bride },
       [input.ownerId],
       now,
       now,
@@ -51,46 +49,12 @@ export class Wedding {
       state.id,
       state.title,
       state.weddingDate,
-      Person.fromState(state.groom),
-      Person.fromState(state.bride),
+      { ...state.groom },
+      { ...state.bride },
       [...state.ownerIds],
       state.createdAt,
       state.updatedAt,
     );
-  }
-
-  private static parse(
-    raw: unknown,
-    clock: Clock,
-  ): { title: string; weddingDate: string | undefined; groom: Person; bride: Person } {
-    const input = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
-
-    const title = input['title'];
-    if (typeof title !== 'string' || title.trim() === '') {
-      throw DomainError.field('title', 'Vyplňte název svatby');
-    }
-    if (title.trim().length > TITLE_MAX) {
-      throw DomainError.field('title', `Název může mít nejvýše ${TITLE_MAX} znaků`);
-    }
-
-    let weddingDate: string | undefined;
-    const rawDate = input['weddingDate'];
-    if (typeof rawDate === 'string' && rawDate.trim() !== '') {
-      const trimmed = rawDate.trim();
-      if (!isValidIsoDate(trimmed)) {
-        throw DomainError.field('weddingDate', 'Datum musí být ve formátu RRRR-MM-DD');
-      }
-      weddingDate = trimmed;
-    }
-
-    const currentYear = clock.now().getUTCFullYear();
-
-    return {
-      title: title.trim(),
-      weddingDate,
-      groom: Person.create(input['groom'], 'groom', currentYear),
-      bride: Person.create(input['bride'], 'bride', currentYear),
-    };
   }
 
   get title(): string {
@@ -120,13 +84,12 @@ export class Wedding {
     }
   }
 
-  update(raw: unknown, clock: Clock): void {
-    const parsed = Wedding.parse(raw, clock);
-
-    this.titleValue = parsed.title;
-    this.weddingDateValue = parsed.weddingDate;
-    this.groomValue = parsed.groom;
-    this.brideValue = parsed.bride;
+  /** Úprava názvu, data a snoubenců – na obrazovce Snoubenci je to jeden formulář. */
+  update(wedding: WeddingInput, clock: Clock): void {
+    this.titleValue = wedding.title;
+    this.weddingDateValue = wedding.weddingDate;
+    this.groomValue = { ...wedding.groom };
+    this.brideValue = { ...wedding.bride };
     this.touch(clock);
   }
 
@@ -144,8 +107,8 @@ export class Wedding {
     const state: WeddingState = {
       id: this.id,
       title: this.titleValue,
-      groom: this.groomValue.toState(),
-      bride: this.brideValue.toState(),
+      groom: { ...this.groomValue },
+      bride: { ...this.brideValue },
       ownerIds: [...this.owners],
       createdAt: this.createdAt,
       updatedAt: this.updatedAtValue,

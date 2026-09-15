@@ -1,53 +1,52 @@
 ---
-title: weddy / wedding – plánování a snoubenci
-type: domena
+title: weddy / wedding – plans and the couple
+type: domain
 sources:
-  - raw/iziweddy-specifikace.md (kap. 4, 5.1, 5.2, 8)
-  - kód: packages/weddy-shared/src/wedding.ts, apps/api/src/domain/weddy/wedding, apps/portal/src/weddy/wedding
+  - raw/iziweddySpec.md (ch. 4, 5.1, 5.2, 8)
+  - code: packages/weddy-shared/src/wedding.ts, apps/api/src/domain/weddy/wedding, apps/portal/src/weddy/wedding
 updated: 2026-09-15
 ---
 
-# `weddy / wedding` – plánování a snoubenci
+# `weddy / wedding` – plans and the couple
 
-> Kořen domény weddy. Agregát `Wedding` drží název, datum, **ženicha
-> a nevěstu** (hodnotové objekty `Person`) a seznam vlastníků. Ostatní
-> subdomény se na něj odkazují přes `weddingId` a ověřují přes něj přístup.
+> Root of the weddy domain. The `Wedding` aggregate holds the title, date, **groom
+> and bride** (value objects `Person`) and the list of owners. The other
+> subdomains refer to it via `weddingId` and check access through it.
 
-## Funkce
+## Features
 
-**Dashboard** (čistě přehled): karty všech plánování uživatele – název
-a jména snoubenců, datum a počet dní do svatby, hosté celkem / přijalo,
-celkový rozpočet. Tlačítko „Přidat plánování", klik na kartu → detail.
+**Dashboard** (overview only): cards of all the user's plans – title and names
+of the couple, date and days until the wedding, guests total / accepted, total
+budget. A "Přidat plánování" (Add plan) button, clicking a card opens the detail.
 
-**Snoubenci:** jeden formulář – blok Svatba (název, datum) a bloky Ženich
-a Nevěsta se stejnými poli. Založení nového plánování používá tentýž formulář
-(`WeddingForm.vue`).
+**Couple:** one form – a Wedding block (title, date) and Groom and Bride blocks
+with the same fields. Creating a new plan uses the same form (`WeddingForm.vue`).
 
-## Pravidla
+## Rules
 
-| Pole | Pravidlo | Schéma |
+| Field | Rule | Schema |
 |---|---|---|
-| `title` | povinné, 1–200 znaků | `WeddingInputSchema` |
-| `weddingDate` | nepovinné, `YYYY-MM-DD`, den musí existovat | `optionalIsoDate` |
-| `groom`, `bride` | povinné objekty | `PersonInputSchema` |
-| `firstName`, `lastName` | povinné, 1–100 znaků | |
-| `birthYear` | nepovinné, celé číslo 1900 – aktuální rok | |
-| `email` | nepovinné, platný e-mail, lowercase | |
-| `phone` | nepovinné, max. 40 znaků | |
-| `note` | nepovinné, max. 2000 znaků | |
+| `title` | required, 1–200 characters | `WeddingInputSchema` |
+| `weddingDate` | optional, `YYYY-MM-DD`, the day must exist | `optionalIsoDate` |
+| `groom`, `bride` | required objects | `PersonInputSchema` |
+| `firstName`, `lastName` | required, 1–100 characters | |
+| `birthYear` | optional, integer 1900 – current year | |
+| `email` | optional, valid e-mail, lowercase | |
+| `phone` | optional, max. 40 characters | |
+| `note` | optional, max. 2000 characters | |
 
-Doména:
+Domain:
 
-- Zakladatel je jediný vlastník (`ownerIds = [userId]`); `shareWith` přidá dalšího
-  (zatím bez endpointu).
-- `toPublic()` odpověď **nikdy nenese `ownerIds`**.
-- Smazání svatby smaže hosty i položky; svatba se maže **poslední** (Cosmos
-  nezná transakce – pád uprostřed jde zopakovat).
-- `daysUntilWedding` = celé dny do data (záporné po svatbě), počítá se z `Clock`.
+- The creator is the only owner (`ownerIds = [userId]`); `shareWith` adds another
+  one (no endpoint yet).
+- `toPublic()` responses **never include `ownerIds`**.
+- Deleting a wedding deletes its guests and items; the wedding is deleted
+  **last** (Cosmos has no transactions – a crash midway can be retried).
+- `daysUntilWedding` = whole days until the date (negative after the wedding), computed from `Clock`.
 
-## Endpointy
+## Endpoints
 
-| Endpoint | Metoda a cesta | Request → Response |
+| Endpoint | Method and path | Request → Response |
 |---|---|---|
 | `listWeddings` | `GET /api/weddy/weddings` | → `WeddingSummary[]` (Wedding + `guestCount`, `acceptedGuestCount`, `budgetTotal`, `daysUntilWedding?`) |
 | `createWedding` | `POST /api/weddy/weddings` | `WeddingInput` → `201 Wedding` |
@@ -55,20 +54,20 @@ Doména:
 | `updateWedding` | `PUT /api/weddy/weddings/{weddingId}` | `WeddingInput` → `Wedding` |
 | `deleteWedding` | `DELETE /api/weddy/weddings/{weddingId}` | → `204` |
 
-## Kód
+## Code
 
-| Vrstva | Soubor |
+| Layer | File |
 |---|---|
-| Sdílené jádro | `packages/weddy-shared/src/wedding.ts` – `PersonSchema`, `PersonInputSchema`, `WeddingSchema`, `WeddingInputSchema`, `WeddingSummarySchema`, `daysUntil` |
-| Doména | `apps/api/src/domain/weddy/wedding/Wedding.ts`, `WeddingRepository.ts` |
-| Use-casy | `apps/api/src/application/weddy/wedding.ts` – `loadWeddingFor`, `listWeddings`, `getWedding`, `createWedding`, `updateWedding`, `deleteWedding` |
-| Endpointy BE | `apps/api/src/endpoints/weddy/wedding/` |
-| Endpointy FE | `apps/portal/src/weddy/wedding/endpoints/` |
+| Shared kernel | `packages/weddy-shared/src/wedding.ts` – `PersonSchema`, `PersonInputSchema`, `WeddingSchema`, `WeddingInputSchema`, `WeddingSummarySchema`, `daysUntil` |
+| Domain | `apps/api/src/domain/weddy/wedding/Wedding.ts`, `WeddingRepository.ts` |
+| Use cases | `apps/api/src/application/weddy/wedding.ts` – `loadWeddingFor`, `listWeddings`, `getWedding`, `createWedding`, `updateWedding`, `deleteWedding` |
+| BE endpoints | `apps/api/src/endpoints/weddy/wedding/` |
+| FE endpoints | `apps/portal/src/weddy/wedding/endpoints/` |
 | Store | `wedding.store.ts` – `summaries`, `current`, `loadList`, `loadOne`, `create`, `update`, `remove` |
-| UI | `DashboardView`, `WeddingNewView`, `CoupleView`, `WeddingForm`, `WeddingLayout` (načítá `current` pro hlavičku) |
-| Úložiště | kontejner `weddings`, PK `/id` |
+| UI | `DashboardView`, `WeddingNewView`, `CoupleView`, `WeddingForm`, `WeddingLayout` (loads `current` for the header) |
+| Storage | container `weddings`, PK `/id` |
 
-## Související
+## Related
 
-- [weddy](weddy.md) · [guests](weddy-guests.md) · [planning](weddy-planning.md) · [budget](weddy-budget.md)
-- Proč není samostatná subdoména `couple`: [domeny.md](../architektura/domeny.md#subdomény-weddy)
+- [weddy](weddy.md) · [guests](weddyGuests.md) · [planning](weddyPlanning.md) · [budget](weddyBudget.md)
+- Why there is no separate `couple` subdomain: [domains.md](../architecture/domains.md#weddy-subdomains)

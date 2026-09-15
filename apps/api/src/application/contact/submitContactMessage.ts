@@ -1,3 +1,4 @@
+import type { ContactMessageInput } from '@fridrich/shared';
 import type { Clock } from '../../domain/shared/Clock.js';
 import type { IdGenerator, RateLimiter } from '../../domain/identity/ports.js';
 import type { EmailSender } from '../../domain/identity/EmailSender.js';
@@ -15,7 +16,7 @@ export interface ContactDeps {
 }
 
 export interface SubmitContactCommand {
-  raw: unknown;
+  message: ContactMessageInput;
   sourceIp: string;
 }
 
@@ -48,7 +49,7 @@ export async function submitContactMessage(
 
   const message = ContactMessage.create({
     id: deps.ids.next(),
-    raw: command.raw,
+    message: command.message,
     sourceIp: command.sourceIp,
     clock: deps.clock,
   });

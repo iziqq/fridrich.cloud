@@ -1,4 +1,13 @@
-import type { ApiErrorBody, ApiErrorDetail } from '@fridrich/shared';
+import { ApiErrorBodySchema, issuesToDetails, type ApiErrorDetail } from '@fridrich/shared';
+import * as v from 'valibot';
+
+/**
+ * HTTP klient pro volání API.
+ *
+ * Nevolá se přímo z komponent ani ze store – každý endpoint má vlastní soubor
+ * `<doména>/endpoints/<jméno>.endpoint.ts` se schématy requestu a response
+ * a teprve ten volá `callEndpoint` (doc/wiki/architecture/endpoints.md).
+ */
 
 /** Chyba z API – nese i validační detaily po jednotlivých polích. */
 export class ApiError extends Error {
@@ -20,40 +29,90 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const response = await fetch(`/api${path}`, {
-    method,
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+export interface EndpointCall<TResponse extends v.GenericSchema | undefined> {
+  method: HttpMethod;
+  /** Cesta bez prefixu `/api`, parametry už dosazené (a zakódované). */
+  path: string;
+  query?: Record<string, string | undefined>;
+  /**
+   * Tělo i se schématem. Validuje se před odesláním – neplatná data skončí
+   * stejnou `ApiError` jako odpověď 400, takže formulář je zobrazí bez
+   * kolečka na server. Odešle se výstup schématu (oříznutý, normalizovaný).
+   */
+  body?: { schema: v.GenericSchema; value: unknown };
+  /** Schéma odpovědi. Odpověď, která mu neodpovídá, je chyba, ne data. */
+  response?: TResponse;
+}
+
+type ResponseOf<TResponse> = TResponse extends v.GenericSchema ? v.InferOutput<TResponse> : void;
+
+export async function callEndpoint<TResponse extends v.GenericSchema | undefined = undefined>(
+  call: EndpointCall<TResponse>,
+): Promise<ResponseOf<TResponse>> {
+  let body: string | undefined;
+  if (call.body) {
+    const parsed = v.safeParse(call.body.schema, call.body.value);
+    if (!parsed.success) {
+      throw new ApiError(400, 'ValidationError', 'Neplatná data', issuesToDetails(parsed.issues));
+    }
+    body = JSON.stringify(parsed.output);
+  }
+
+  const response = await fetch(`/api${call.path}${queryString(call.query)}`, {
+    method: call.method,
     headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body,
     // Session cookie musí jít s každým požadavkem.
     credentials: 'include',
   });
 
-  if (response.status === 204) return undefined as T;
+  if (!response.ok) throw await errorFrom(response);
+  if (!call.response || response.status === 204) return undefined as ResponseOf<TResponse>;
 
-  if (!response.ok) {
-    let payload: Partial<ApiErrorBody> = {};
-    try {
-      payload = (await response.json()) as Partial<ApiErrorBody>;
-    } catch {
-      // odpověď bez JSON těla (výpadek, proxy, přesměrování)
-    }
+  const parsed = v.safeParse(call.response, await response.json());
+  if (!parsed.success) {
+    console.error(`Neočekávaná odpověď z ${call.method} /api${call.path}`, parsed.issues);
+    throw new ApiError(response.status, 'InvalidResponse', 'Server vrátil neočekávaná data.');
+  }
 
-    throw new ApiError(
+  return parsed.output as ResponseOf<TResponse>;
+}
+
+function queryString(query: Record<string, string | undefined> | undefined): string {
+  if (!query) return '';
+
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value) search.set(key, value);
+  }
+
+  const serialized = search.toString();
+  return serialized ? `?${serialized}` : '';
+}
+
+async function errorFrom(response: Response): Promise<ApiError> {
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    // odpověď bez JSON těla (výpadek, proxy, přesměrování)
+  }
+
+  const parsed = v.safeParse(ApiErrorBodySchema, payload);
+  if (!parsed.success) {
+    return new ApiError(
       response.status,
-      payload.error ?? 'InternalServerError',
-      payload.message ?? `Požadavek selhal (${response.status})`,
-      payload.details ?? [],
+      'InternalServerError',
+      `Požadavek selhal (${response.status})`,
     );
   }
 
-  return (await response.json()) as T;
+  return new ApiError(
+    response.status,
+    parsed.output.error,
+    parsed.output.message,
+    parsed.output.details ?? [],
+  );
 }
-
-export const http = {
-  get: <T>(path: string) => request<T>('GET', path),
-  post: <T>(path: string, body: unknown) => request<T>('POST', path, body),
-  put: <T>(path: string, body: unknown) => request<T>('PUT', path, body),
-  patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, body),
-  delete: (path: string) => request<void>('DELETE', path),
-};

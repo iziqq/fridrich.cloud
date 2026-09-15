@@ -2,7 +2,7 @@
  * Texty portálu na jednom místě.
  *
  * Obsah je záměrně oddělený od komponent – jde ho upravit bez zásahu do
- * rozvržení a později přeložit (doc/portal.md, kap. 7).
+ * rozvržení a později přeložit (doc/wiki/domains/portal.md).
  */
 
 export interface NavItem {

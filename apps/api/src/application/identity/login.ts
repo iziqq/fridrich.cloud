@@ -6,7 +6,7 @@ import { startSession, type SessionResult } from './session.js';
 import type { IdentityDeps } from './deps.js';
 
 export interface RequestLoginCodeCommand {
-  raw: unknown;
+  email: string;
   sourceIp: string;
 }
 
@@ -21,12 +21,7 @@ export async function requestLoginCode(
   deps: IdentityDeps,
   command: RequestLoginCodeCommand,
 ): Promise<void> {
-  const raw = (typeof command.raw === 'object' && command.raw !== null ? command.raw : {}) as Record<
-    string,
-    unknown
-  >;
-
-  const rawEmail = typeof raw['email'] === 'string' ? raw['email'].trim().toLowerCase() : '';
+  const rawEmail = command.email.trim().toLowerCase();
 
   const [ipAllowed, accountAllowed] = await Promise.all([
     deps.rateLimiter.consume(`login-request-ip:${command.sourceIp}`, 20, 60 * 60 * 1000),
@@ -62,7 +57,8 @@ export async function requestLoginCode(
 }
 
 export interface VerifyLoginCodeCommand {
-  raw: unknown;
+  email: string;
+  code: string;
   sourceIp: string;
 }
 
@@ -89,14 +85,9 @@ export async function verifyLoginCode(
   );
   if (!allowed) throw DomainError.tooManyRequests();
 
-  const raw = (typeof command.raw === 'object' && command.raw !== null ? command.raw : {}) as Record<
-    string,
-    unknown
-  >;
-
   let email: EmailAddress;
   try {
-    email = EmailAddress.create(raw['email']);
+    email = EmailAddress.create(command.email);
   } catch {
     throw rejected();
   }
@@ -106,7 +97,7 @@ export async function verifyLoginCode(
   if (!user || !challenge) throw rejected();
 
   try {
-    challenge.verify(raw['code'], deps.tokenGenerator, deps.clock);
+    challenge.verify(command.code, deps.tokenGenerator, deps.clock);
   } catch (error) {
     // Počítadlo pokusů zvedla doména; bez uložení by hádání kódu nic nestálo.
     await deps.loginCodes.save(challenge);

@@ -29,8 +29,9 @@ export function readSessionToken(request: HttpRequest): string | undefined {
  *
  * `HttpOnly` ji schová před JavaScriptem, takže ji neukradne XSS.
  * `SameSite=Lax` brání odeslání při cizím POSTu (CSRF), ale nechá projít
- * běžnou navigaci. `Domain=.fridrich.cloud` zajistí, že přihlášení platí
- * i na subdoménách produktů (doc/architecture.md, kap. 5).
+ * běžnou navigaci. `Domain` se nastavuje jen při vyplněném `COOKIE_DOMAIN` –
+ * web, produkty i API jsou na jednom originu, takže cookie platí všude sama
+ * (doc/wiki/domains/identity.md).
  */
 export function sessionCookie(token: string, expiresAt: string): string {
   const config = getConfig();

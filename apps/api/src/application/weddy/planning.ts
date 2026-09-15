@@ -1,13 +1,21 @@
-import type { BudgetSummary, PlanningCategory, PlanningItem as ItemData } from '@fridrich/weddy-shared';
-import { calculateBudget } from '@fridrich/weddy-shared';
-import { PlanningItem } from '../../domain/weddy/PlanningItem.js';
+import type {
+  PlanningCategory,
+  PlanningItem as ItemData,
+  PlanningItemInput,
+  PlanningItemStatus,
+} from '@fridrich/weddy-shared';
 import { DomainError } from '../../domain/shared/DomainError.js';
-import { loadWeddingFor } from './weddings.js';
+import { PlanningItem } from '../../domain/weddy/planning/PlanningItem.js';
+import { loadWeddingFor } from './wedding.js';
 import type { WeddyDeps } from './deps.js';
+
+/*
+ * Use-casy subdomény `planning` – položky v sekcích přípravy.
+ */
 
 export async function listItems(
   deps: WeddyDeps,
-  weddingId: string | undefined,
+  weddingId: string,
   userId: string,
   category?: PlanningCategory,
 ): Promise<ItemData[]> {
@@ -18,12 +26,11 @@ export async function listItems(
 
 async function loadItem(
   deps: WeddyDeps,
-  weddingId: string | undefined,
-  itemId: string | undefined,
+  weddingId: string,
+  itemId: string,
   userId: string,
 ): Promise<PlanningItem> {
   const wedding = await loadWeddingFor(deps, weddingId, userId);
-  if (!itemId) throw DomainError.notFound('Položka');
 
   const item = await deps.items.findById(wedding.id, itemId);
   if (!item) throw DomainError.notFound('Položka');
@@ -33,8 +40,8 @@ async function loadItem(
 
 export async function createItem(
   deps: WeddyDeps,
-  weddingId: string | undefined,
-  raw: unknown,
+  weddingId: string,
+  input: PlanningItemInput,
   userId: string,
 ): Promise<ItemData> {
   const wedding = await loadWeddingFor(deps, weddingId, userId);
@@ -42,7 +49,7 @@ export async function createItem(
   const item = PlanningItem.create({
     id: deps.ids.next(),
     weddingId: wedding.id,
-    raw,
+    item: input,
     clock: deps.clock,
   });
 
@@ -52,13 +59,13 @@ export async function createItem(
 
 export async function updateItem(
   deps: WeddyDeps,
-  weddingId: string | undefined,
-  itemId: string | undefined,
-  raw: unknown,
+  weddingId: string,
+  itemId: string,
+  input: PlanningItemInput,
   userId: string,
 ): Promise<ItemData> {
   const item = await loadItem(deps, weddingId, itemId, userId);
-  item.update(raw, deps.clock);
+  item.update(input, deps.clock);
 
   await deps.items.save(item);
   return item.toState();
@@ -66,15 +73,13 @@ export async function updateItem(
 
 export async function changeItemStatus(
   deps: WeddyDeps,
-  weddingId: string | undefined,
-  itemId: string | undefined,
-  raw: unknown,
+  weddingId: string,
+  itemId: string,
+  status: PlanningItemStatus,
   userId: string,
 ): Promise<ItemData> {
   const item = await loadItem(deps, weddingId, itemId, userId);
-
-  const body = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
-  item.changeStatus(body['status'], deps.clock);
+  item.changeStatus(status, deps.clock);
 
   await deps.items.save(item);
   return item.toState();
@@ -82,26 +87,10 @@ export async function changeItemStatus(
 
 export async function deleteItem(
   deps: WeddyDeps,
-  weddingId: string | undefined,
-  itemId: string | undefined,
+  weddingId: string,
+  itemId: string,
   userId: string,
 ): Promise<void> {
   const item = await loadItem(deps, weddingId, itemId, userId);
   await deps.items.delete(item.weddingId, item.id);
-}
-
-/**
- * Rozpočet se nikde neukládá – počítá se vždy z aktuálních položek
- * (doc/iziweddy.md, kap. 5.5). Stejnou funkci volá i frontend, takže se
- * čísla nemůžou rozejít.
- */
-export async function getBudget(
-  deps: WeddyDeps,
-  weddingId: string | undefined,
-  userId: string,
-): Promise<BudgetSummary> {
-  const wedding = await loadWeddingFor(deps, weddingId, userId);
-  const items = await deps.items.list(wedding.id);
-
-  return calculateBudget(items.map((item) => item.toState()));
 }

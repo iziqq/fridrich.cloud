@@ -1,25 +1,25 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { calculateBudget, calculateGuestStats, groupIntoFamilies } from '@fridrich/weddy-shared';
+import { getBudget } from '../src/application/weddy/budget.js';
 import {
   changeGuestStatus,
+  createFamily,
   createGuest,
+  deleteFamily,
   deleteGuest,
   listGuests,
-} from '../src/application/weddy/guests.js';
-import {
-  createFamily,
-  deleteFamily,
   updateFamily,
-} from '../src/application/weddy/families.js';
-import { createItem, getBudget, listItems } from '../src/application/weddy/planning.js';
+  updateGuest,
+} from '../src/application/weddy/guests.js';
+import { createItem, listItems } from '../src/application/weddy/planning.js';
 import {
   createWedding,
   deleteWedding,
   getWedding,
   listWeddings,
   updateWedding,
-} from '../src/application/weddy/weddings.js';
+} from '../src/application/weddy/wedding.js';
 import { isDomainError } from '../src/domain/shared/DomainError.js';
 import { weddyTestDeps, validWedding, type WeddyTestContext } from './fakes.js';
 
@@ -69,24 +69,6 @@ describe('plánování svatby', () => {
     await assert.rejects(
       getWedding(deps, 'neexistuje', OWNER),
       (error) => isDomainError(error) && error.kind === 'notFound',
-    );
-  });
-
-  it('odmítne svatbu bez názvu', async () => {
-    const deps = weddyTestDeps();
-
-    await assert.rejects(
-      createWedding(deps, { ...validWedding, title: '  ' }, OWNER),
-      (error) => isDomainError(error) && error.kind === 'validation',
-    );
-  });
-
-  it('odmítne neplatné datum svatby', async () => {
-    const deps = weddyTestDeps();
-
-    await assert.rejects(
-      createWedding(deps, { ...validWedding, weddingDate: '2026-02-31' }, OWNER),
-      isDomainError,
     );
   });
 
@@ -145,15 +127,6 @@ describe('hosté', () => {
     assert.equal(guest.ageGroup, 'adult');
   });
 
-  it('odmítne hosta bez strany', async () => {
-    const { deps, weddingId } = await withWedding();
-
-    await assert.rejects(
-      createGuest(deps, weddingId, { firstName: 'Eva', lastName: 'Malá' }, OWNER),
-      isDomainError,
-    );
-  });
-
   it('dovolí i přechod stavu proti běžnému toku, aby šla opravit chyba', async () => {
     const { deps, weddingId } = await withWedding();
     const guest = await createGuest(
@@ -163,13 +136,7 @@ describe('hosté', () => {
       OWNER,
     );
 
-    const updated = await changeGuestStatus(
-      deps,
-      weddingId,
-      guest.id,
-      { status: 'accepted' },
-      OWNER,
-    );
+    const updated = await changeGuestStatus(deps, weddingId, guest.id, 'accepted', OWNER);
 
     assert.equal(updated.status, 'accepted');
   });
@@ -216,29 +183,6 @@ describe('položky plánování a rozpočet', () => {
 
     const item = await createItem(deps, weddingId, { category: 'dress', name: 'Šaty' }, OWNER);
     assert.equal(item.status, 'draft');
-  });
-
-  it('odmítne odkaz bez http/https', async () => {
-    const { deps, weddingId } = await withWedding();
-
-    await assert.rejects(
-      createItem(
-        deps,
-        weddingId,
-        { category: 'dress', name: 'Šaty', url: 'javascript:alert(1)' },
-        OWNER,
-      ),
-      isDomainError,
-    );
-  });
-
-  it('odmítne zápornou cenu', async () => {
-    const { deps, weddingId } = await withWedding();
-
-    await assert.rejects(
-      createItem(deps, weddingId, { category: 'dress', name: 'Šaty', price: -5 }, OWNER),
-      isDomainError,
-    );
   });
 
   it('položky lze filtrovat podle sekce', async () => {
@@ -412,14 +356,34 @@ describe('rodiny', () => {
     assert.equal(guests.length, 0);
   });
 
-  it('odmítne rodinu bez členů i bez názvu', async () => {
+  it('neexistující rodinu nelze upravit ani smazat', async () => {
     const { deps, weddingId } = await withWedding();
 
     await assert.rejects(
-      createFamily(deps, weddingId, { ...novakovi, members: [] }, OWNER),
-      isDomainError,
+      updateFamily(deps, weddingId, 'neexistuje', novakovi, OWNER),
+      (error) => isDomainError(error) && error.kind === 'notFound',
     );
-    await assert.rejects(createFamily(deps, weddingId, { ...novakovi, name: '  ' }, OWNER), isDomainError);
+    await assert.rejects(
+      deleteFamily(deps, weddingId, 'neexistuje', OWNER),
+      (error) => isDomainError(error) && error.kind === 'notFound',
+    );
+  });
+
+  it('úprava hosta ho z rodiny nevyřadí', async () => {
+    const { deps, weddingId } = await withWedding();
+    const family = await createFamily(deps, weddingId, novakovi, OWNER);
+    const member = family.members[0];
+    assert.ok(member);
+
+    const updated = await updateGuest(
+      deps,
+      weddingId,
+      member.id,
+      { firstName: 'Pepa', side: 'groom' },
+      OWNER,
+    );
+
+    assert.equal(updated.family?.id, family.id);
   });
 
   it('cizí uživatel rodinu nezaloží ani nesmaže', async () => {

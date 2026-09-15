@@ -101,12 +101,12 @@ export class LoginCode {
    * Hláška je schválně jedna pro špatný, vypršený i vyčerpaný kód: z rozdílu
    * by šlo poznat, že se hádá správným směrem.
    */
-  verify(code: unknown, generator: TokenGenerator, clock: Clock): void {
+  verify(code: string, generator: TokenGenerator, clock: Clock): void {
     if (this.isExpired(clock) || this.isExhausted()) throw LoginCode.rejected();
 
     this.attemptsValue += 1;
 
-    const normalized = typeof code === 'string' ? code.replace(/\s/g, '') : '';
+    const normalized = code.replace(/\s/g, '');
     if (!DIGITS_RE.test(normalized)) throw LoginCode.rejected();
 
     if (!generator.matches(this.codeHash, `${this.id}:${normalized}`)) {

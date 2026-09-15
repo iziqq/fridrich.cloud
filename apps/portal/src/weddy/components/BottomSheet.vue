@@ -8,7 +8,7 @@ const panel = ref<HTMLElement | null>(null);
 let lastFocused: HTMLElement | null = null;
 
 /*
- * Formulář na mobilu vyjíždí zespodu (doc/iziweddy.md, kap. 6.3).
+ * Formulář na mobilu vyjíždí zespodu (doc/wiki/domains/weddy.md).
  * Zatímco je otevřený, pozadí nesmí scrollovat a fokus musí zůstat uvnitř –
  * jinak uživatel klávesnicí „propadne" pod překryv.
  */

@@ -1,109 +1,111 @@
-# 💍 IziWeddy – svatební plánovač
+# 💍 IziWeddy – wedding planner
 
-Mobilní webová aplikace pro plánování svatby. Umožňuje spravovat údaje o snoubencích, seznam hostů, jednotlivé oblasti přípravy (místo obřadu, veselka, květiny, šaty…) a automaticky počítá rozpočet.
+> Translated from the Czech original; the Czech text is in git history (commit 8db5e0a, file doc/iziweddy.md).
 
-IziWeddy je **jeden z produktů pod `fridrich.cloud`**, ne samostatný projekt. Rozdělení celku, sdílené balíčky a společná identita jsou popsané v [architecture.md](architecture.md).
+A mobile web application for planning a wedding. It lets you manage details about the engaged couple, the guest list, the individual areas of preparation (ceremony venue, reception, flowers, dress…) and automatically calculates the budget.
+
+IziWeddy is **one of the products under `fridrich.cloud`**, not a standalone project. The breakdown of the whole, the shared packages and the common identity are described in [architecture.md](architecture.md).
 
 | | |
 |---|---|
-| **Adresa** | `www.fridrich.cloud/izi-weddy` |
-| **Modul API** | `/api/weddy/*` |
-| **Frontend** | `apps/portal/src/weddy` – podstrom portálu, ne samostatná aplikace |
-| **Sdílené typy** | `packages/weddy-shared` |
-| **Přihlášení** | Společný účet `fridrich.cloud` – viz [architecture.md, kap. 5](architecture.md#5-identita-registrace-a-přihlášení) |
+| **Address** | `www.fridrich.cloud/izi-weddy` |
+| **API module** | `/api/weddy/*` |
+| **Frontend** | `apps/portal/src/weddy` – a subtree of the portal, not a standalone application |
+| **Shared types** | `packages/weddy-shared` |
+| **Sign-in** | Shared `fridrich.cloud` account – see [architecture.md, ch. 5](architecture.md#5-identita-registrace-a-přihlášení) |
 
-> ⚠️ **Poznámka k tomuto dokumentu.** Vznikl dřív než rozdělení projektu, takže
-> kapitoly [3](#3-struktura-repozitáře), [7](#7-rest-api), [9](#9-ukládání-dat),
-> [10](#10-lokální-vývoj) a [11](#11-nasazení) popisují IziWeddy jako samostatný
-> repozitář. Platí místo nich [architecture.md](architecture.md); konkrétně:
-> aplikace žije v `apps/portal/src/weddy`, endpointy mají prefix `/api/weddy`, backend
-> je organizovaný domain-first podle [`CLAUDE.md`](../CLAUDE.md) a otázka
-> přihlašování (kap. 12, otázka 1) je už zodpovězená – účet je společný pro
-> všechny produkty. **Kapitoly 4, 5, 6, 8 a 12 platí beze změny** – to je
-> vlastní zadání aplikace.
+> ⚠️ **Note on this document.** It was written before the project was split up, so
+> chapters [3](#3-repository-structure), [7](#7-rest-api), [9](#9-data-storage),
+> [10](#10-local-development) and [11](#11-deployment) describe IziWeddy as a standalone
+> repository. [architecture.md](architecture.md) applies instead of them; specifically:
+> the application lives in `apps/portal/src/weddy`, endpoints have the `/api/weddy` prefix, the backend
+> is organised domain-first according to [`CLAUDE.md`](../CLAUDE.md), and the question
+> of sign-in (ch. 12, question 1) has already been answered – the account is shared across
+> all products. **Chapters 4, 5, 6, 8 and 12 apply unchanged** – they are
+> the actual specification of the application.
 
 ---
 
-## Obsah
+## Contents
 
-1. [Přehled](#1-přehled)
-2. [Technologie](#2-technologie)
-3. [Struktura repozitáře](#3-struktura-repozitáře)
-4. [Doménový model](#4-doménový-model)
-5. [Funkční specifikace](#5-funkční-specifikace)
-6. [Obrazovky a navigace](#6-obrazovky-a-navigace)
+1. [Overview](#1-overview)
+2. [Technologies](#2-technologies)
+3. [Repository structure](#3-repository-structure)
+4. [Domain model](#4-domain-model)
+5. [Functional specification](#5-functional-specification)
+6. [Screens and navigation](#6-screens-and-navigation)
 7. [REST API](#7-rest-api)
-8. [Validační pravidla](#8-validační-pravidla)
-9. [Ukládání dat](#9-ukládání-dat)
-10. [Lokální vývoj](#10-lokální-vývoj)
-11. [Nasazení](#11-nasazení)
-12. [Otevřené otázky a možná rozšíření](#12-otevřené-otázky-a-možná-rozšíření)
+8. [Validation rules](#8-validation-rules)
+9. [Data storage](#9-data-storage)
+10. [Local development](#10-local-development)
+11. [Deployment](#11-deployment)
+12. [Open questions and possible extensions](#12-open-questions-and-possible-extensions)
 
 ---
 
-## 1. Přehled
+## 1. Overview
 
-| Oblast | Popis |
+| Area | Description |
 |---|---|
-| **Cílová platforma** | Primárně mobilní zařízení (mobile-first), funkční i na desktopu |
+| **Target platform** | Primarily mobile devices (mobile-first), also functional on desktop |
 | **Frontend** | Vue 3 + TypeScript |
 | **Backend** | Azure Functions (TypeScript) |
-| **Repozitář** | Jeden monorepozitář obsahující frontend, backend i sdílené typy |
-| **Měna** | CZK (výchozí) |
+| **Repository** | A single monorepo containing the frontend, backend and shared types |
+| **Currency** | CZK (default) |
 
-### Hlavní moduly
+### Main modules
 
-- **Dashboard** – přehled všech plánování, vytvoření nového plánování.
-- **Snoubenci** – údaje o ženichovi a nevěstě.
-- **Hosté** – seznam hostů se stavem pozvánky.
-- **Plánování** – jedenáct sekcí (místo obřadu, veselka, jídlo, …) s položkami od dodavatelů.
-- **Rozpočet** – automatický součet všech zadaných cen.
+- **Dashboard** – overview of all plannings, creation of a new planning.
+- **Couple** – details about the groom and the bride.
+- **Guests** – guest list with invitation status.
+- **Planning** – eleven sections (ceremony venue, reception, food, …) with items from vendors.
+- **Budget** – automatic sum of all entered prices.
 
 ---
 
-## 2. Technologie
+## 2. Technologies
 
 ### Frontend (`apps/web`)
 
-| Technologie | Účel |
+| Technology | Purpose |
 |---|---|
 | [Vue 3](https://vuejs.org/) (Composition API, `<script setup>`) | UI framework |
-| [Vite](https://vitejs.dev/) | Build a dev server |
-| TypeScript | Typová bezpečnost |
-| [Vue Router](https://router.vuejs.org/) | Navigace mezi stránkami |
-| [Pinia](https://pinia.vuejs.org/) | Správa stavu |
-| UI knihovna *(k rozhodnutí)* | Např. Ionic Vue, Vuetify nebo Tailwind CSS – viz [otevřené otázky](#12-otevřené-otázky-a-možná-rozšíření) |
+| [Vite](https://vitejs.dev/) | Build and dev server |
+| TypeScript | Type safety |
+| [Vue Router](https://router.vuejs.org/) | Navigation between pages |
+| [Pinia](https://pinia.vuejs.org/) | State management |
+| UI library *(to be decided)* | E.g. Ionic Vue, Vuetify or Tailwind CSS – see [open questions](#12-open-questions-and-possible-extensions) |
 
 ### Backend (`apps/api`)
 
-| Technologie | Účel |
+| Technology | Purpose |
 |---|---|
 | Azure Functions v4 (Node.js programming model v4) | HTTP API |
-| TypeScript | Typová bezpečnost |
-| `@azure/functions` | Registrace HTTP triggerů |
-| Azure Cosmos DB *(doporučeno)* | Úložiště dat |
+| TypeScript | Type safety |
+| `@azure/functions` | Registration of HTTP triggers |
+| Azure Cosmos DB *(recommended)* | Data storage |
 
-### Sdílený balíček (`packages/shared`)
+### Shared package (`packages/shared`)
 
-Obsahuje TypeScript typy, výčty (enumy) a validační logiku, které používá **frontend i backend**. Díky tomu je kontrakt API definovaný na jednom místě.
+Contains TypeScript types, enumerations (enums) and validation logic used by **both the frontend and the backend**. This way the API contract is defined in one place.
 
 ---
 
-## 3. Struktura repozitáře
+## 3. Repository structure
 
-Repozitář využívá **npm workspaces**.
+The repository uses **npm workspaces**.
 
 ```
 wedding-planner/
 ├── apps/
 │   ├── web/                      # Vue 3 frontend
 │   │   ├── src/
-│   │   │   ├── api/              # HTTP klient pro volání Azure Functions
-│   │   │   ├── components/       # Znovupoužitelné komponenty
-│   │   │   ├── layouts/          # Layouty (např. layout s bottom navigací)
-│   │   │   ├── router/           # Definice rout
+│   │   │   ├── api/              # HTTP client for calling Azure Functions
+│   │   │   ├── components/       # Reusable components
+│   │   │   ├── layouts/          # Layouts (e.g. layout with bottom navigation)
+│   │   │   ├── router/           # Route definitions
 │   │   │   ├── stores/           # Pinia stores
-│   │   │   ├── views/            # Stránky (Dashboard, Guests, Budget, …)
+│   │   │   ├── views/            # Pages (Dashboard, Guests, Budget, …)
 │   │   │   ├── App.vue
 │   │   │   └── main.ts
 │   │   ├── index.html
@@ -112,38 +114,38 @@ wedding-planner/
 │   │
 │   └── api/                      # Azure Functions backend
 │       ├── src/
-│       │   ├── functions/        # HTTP triggery (weddings.ts, guests.ts, …)
-│       │   ├── repositories/     # Přístup k databázi
-│       │   └── services/         # Business logika (např. výpočet rozpočtu)
+│       │   ├── functions/        # HTTP triggers (weddings.ts, guests.ts, …)
+│       │   ├── repositories/     # Database access
+│       │   └── services/         # Business logic (e.g. budget calculation)
 │       ├── host.json
-│       ├── local.settings.json   # Lokální konfigurace (NEcommitovat)
+│       ├── local.settings.json   # Local configuration (do NOT commit)
 │       └── package.json
 │
 ├── packages/
-│   └── shared/                   # Sdílené typy, enumy a validace
+│   └── shared/                   # Shared types, enums and validation
 │       ├── src/
 │       │   ├── models.ts
 │       │   ├── enums.ts
 │       │   └── validation.ts
 │       └── package.json
 │
-├── package.json                  # Root – definice workspaces a skriptů
-├── staticwebapp.config.json      # Konfigurace Azure Static Web Apps
+├── package.json                  # Root – workspaces and scripts definition
+├── staticwebapp.config.json      # Azure Static Web Apps configuration
 └── README.md
 ```
 
 ---
 
-## 4. Doménový model
+## 4. Domain model
 
-### 4.1 Diagram entit
+### 4.1 Entity diagram
 
 ```mermaid
 erDiagram
-    WEDDING ||--|| PERSON : "ženich"
-    WEDDING ||--|| PERSON : "nevěsta"
-    WEDDING ||--o{ GUEST : "má hosty"
-    WEDDING ||--o{ PLANNING_ITEM : "má položky plánování"
+    WEDDING ||--|| PERSON : "groom"
+    WEDDING ||--|| PERSON : "bride"
+    WEDDING ||--o{ GUEST : "has guests"
+    WEDDING ||--o{ PLANNING_ITEM : "has planning items"
 
     WEDDING {
         string id
@@ -173,64 +175,64 @@ erDiagram
     }
 ```
 
-### 4.2 Výčty (enumy)
+### 4.2 Enumerations (enums)
 
-#### Strana hosta – `GuestSide`
+#### Guest side – `GuestSide`
 
-| Hodnota | Popis |
+| Value | Description |
 |---|---|
-| `groom` | Host ženicha |
-| `bride` | Host nevěsty |
+| `groom` | Groom's guest |
+| `bride` | Bride's guest |
 
-#### Věková skupina – `AgeGroup`
+#### Age group – `AgeGroup`
 
-| Hodnota | Popis |
+| Value | Description |
 |---|---|
-| `adult` | Dospělý |
-| `child` | Dítě |
+| `adult` | Adult |
+| `child` | Child |
 
-#### Stav hosta – `GuestStatus`
+#### Guest status – `GuestStatus`
 
-| Hodnota | Zobrazení | Popis |
+| Value | Display | Description |
 |---|---|---|
-| `draft` | Návrh | Host je pouze navržený – může, ale nemusí být pozván |
-| `requested` | Pozván | Pozvánka byla odeslána, čeká se na odpověď |
-| `accepted` | Přijal | Host pozvání přijal |
-| `rejected` | Odmítl | Host pozvání odmítl |
+| `draft` | Návrh (Draft) | The guest is only proposed – may or may not be invited |
+| `requested` | Pozván (Invited) | The invitation has been sent, waiting for a reply |
+| `accepted` | Přijal (Accepted) | The guest accepted the invitation |
+| `rejected` | Odmítl (Declined) | The guest declined the invitation |
 
 ```mermaid
 stateDiagram-v2
     [*] --> Draft
-    Draft --> Requested : odeslání pozvánky
-    Requested --> Accepted : host přijal
-    Requested --> Rejected : host odmítl
-    Accepted --> Rejected : host změnil názor
-    Rejected --> Accepted : host změnil názor
+    Draft --> Requested : invitation sent
+    Requested --> Accepted : guest accepted
+    Requested --> Rejected : guest declined
+    Accepted --> Rejected : guest changed their mind
+    Rejected --> Accepted : guest changed their mind
 ```
 
-> Diagram znázorňuje běžný tok. Aplikace přechody **nevynucuje** – uživatel může stav libovolně změnit (např. opravit chybu).
+> The diagram shows the typical flow. The application **does not enforce** the transitions – the user can change the status freely (e.g. to fix a mistake).
 
-#### Kategorie plánování – `PlanningCategory`
+#### Planning category – `PlanningCategory`
 
-| Hodnota | Zobrazení |
+| Value | Display |
 |---|---|
-| `ceremonyVenue` | Místo obřadu |
-| `receptionVenue` | Místo veselky |
-| `flowers` | Květiny |
-| `decorations` | Výzdoba |
-| `suit` | Oblek |
-| `dress` | Šaty |
-| `bachelorParty` | Rozlučka |
-| `otherActivities` | Další aktivity |
+| `ceremonyVenue` | Místo obřadu (Ceremony venue) |
+| `receptionVenue` | Místo veselky (Reception venue) |
+| `flowers` | Květiny (Flowers) |
+| `decorations` | Výzdoba (Decorations) |
+| `suit` | Oblek (Suit) |
+| `dress` | Šaty (Dress) |
+| `bachelorParty` | Rozlučka (Bachelor/bachelorette party) |
+| `otherActivities` | Další aktivity (Other activities) |
 
-#### Stav položky plánování – `PlanningItemStatus`
+#### Planning item status – `PlanningItemStatus`
 
-| Hodnota | Zobrazení | Popis |
+| Value | Display | Description |
 |---|---|---|
-| `draft` | Návrh | **Výchozí stav.** Možnost, o které se uvažuje |
-| `accepted` | Schváleno | Vybraná / objednaná možnost |
+| `draft` | Návrh | **Default status.** An option being considered |
+| `accepted` | Schváleno (Approved) | The selected / ordered option |
 
-### 4.3 TypeScript definice (`packages/shared`)
+### 4.3 TypeScript definitions (`packages/shared`)
 
 ```ts
 // enums.ts
@@ -263,7 +265,7 @@ export interface Person {
 
 export interface Wedding {
   id: string;
-  title: string;            // např. "Svatba Jana & Petra"
+  title: string;            // e.g. "Svatba Jana & Petra"
   weddingDate?: string;     // ISO 8601 (YYYY-MM-DD)
   groom: Person;
   bride: Person;
@@ -278,7 +280,7 @@ export interface Guest {
   lastName: string;
   side: GuestSide;
   ageGroup: AgeGroup;
-  status: GuestStatus;      // výchozí: 'draft'
+  status: GuestStatus;      // default: 'draft'
   note?: string;
   createdAt: string;
   updatedAt: string;
@@ -289,9 +291,9 @@ export interface PlanningItem {
   weddingId: string;
   category: PlanningCategory;
   name: string;
-  url?: string;             // odkaz na dodavatele
-  price?: number;           // v CZK, nepovinné
-  status: PlanningItemStatus; // výchozí: 'draft'
+  url?: string;             // link to the vendor
+  price?: number;           // in CZK, optional
+  status: PlanningItemStatus; // default: 'draft'
   createdAt: string;
   updatedAt: string;
 }
@@ -299,167 +301,167 @@ export interface PlanningItem {
 
 ---
 
-## 5. Funkční specifikace
+## 5. Functional specification
 
 ### 5.1 Dashboard
 
-Dashboard slouží **čistě pro přehled**.
+The dashboard serves **purely as an overview**.
 
-- Zobrazuje seznam všech plánování (svateb) jako karty.
-- Každá karta obsahuje:
-  - název svatby a jména snoubenců,
-  - datum svatby a počet dní do svatby (pokud je datum vyplněno),
-  - počet hostů (celkem / přijalo),
-  - celkový rozpočet.
-- Tlačítko **„Přidat plánování"** otevře formulář pro vytvoření nové svatby.
-- Kliknutím na kartu uživatel přejde do detailu plánování.
+- It displays a list of all plannings (weddings) as cards.
+- Each card contains:
+  - the wedding title and the names of the couple,
+  - the wedding date and the number of days until the wedding (if the date is filled in),
+  - the number of guests (total / accepted),
+  - the total budget.
+- The **"Přidat plánování" (Add planning)** button opens a form for creating a new wedding.
+- Clicking a card takes the user to the planning detail.
 
-### 5.2 Snoubenci
+### 5.2 Couple
 
-Formulář se dvěma bloky – **Ženich** a **Nevěsta**. Oba mají stejná pole:
+A form with two blocks – **Ženich (Groom)** and **Nevěsta (Bride)**. Both have the same fields:
 
-| Pole | Povinné | Poznámka |
+| Field | Required | Note |
 |---|---|---|
-| Jméno | ✅ | |
-| Příjmení | ✅ | |
-| Rok narození | ❌ | |
+| First name | ✅ | |
+| Last name | ✅ | |
+| Year of birth | ❌ | |
 | E-mail | ❌ | |
-| Telefon | ❌ | |
-| Poznámka | ❌ | Volný text |
+| Phone | ❌ | |
+| Note | ❌ | Free text |
 
-Společně s nimi se edituje i **název svatby** a **datum svatby**.
+The **wedding title** and **wedding date** are edited together with them.
 
-### 5.3 Hosté
+### 5.3 Guests
 
-Hosté se zobrazují v jedné společné tabulce.
+Guests are displayed in a single shared table.
 
-#### Pole hosta
+#### Guest fields
 
-| Pole | Povinné | Výchozí hodnota |
+| Field | Required | Default value |
 |---|---|---|
-| Jméno | ✅ | |
-| Příjmení | ❌ | u členů rodiny se nevyplňuje – příjmení nese název rodiny |
-| Strana (ženich / nevěsta) | ✅ | u členů rodiny ji určuje rodina |
-| Věková skupina (dospělý / dítě) | ✅ | Dospělý |
-| Stav | ✅ | Návrh (`draft`) |
-| Rodina | ❌ | |
-| Poznámka | ❌ | |
+| First name | ✅ | |
+| Last name | ❌ | not filled in for family members – the last name is carried by the family name |
+| Side (groom / bride) | ✅ | for family members it is determined by the family |
+| Age group (adult / child) | ✅ | Adult |
+| Status | ✅ | Návrh (`draft`) |
+| Family | ❌ | |
+| Note | ❌ | |
 
-#### Rodiny
+#### Families
 
-Rodinu (`Rodina Novákovi`) zadává uživatel **najednou**: název, stranu a seznam
-členů. U každého člena volí věkovou skupinu, **stranu volí pro rodinu jako celek**.
+The user enters a family (`Rodina Novákovi` – the Novák family) **all at once**: name, side and a list of
+members. For each member they choose the age group; **the side is chosen for the family as a whole**.
 
-> **Rodina nemá vlastní záznam.** Je to skupina hostů se stejným `family.id`
-> a názvem. Díky tomu zůstává strana na hostovi, takže filtry i statistiky
-> fungují beze změny – a nemůže se stát, že by se strana rodiny rozešla se
-> stranou jejích členů. Cenou je, že přejmenování rodiny nebo její přesun na
-> druhou stranu přepíše všechny její členy.
+> **A family has no record of its own.** It is a group of guests with the same `family.id`
+> and name. Thanks to this, the side stays on the guest, so filters and statistics
+> work unchanged – and the family's side can never diverge from
+> the side of its members. The price is that renaming a family or moving it to
+> the other side rewrites all of its members.
 
-- Seznam členů je při úpravě **úplný**: kdo v něm chybí, přestává být hostem.
-  Jinak by nešlo člena odebrat.
-- Smazání rodiny smaže i všechny členy.
-- Stav pozvánky si drží **každý člen zvlášť** – jeden z rodiny může odmítnout.
-- Rodina bez členů nedává smysl, proto ji API odmítne.
+- When editing, the member list is **complete**: anyone missing from it stops being a guest.
+  Otherwise it would be impossible to remove a member.
+- Deleting a family also deletes all its members.
+- The invitation status is held by **each member separately** – one member of the family can decline.
+- A family without members makes no sense, so the API rejects it.
 
-#### Funkce
+#### Features
 
-- **Přidání, úprava a smazání** hosta.
-- **Rychlá změna stavu** přímo ze seznamu (bez otevírání formuláře).
-- **Zadání celé rodiny najednou** – viz níže.
-- **Filtrování** podle strany, věkové skupiny a stavu.
-- **Vyhledávání** podle jména.
-- **Řazení** podle příjmení (výchozí) nebo jména. Volba není filtr, takže ji
-  „Zrušit filtry" nechává být. Při shodě rozhoduje to druhé jméno a porovnává
-  se česky – `Čermák` patří za `Cach`, ne až za `Žák`.
-- **Jméno se vypisuje v pořadí, ve kterém se řadí** (`Novák Petr` při řazení
-  podle příjmení). Jinak vypadá seznam rozbitě: oko čte první slovo, takže
-  `Jana Adamová, Petr Novák` působí jako náhodné pořadí.
-- **Souhrnné statistiky** nad tabulkou:
+- **Adding, editing and deleting** a guest.
+- **Quick status change** directly from the list (without opening the form).
+- **Entering a whole family at once** – see below.
+- **Filtering** by side, age group and status.
+- **Searching** by name.
+- **Sorting** by last name (default) or first name. The choice is not a filter, so
+  "Zrušit filtry" (Clear filters) leaves it alone. On a tie the other name decides, and the comparison
+  uses Czech collation – `Čermák` belongs after `Cach`, not after `Žák`.
+- **The name is displayed in the order in which it is sorted** (`Novák Petr` when sorting
+  by last name). Otherwise the list looks broken: the eye reads the first word, so
+  `Jana Adamová, Petr Novák` comes across as a random order.
+- **Summary statistics** above the table:
 
-| Statistika | Výpočet |
+| Statistic | Calculation |
 |---|---|
-| Celkem hostů | všichni kromě `rejected` |
-| Potvrzeno | počet `accepted` |
-| Čeká na odpověď | počet `requested` |
-| Návrhy | počet `draft` |
-| Odmítnuto | počet `rejected` |
-| Ženich / Nevěsta | rozdělení podle strany |
-| Dospělí / Děti | rozdělení podle věkové skupiny |
+| Celkem hostů (Total guests) | everyone except `rejected` |
+| Potvrzeno (Confirmed) | count of `accepted` |
+| Čeká na odpověď (Awaiting reply) | count of `requested` |
+| Návrhy (Drafts) | count of `draft` |
+| Odmítnuto (Declined) | count of `rejected` |
+| Ženich / Nevěsta (Groom / Bride) | breakdown by side |
+| Dospělí / Děti (Adults / Children) | breakdown by age group |
 
-#### Členění přehledu
+#### Overview layout
 
-Strana **není štítek u jména, ale celá sekce**. Seznam má dva oddíly –
-*Ženich* a *Nevěsta* – a uvnitř každého stojí nejdřív rodiny jako ohraničené
-bloky a pod nimi jednotlivci. U jména už se strana neopakuje, plyne z toho,
-kde host stojí.
+The side **is not a tag next to the name, but a whole section**. The list has two parts –
+*Ženich* and *Nevěsta* – and inside each, families come first as bordered
+blocks, with individuals below them. The side is no longer repeated next to the name; it follows from
+where the guest is placed.
 
-Členové rodiny se uvnitř bloku řadí podle zvoleného řazení, tedy abecedně
-podle křestního jména – příjmení nemají. Pořadí, ve kterém je uživatel zapsal,
-se nezachovává.
+Family members within a block are sorted according to the selected sorting, i.e. alphabetically
+by first name – they have no last names. The order in which the user entered them
+is not preserved.
 
-**Rodiny jsou sbalené.** Deset rodin po čtyřech členech je čtyřicet řádků
-a přehled by se v nich ztratil, takže se ve výchozím stavu ukazuje jen
-hlavička se souhrnem (`4 členové · 2 děti`). Rozbaluje se kliknutím.
+**Families are collapsed.** Ten families of four members each make forty rows
+and the overview would get lost in them, so by default only
+a header with a summary (`4 členové · 2 děti` – 4 members · 2 children) is shown. It expands on click.
 
-> ℹ️ Při aktivním hledání nebo filtru se **všechny rodiny rozbalí samy**.
-> Shoda schovaná ve sbalené rodině by vypadala, že host neexistuje.
+> ℹ️ When a search or filter is active, **all families expand automatically**.
+> A match hidden inside a collapsed family would make it look as if the guest did not exist.
 
-> **Mobilní zobrazení:** Na úzkých displejích se tabulka vykresluje jako seznam karet (jméno, barevný štítek stavu, ikona strany a věkové skupiny). Na širších displejích jako klasická tabulka.
+> **Mobile view:** On narrow displays the table is rendered as a list of cards (name, coloured status tag, side and age group icon). On wider displays as a classic table.
 
-### 5.4 Sekce plánování
+### 5.4 Planning sections
 
-Aplikace obsahuje jedenáct pevně daných sekcí:
+The application contains eleven fixed sections:
 
-1. Místo obřadu
-2. Místo veselky
-3. Jídlo
-4. Pití
-5. Květiny
-6. Výzdoba
-7. Oblek
-8. Šaty
-9. Prstýnky
-10. Rozlučka
-11. Další aktivity
+1. Místo obřadu (Ceremony venue)
+2. Místo veselky (Reception venue)
+3. Jídlo (Food)
+4. Pití (Drinks)
+5. Květiny (Flowers)
+6. Výzdoba (Decorations)
+7. Oblek (Suit)
+8. Šaty (Dress)
+9. Prstýnky (Rings)
+10. Rozlučka (Bachelor/bachelorette party)
+11. Další aktivity (Other activities)
 
-Pořadí není abecední, ale tematické: jídlo a pití stojí hned za místem
-veselky, ke kterému se vážou, prstýnky za obleky a šaty.
+The order is not alphabetical but thematic: food and drinks come right after the
+reception venue they relate to, rings after the suit and dress.
 
-Každá sekce obsahuje **libovolný počet položek** (např. více variant míst obřadu, mezi kterými se rozhoduje).
+Each section contains **any number of items** (e.g. several ceremony venue options to decide between).
 
-#### Pole položky
+#### Item fields
 
-| Pole | Povinné | Výchozí hodnota | Poznámka |
+| Field | Required | Default value | Note |
 |---|---|---|---|
-| Název | ✅ | | |
-| URL | ❌ | | Odkaz na dodavatele, otevírá se v nové záložce |
-| Cena | ❌ | | Kladné číslo v CZK |
-| Stav | ✅ | Návrh (`draft`) | Návrh / Schváleno |
+| Name | ✅ | | |
+| URL | ❌ | | Link to the vendor, opens in a new tab |
+| Price | ❌ | | Positive number in CZK |
+| Status | ✅ | Návrh (`draft`) | Návrh / Schváleno |
 
-#### Funkce
+#### Features
 
-- Přehled sekcí zobrazuje u každé sekce počet položek, počet schválených položek a součet cen.
-- V detailu sekce lze položky přidávat, upravovat, mazat a měnit jejich stav.
+- The section overview shows, for each section, the number of items, the number of approved items and the sum of prices.
+- In the section detail, items can be added, edited, deleted and their status changed.
 
-### 5.5 Rozpočet
+### 5.5 Budget
 
-Stránka Rozpočet **vezme všechny zadané částky** z položek plánování a sečte je.
+The Budget page **takes all entered amounts** from the planning items and adds them up.
 
-#### Zobrazované hodnoty
+#### Displayed values
 
-| Hodnota | Výpočet |
+| Value | Calculation |
 |---|---|
-| **Celkem** | součet cen všech položek |
-| **Schváleno** | součet cen položek ve stavu `accepted` |
-| **Návrhy** | součet cen položek ve stavu `draft` |
-| **Rozpis podle sekcí** | celkem / schváleno / návrhy pro každou sekci |
-| **Položky bez ceny** | počet položek, které nemají vyplněnou cenu (upozornění, že rozpočet nemusí být úplný) |
+| **Celkem (Total)** | sum of prices of all items |
+| **Schváleno** | sum of prices of items with status `accepted` |
+| **Návrhy** | sum of prices of items with status `draft` |
+| **Rozpis podle sekcí (Breakdown by section)** | total / approved / drafts for each section |
+| **Položky bez ceny (Items without a price)** | number of items that have no price filled in (a warning that the budget may be incomplete) |
 
-#### Pravidla výpočtu
+#### Calculation rules
 
-- Položky bez ceny se do součtů **nezapočítávají** (počítají se jako 0), ale jsou evidovány v počtu „bez ceny".
-- Rozpočet se **nikam neukládá** – vždy se počítá dynamicky z aktuálních položek.
+- Items without a price are **not included** in the sums (they count as 0), but they are tracked in the "without a price" count.
+- The budget is **not stored anywhere** – it is always calculated dynamically from the current items.
 
 ```ts
 // packages/shared/src/budget.ts
@@ -475,43 +477,43 @@ export interface BudgetSummary extends BudgetBreakdown {
 }
 
 export function calculateBudget(items: PlanningItem[]): BudgetSummary {
-  // Pro každou položku:
+  // For each item:
   //  - price === undefined → itemsWithoutPrice++
-  //  - jinak přičíst k total a podle status k accepted / draft
-  //  - totéž provést i v rámci byCategory[item.category]
+  //  - otherwise add to total and, depending on status, to accepted / draft
+  //  - do the same within byCategory[item.category]
 }
 ```
 
-> Funkce `calculateBudget` je ve sdíleném balíčku, takže ji lze použít jak na backendu (endpoint `/budget`), tak na frontendu (okamžitý přepočet bez volání API).
+> The `calculateBudget` function lives in the shared package, so it can be used both on the backend (the `/budget` endpoint) and on the frontend (instant recalculation without calling the API).
 
 ---
 
-## 6. Obrazovky a navigace
+## 6. Screens and navigation
 
-### 6.1 Routy
+### 6.1 Routes
 
-Aplikace běží pod cestou **`/izi-weddy`** uvnitř portálu. Routy níže se proto
-uvádějí relativně k tomuto základu – `/weddings/new` je v prohlížeči
+The application runs under the **`/izi-weddy`** path inside the portal. The routes below are therefore
+given relative to this base – `/weddings/new` is, in the browser,
 `www.fridrich.cloud/izi-weddy/weddings/new`.
 
-Základ nikde nefiguruje natvrdo: drží ho konstanta `WEDDY_BASE` v `weddy/routes.ts`
-a odkazy si ho skládají přes `weddyPath('/weddings/new')`. Přesun pod jinou
-cestu je tedy změna jednoho řádku.
+The base is not hard-coded anywhere: it is held by the `WEDDY_BASE` constant in `weddy/routes.ts`
+and links compose it via `weddyPath('/weddings/new')`. Moving under a different
+path is therefore a one-line change.
 
-| Routa | Stránka |
+| Route | Page |
 |---|---|
 | `/` | Dashboard |
-| `/weddings/new` | Nové plánování |
-| `/weddings/:weddingId` | Přehled plánování (souhrn) |
-| `/weddings/:weddingId/couple` | Snoubenci |
-| `/weddings/:weddingId/guests` | Hosté |
-| `/weddings/:weddingId/planning` | Přehled sekcí plánování |
-| `/weddings/:weddingId/planning/:category` | Detail sekce (seznam položek) |
-| `/weddings/:weddingId/budget` | Rozpočet |
+| `/weddings/new` | New planning |
+| `/weddings/:weddingId` | Planning overview (summary) |
+| `/weddings/:weddingId/couple` | Couple |
+| `/weddings/:weddingId/guests` | Guests |
+| `/weddings/:weddingId/planning` | Planning sections overview |
+| `/weddings/:weddingId/planning/:category` | Section detail (list of items) |
+| `/weddings/:weddingId/budget` | Budget |
 
-### 6.2 Navigace na mobilu
+### 6.2 Mobile navigation
 
-V rámci detailu plánování je ve spodní části obrazovky **bottom navigation bar** se čtyřmi záložkami:
+Within the planning detail, there is a **bottom navigation bar** at the bottom of the screen with four tabs:
 
 ```
 ┌─────────────────────────────────────┐
@@ -526,51 +528,51 @@ V rámci detailu plánování je ve spodní části obrazovky **bottom navigatio
 └─────────────────────────────────────┘
 ```
 
-### 6.3 Zásady mobile-first UI
+### 6.3 Mobile-first UI principles
 
-- Návrh začíná od šířky **360 px**, desktopové rozložení se řeší až přes media queries.
-- Dotykové prvky mají minimální velikost **44 × 44 px**.
-- Primární akce (např. „Přidat hosta") jako **plovoucí tlačítko (FAB)** v pravém dolním rohu.
-- Formuláře se otevírají jako **bottom sheet** nebo na celou obrazovku.
-- Stavy jsou rozlišené barevným štítkem **i textem** (nejen barvou – kvůli přístupnosti).
-- Pro numerická pole (cena, rok) se používá `inputmode="numeric"`, aby se na mobilu otevřela číselná klávesnice.
+- The design starts at a width of **360 px**; the desktop layout is handled only via media queries.
+- Touch targets have a minimum size of **44 × 44 px**.
+- The primary action (e.g. "Přidat hosta" (Add guest)) as a **floating action button (FAB)** in the bottom right corner.
+- Forms open as a **bottom sheet** or full screen.
+- Statuses are distinguished by a coloured tag **and by text** (not just by colour – for accessibility).
+- Numeric fields (price, year) use `inputmode="numeric"` so that a numeric keyboard opens on mobile.
 
 ---
 
 ## 7. REST API
 
-Všechny endpointy mají prefix `/api`. Data se přenášejí ve formátu JSON.
+All endpoints have the `/api` prefix. Data is transferred in JSON format.
 
-### 7.1 Plánování (svatby)
+### 7.1 Plannings (weddings)
 
-| Metoda | Endpoint | Popis |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/weddy/weddings` | Seznam svateb vč. souhrnných statistik pro dashboard |
-| `POST` | `/api/weddy/weddings` | Vytvoření svatby |
-| `GET` | `/api/weddy/weddings/{weddingId}` | Detail svatby |
-| `PUT` | `/api/weddy/weddings/{weddingId}` | Úprava svatby (název, datum, snoubenci) |
-| `DELETE` | `/api/weddy/weddings/{weddingId}` | Smazání svatby včetně hostů a položek |
+| `GET` | `/api/weddy/weddings` | List of weddings incl. summary statistics for the dashboard |
+| `POST` | `/api/weddy/weddings` | Create a wedding |
+| `GET` | `/api/weddy/weddings/{weddingId}` | Wedding detail |
+| `PUT` | `/api/weddy/weddings/{weddingId}` | Update a wedding (title, date, couple) |
+| `DELETE` | `/api/weddy/weddings/{weddingId}` | Delete a wedding including its guests and items |
 
-### 7.2 Hosté
+### 7.2 Guests
 
-| Metoda | Endpoint | Popis |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/weddy/weddings/{weddingId}/guests` | Seznam hostů (volitelné filtry `?side=`, `?ageGroup=`, `?status=`) |
-| `POST` | `/api/weddy/weddings/{weddingId}/guests` | Přidání hosta |
-| `PUT` | `/api/weddy/weddings/{weddingId}/guests/{guestId}` | Úprava hosta |
-| `PATCH` | `/api/weddy/weddings/{weddingId}/guests/{guestId}/status` | Rychlá změna stavu |
-| `DELETE` | `/api/weddy/weddings/{weddingId}/guests/{guestId}` | Smazání hosta |
+| `GET` | `/api/weddy/weddings/{weddingId}/guests` | List of guests (optional filters `?side=`, `?ageGroup=`, `?status=`) |
+| `POST` | `/api/weddy/weddings/{weddingId}/guests` | Add a guest |
+| `PUT` | `/api/weddy/weddings/{weddingId}/guests/{guestId}` | Update a guest |
+| `PATCH` | `/api/weddy/weddings/{weddingId}/guests/{guestId}/status` | Quick status change |
+| `DELETE` | `/api/weddy/weddings/{weddingId}/guests/{guestId}` | Delete a guest |
 
-#### Rodiny
+#### Families
 
-Rodina nemá vlastní záznam, takže **čtecí endpoint neexistuje** – poskládá se
-ze seznamu hostů přes `groupIntoFamilies()` v `@fridrich/weddy-shared`.
+A family has no record of its own, so **there is no read endpoint** – it is assembled
+from the guest list via `groupIntoFamilies()` in `@fridrich/weddy-shared`.
 
-| Metoda | Endpoint | Popis |
+| Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/weddy/weddings/{weddingId}/families` | Založení rodiny i se členy |
-| `PUT` | `/api/weddy/weddings/{weddingId}/families/{familyId}` | Přepis rodiny; chybějící členové se smažou |
-| `DELETE` | `/api/weddy/weddings/{weddingId}/families/{familyId}` | Smazání rodiny i všech členů |
+| `POST` | `/api/weddy/weddings/{weddingId}/families` | Create a family together with its members |
+| `PUT` | `/api/weddy/weddings/{weddingId}/families/{familyId}` | Overwrite a family; missing members are deleted |
+| `DELETE` | `/api/weddy/weddings/{weddingId}/families/{familyId}` | Delete a family and all its members |
 
 ```jsonc
 // POST /api/weddy/weddings/{weddingId}/families
@@ -586,27 +588,27 @@ ze seznamu hostů přes `groupIntoFamilies()` v `@fridrich/weddy-shared`.
 }
 ```
 
-Při úpravě nese existující člen `id`; bez něj vznikne nový.
+When updating, an existing member carries its `id`; without it, a new one is created.
 
-### 7.3 Položky plánování
+### 7.3 Planning items
 
-| Metoda | Endpoint | Popis |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/weddy/weddings/{weddingId}/items` | Seznam položek (volitelný filtr `?category=`) |
-| `POST` | `/api/weddy/weddings/{weddingId}/items` | Přidání položky |
-| `PUT` | `/api/weddy/weddings/{weddingId}/items/{itemId}` | Úprava položky |
-| `PATCH` | `/api/weddy/weddings/{weddingId}/items/{itemId}/status` | Rychlá změna stavu |
-| `DELETE` | `/api/weddy/weddings/{weddingId}/items/{itemId}` | Smazání položky |
+| `GET` | `/api/weddy/weddings/{weddingId}/items` | List of items (optional filter `?category=`) |
+| `POST` | `/api/weddy/weddings/{weddingId}/items` | Add an item |
+| `PUT` | `/api/weddy/weddings/{weddingId}/items/{itemId}` | Update an item |
+| `PATCH` | `/api/weddy/weddings/{weddingId}/items/{itemId}/status` | Quick status change |
+| `DELETE` | `/api/weddy/weddings/{weddingId}/items/{itemId}` | Delete an item |
 
-### 7.4 Rozpočet
+### 7.4 Budget
 
-| Metoda | Endpoint | Popis |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/weddy/weddings/{weddingId}/budget` | Vypočítaný rozpočet |
+| `GET` | `/api/weddy/weddings/{weddingId}/budget` | Calculated budget |
 
-### 7.5 Příklady
+### 7.5 Examples
 
-**Vytvoření položky plánování**
+**Creating a planning item**
 
 ```http
 POST /api/weddy/weddings/7f3c.../items
@@ -620,7 +622,7 @@ Content-Type: application/json
 }
 ```
 
-Odpověď `201 Created`:
+Response `201 Created`:
 
 ```json
 {
@@ -636,7 +638,7 @@ Odpověď `201 Created`:
 }
 ```
 
-**Rozpočet**
+**Budget**
 
 ```http
 GET /api/weddy/weddings/7f3c.../budget
@@ -656,16 +658,16 @@ GET /api/weddy/weddings/7f3c.../budget
 }
 ```
 
-### 7.6 Chybové odpovědi
+### 7.6 Error responses
 
-| Kód | Kdy |
+| Code | When |
 |---|---|
-| `400 Bad Request` | Neplatná data (validace selhala) |
-| `401 Unauthorized` | Uživatel není přihlášen *(pokud bude autentizace)* |
-| `404 Not Found` | Svatba / host / položka neexistuje |
-| `500 Internal Server Error` | Neočekávaná chyba serveru |
+| `400 Bad Request` | Invalid data (validation failed) |
+| `401 Unauthorized` | The user is not signed in *(if there will be authentication)* |
+| `404 Not Found` | The wedding / guest / item does not exist |
+| `500 Internal Server Error` | Unexpected server error |
 
-Formát chyby:
+Error format:
 
 ```json
 {
@@ -677,7 +679,7 @@ Formát chyby:
 }
 ```
 
-### 7.7 Ukázka Azure Function
+### 7.7 Azure Function example
 
 ```ts
 // apps/api/src/functions/items.ts
@@ -710,71 +712,71 @@ app.http('createItem', {
 
 ---
 
-## 8. Validační pravidla
+## 8. Validation rules
 
-Validace je implementována ve sdíleném balíčku a spouští se **na frontendu** (okamžitá zpětná vazba) i **na backendu** (bezpečnost).
+Validation is implemented in the shared package and runs **on the frontend** (instant feedback) as well as **on the backend** (security).
 
-| Entita | Pole | Pravidlo |
+| Entity | Field | Rule |
 |---|---|---|
-| Person | `firstName`, `lastName` | povinné, 1–100 znaků |
-| Person | `birthYear` | celé číslo, 1900 – aktuální rok |
-| Person | `email` | platný formát e-mailu |
-| Wedding | `title` | povinné, 1–200 znaků |
-| Wedding | `weddingDate` | platné datum ve formátu `YYYY-MM-DD` |
-| Guest | `firstName`, `lastName` | povinné, 1–100 znaků |
+| Person | `firstName`, `lastName` | required, 1–100 characters |
+| Person | `birthYear` | integer, 1900 – current year |
+| Person | `email` | valid e-mail format |
+| Wedding | `title` | required, 1–200 characters |
+| Wedding | `weddingDate` | valid date in `YYYY-MM-DD` format |
+| Guest | `firstName`, `lastName` | required, 1–100 characters |
 | Guest | `side` | `groom` \| `bride` |
 | Guest | `ageGroup` | `adult` \| `child` |
 | Guest | `status` | `draft` \| `requested` \| `accepted` \| `rejected` |
-| PlanningItem | `name` | povinné, 1–200 znaků |
-| PlanningItem | `url` | pokud je vyplněno, musí být platná URL (`http://` nebo `https://`) |
-| PlanningItem | `price` | pokud je vyplněno, číslo ≥ 0 |
-| PlanningItem | `category` | jedna z 8 kategorií |
+| PlanningItem | `name` | required, 1–200 characters |
+| PlanningItem | `url` | if filled in, must be a valid URL (`http://` or `https://`) |
+| PlanningItem | `price` | if filled in, a number ≥ 0 |
+| PlanningItem | `category` | one of the 8 categories |
 | PlanningItem | `status` | `draft` \| `accepted` |
 
 ---
 
-## 9. Ukládání dat
+## 9. Data storage
 
-**Doporučení:** Azure Cosmos DB (NoSQL API) v režimu **serverless** – pro aplikaci s malým provozem je nejlevnější a nevyžaduje správu kapacity.
+**Recommendation:** Azure Cosmos DB (NoSQL API) in **serverless** mode – for a low-traffic application it is the cheapest option and requires no capacity management.
 
-| Kontejner | Partition key | Obsah |
+| Container | Partition key | Contents |
 |---|---|---|
-| `weddings` | `/id` | Svatby včetně údajů o snoubencích |
-| `guests` | `/weddingId` | Hosté |
-| `planningItems` | `/weddingId` | Položky plánování |
+| `weddings` | `/id` | Weddings including details about the couple |
+| `guests` | `/weddingId` | Guests |
+| `planningItems` | `/weddingId` | Planning items |
 
-Partition key `weddingId` zajistí, že všechny dotazy v rámci jedné svatby (seznam hostů, rozpočet) jsou levné a rychlé.
+The `weddingId` partition key ensures that all queries within a single wedding (guest list, budget) are cheap and fast.
 
-> **Alternativa:** Azure Table Storage – ještě levnější a jednodušší, ale s omezenějšími možnostmi dotazování.
+> **Alternative:** Azure Table Storage – even cheaper and simpler, but with more limited querying capabilities.
 
 ---
 
-## 10. Lokální vývoj
+## 10. Local development
 
-### Požadavky
+### Requirements
 
-- Node.js 20 LTS nebo novější
-- Cosmos DB Emulator nebo připojení ke vzdálené Cosmos DB
+- Node.js 20 LTS or newer
+- Cosmos DB Emulator or a connection to a remote Cosmos DB
 
 [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
-přinese `npm install` jako devDependency `apps/api` – globálně se instalovat nemusí.
+are brought in by `npm install` as a devDependency of `apps/api` – they do not need to be installed globally.
 
-### Spuštění
+### Running
 
 ```bash
-# Instalace závislostí pro všechny workspaces
+# Install dependencies for all workspaces
 npm install
 
-# Ve dvou terminálech
+# In two terminals
 npm run dev:api      # :7071
-npm run dev:portal   # :5173 – tudy se chodí
+npm run dev:portal   # :5173 – this is the one you open
 ```
 
-Plánovač se otevírá na **`http://localhost:5173/izi-weddy/`**. Vlastní dev
-server nemá – je to táž aplikace jako portál. Když je port obsazený, Vite
-uskočí na další volný a vypíše ho při startu.
+The planner opens at **`http://localhost:5173/izi-weddy/`**. It has no dev
+server of its own – it is the same application as the portal. If the port is taken, Vite
+moves to the next free one and prints it at startup.
 
-### Doporučené skripty v root `package.json`
+### Recommended scripts in the root `package.json`
 
 ```json
 {
@@ -789,7 +791,7 @@ uskočí na další volný a vypíše ho při startu.
 }
 ```
 
-### Konfigurace API (`apps/api/local.settings.json`)
+### API configuration (`apps/api/local.settings.json`)
 
 ```json
 {
@@ -798,49 +800,49 @@ uskočí na další volný a vypíše ho při startu.
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "COSMOS_ENDPOINT": "https://localhost:8081",
-    "COSMOS_KEY": "<klíč-emulátoru>",
+    "COSMOS_KEY": "<emulator-key>",
     "COSMOS_DATABASE": "wedding-planner"
   }
 }
 ```
 
-> ⚠️ Soubor `local.settings.json` **necommitovat** – přidat do `.gitignore`.
+> ⚠️ **Do not commit** the `local.settings.json` file – add it to `.gitignore`.
 
 ---
 
-## 11. Nasazení
+## 11. Deployment
 
-> Závazný popis nasazení je v [architecture.md, kap. 9](architecture.md#9-nasazení).
-> Tahle kapitola jen shrnuje, co z něj plyne pro IziWeddy.
+> The authoritative description of deployment is in [architecture.md, ch. 9](architecture.md#9-nasazení).
+> This chapter only summarises what follows from it for IziWeddy.
 
-IziWeddy se nenasazuje samostatně – je součástí portálu, takže ho publikuje
-nasazení celého webu. Podrobnosti v [architecture.md, kap. 9](architecture.md#9-nasazení).
+IziWeddy is not deployed on its own – it is part of the portal, so it is published by
+the deployment of the whole website. Details in [architecture.md, ch. 9](architecture.md#9-nasazení).
 
-Cenou za to je, že **změna v plánovači znamená nové nasazení celého webu**.
-Při téhle velikosti je to výhodnější než udržovat druhý build, druhé workflow
-a přepisy cest ve Static Web Apps.
+The price for this is that **a change in the planner means a new deployment of the whole website**.
+At this size that is preferable to maintaining a second build, a second workflow
+and path rewrites in Static Web Apps.
 
 ---
 
-## 12. Otevřené otázky a možná rozšíření
+## 12. Open questions and possible extensions
 
-### Otevřené otázky
+### Open questions
 
-| # | Otázka | Návrh |
+| # | Question | Proposal |
 |---|---|---|
-| 1 | Bude aplikace mít přihlašování? Může plánování sdílet více uživatelů (např. oba snoubenci)? | Vestavěná autentizace Azure Static Web Apps (Microsoft / GitHub / Google účet) |
-| 2 | Která UI knihovna? | **Ionic Vue** pro nativní mobilní vzhled, **Vuetify** pro Material Design, **Tailwind** pro plnou kontrolu nad vzhledem |
-| 3 | Má být aplikace instalovatelná na plochu telefonu? | Ano – PWA přes `vite-plugin-pwa` |
-| 4 | Má se u hosta evidovat, zda přijde s doprovodem? | Pole `plusOne: boolean` nebo propojení hostů do skupin/rodin |
-| 5 | Může být v jedné sekci schváleno více položek? (např. u „Další aktivity" dává smysl, u „Místa obřadu" spíše ne) | Zatím povolit, případně jen zobrazit upozornění |
+| 1 | Will the application have sign-in? Can a planning be shared by multiple users (e.g. both partners)? | Built-in Azure Static Web Apps authentication (Microsoft / GitHub / Google account) |
+| 2 | Which UI library? | **Ionic Vue** for a native mobile look, **Vuetify** for Material Design, **Tailwind** for full control over the look |
+| 3 | Should the application be installable on the phone's home screen? | Yes – PWA via `vite-plugin-pwa` |
+| 4 | Should we track whether a guest is bringing a companion? | A `plusOne: boolean` field or linking guests into groups/families |
+| 5 | Can more than one item be approved in a single section? (e.g. for "Další aktivity" it makes sense, for "Místo obřadu" rather not) | Allow it for now, possibly just show a warning |
 
-### Možná rozšíření
+### Possible extensions
 
-- 🎯 **Cílový rozpočet** – zadání maximální částky a zobrazení, kolik zbývá.
-- 💳 **Zálohy a platby** – evidence zaplacené zálohy a zbývající částky u položek.
-- ✅ **Checklist úkolů** s termíny (např. „objednat dort do 1. 5.").
-- 🪑 **Zasedací pořádek** – rozmístění potvrzených hostů ke stolům.
-- 🍽️ **Dietní omezení** hostů (vegetarián, alergie…).
-- 📤 **Export** seznamu hostů a rozpočtu do CSV / Excelu.
-- 🔔 **Notifikace** – připomenutí hostů, kteří dlouho neodpověděli na pozvánku.
-- 🌙 **Tmavý režim**.
+- 🎯 **Target budget** – entering a maximum amount and showing how much remains.
+- 💳 **Deposits and payments** – tracking the deposit paid and the remaining amount for items.
+- ✅ **Task checklist** with deadlines (e.g. "order the cake by 1 May").
+- 🪑 **Seating plan** – assigning confirmed guests to tables.
+- 🍽️ **Dietary restrictions** of guests (vegetarian, allergies…).
+- 📤 **Export** of the guest list and budget to CSV / Excel.
+- 🔔 **Notifications** – reminders for guests who have not replied to the invitation for a long time.
+- 🌙 **Dark mode**.

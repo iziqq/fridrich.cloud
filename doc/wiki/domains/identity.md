@@ -1,102 +1,101 @@
 ---
-title: Doména identity
-type: domena
+title: identity domain
+type: domain
 sources:
-  - kód: apps/api/src/{domain,application,endpoints}/identity, apps/portal/src/identity
-  - historie: doc/architecture.md kap. 5 (commit 8db5e0a)
+  - code: apps/api/src/{domain,application,endpoints}/identity, apps/portal/src/identity
+  - history: doc/architecture.md ch. 5 (commit 8db5e0a)
 updated: 2026-09-15
 ---
 
-# Doména `identity`
+# `identity` domain
 
-> Vlastní účet na fridrich.cloud, **bez hesel**. Registrace jménem a e-mailem,
-> aktivace odkazem, přihlášení šestimístným kódem ze schránky, session
-> v httpOnly cookie. Jeden účet pro portál i všechny produkty.
+> An own account on fridrich.cloud, **without passwords**. Registration with a
+> name and e-mail, activation via a link, login with a six-digit code from the
+> mailbox, session in an httpOnly cookie. One account for the portal and all products.
 
-## Rozhodnutí
+## Decisions
 
-- ✅ **Identita je vlastní modul API**, ne Microsoft Entra External ID –
-  cizí přihlašovací obrazovka by nešla sladit se vzhledem portálu.
-- ✅ **Bez hesel.** Totožnost prokazuje přístup do schránky. Odpadá hashování,
-  politika hesel, obnova i credential stuffing. Cena: bezpečnost účtu = bezpečnost
-  schránky a výpadek pošty = výpadek přihlašování.
+- ✅ **Identity is our own API module**, not Microsoft Entra External ID – a
+  third-party login screen could not match the portal look.
+- ✅ **No passwords.** Identity is proven by access to the mailbox. No hashing,
+  password policy, recovery or credential stuffing. The price: account security
+  = mailbox security, and a mail outage = a login outage.
 
-## Toky
+## Flows
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Registrace : jméno + e-mail
-    Registrace --> Aktivni : klik na aktivační odkaz (24 h) → rovnou přihlášen
-    Aktivni --> KodOdeslan : zadal e-mail na /prihlaseni
-    KodOdeslan --> Prihlasen : opsal 6místný kód (10 min, 5 pokusů)
-    KodOdeslan --> Aktivni : kód vypršel nebo došly pokusy
-    Prihlasen --> Aktivni : odhlášení
+    [*] --> Registered : name + e-mail
+    Registered --> Active : clicks activation link (24 h) → signed in right away
+    Active --> CodeSent : enters e-mail on /prihlaseni
+    CodeSent --> SignedIn : types the 6-digit code (10 min, 5 attempts)
+    CodeSent --> Active : code expired or attempts used up
+    SignedIn --> Active : sign out
 ```
 
-Úspěšné přihlášení kódem zároveň ověří e-mail – účet jde aktivovat i bez
-kliknutí na odkaz.
+A successful login with a code also verifies the e-mail – an account can be
+activated without clicking the link.
 
-## Doménový model (`apps/api/src/domain/identity`)
+## Domain model (`apps/api/src/domain/identity`)
 
-| Objekt | Odpovědnost |
+| Object | Responsibility |
 |---|---|
-| `User` | Agregát – e-mail, jméno, stav ověření. `register`, `verifyEmail`, `rename`, `changeEmail` (vynuluje ověření), `toPublic`. Jméno validuje přes `DisplayNameSchema`. |
-| `EmailAddress` | Hodnotový objekt – normalizace na lowercase a tvar přes `AccountEmailSchema`. |
-| `OneTimeToken` | Aktivační odkaz – expirace 24 h, jednorázovost (`consume`). |
-| `LoginCode` | Přihlašovací výzva – platnost 10 min, max. 5 pokusů, jediná cesta dovnitř přes `verify()`. |
-| `Session` | Přihlášení na 30 dní, posouvá se při aktivitě nejvýš jednou denně (`touch`). |
+| `User` | Aggregate – e-mail, name, verification state. `register`, `verifyEmail`, `rename`, `changeEmail` (resets verification), `toPublic`. Validates the name via `DisplayNameSchema`. |
+| `EmailAddress` | Value object – lowercase normalisation and shape via `AccountEmailSchema`. |
+| `OneTimeToken` | Activation link – 24 h expiry, single use (`consume`). |
+| `LoginCode` | Login challenge – valid 10 min, max. 5 attempts, the only way in is `verify()`. |
+| `Session` | Sign-in for 30 days, extended on activity at most once a day (`touch`). |
 | `ports.ts` | `UserRepository`, `TokenRepository`, `LoginCodeRepository`, `SessionRepository`, `TokenGenerator`, `IdGenerator`, `RateLimiter` |
-| `EmailSender` | Port pro odesílání e-mailů |
+| `EmailSender` | Port for sending e-mails |
 
-Use-casy (`application/identity`): `registerUser`, `verifyEmail`,
-`requestLoginCode`, `verifyLoginCode`, `resolveSession`, `logout`; texty
-e-mailů v `emails.ts`.
+Use cases (`application/identity`): `registerUser`, `verifyEmail`,
+`requestLoginCode`, `verifyLoginCode`, `resolveSession`, `logout`; e-mail texts
+in `emails.ts`.
 
-## Endpointy
+## Endpoints
 
-| Endpoint | Metoda a cesta | Request → Response |
+| Endpoint | Method and path | Request → Response |
 |---|---|---|
-| `register` | `POST /api/auth/register` | `{ email, displayName }` → `202 { message }` – stejná i pro obsazený e-mail |
+| `register` | `POST /api/auth/register` | `{ email, displayName }` → `202 { message }` – identical for an already used e-mail |
 | `verifyEmail` | `POST /api/auth/verify-email` | `{ token }` → `200 User` + session cookie |
-| `requestLoginCode` | `POST /api/auth/login` | `{ email }` → `202 { message }` – stejná i pro neznámou adresu |
+| `requestLoginCode` | `POST /api/auth/login` | `{ email }` → `202 { message }` – identical for an unknown address |
 | `verifyLoginCode` | `POST /api/auth/login/verify` | `{ email, code }` → `200 User` + session cookie |
-| `logout` | `POST /api/auth/logout` | → `204`, smaže cookie |
-| `getCurrentUser` | `GET /api/auth/me` | → `200 User`, `401` bez přihlášení |
+| `logout` | `POST /api/auth/logout` | → `204`, clears the cookie |
+| `getCurrentUser` | `GET /api/auth/me` | → `200 User`, `401` when signed out |
 
-Soubory: `apps/api/src/endpoints/identity/*.endpoint.ts`,
-`apps/portal/src/identity/endpoints/*.endpoint.ts`. `User` =
-`UserSchema` z `@fridrich/shared` (bez čehokoli z bezpečnostní vrstvy).
+Files: `apps/api/src/endpoints/identity/*.endpoint.ts`,
+`apps/portal/src/identity/endpoints/*.endpoint.ts`. `User` = `UserSchema` from
+`@fridrich/shared` (nothing from the security layer).
 
 ## Frontend
 
-- `auth.store.ts` – `user`, `isAuthenticated`, `load()` (sdílí souběžná volání),
+- `auth.store.ts` – `user`, `isAuthenticated`, `load()` (concurrent calls share one request),
   `signInWithCode`, `activateAccount`, `signOut`.
-- `RegisterView` a první krok `LoginView` volají endpointy přímo (stav nemění).
-- `LoginView` pouští návrat (`redirect`) jen na stejný origin – ochrana proti open redirectu.
+- `RegisterView` and the first step of `LoginView` call endpoints directly (no state change).
+- `LoginView` allows the return target (`redirect`) only on the same origin – protection against open redirects.
 
-## Bezpečnostní pravidla
+## Security rules
 
-- **Kód platí 10 minut a přežije 5 chybných pokusů.** Obranou je okno
-  a počítadlo, ne délka kódu. Počítadlo se ukládá i při neúspěchu.
-- **Nový kód zneplatní předchozí.**
-- **Kód chodí jen jako číslo k opsání, ne odkaz** – odkazy proklikávají
-  skenery pošty.
-- **V databázi jen otisky.** Tokeny SHA-256; kód hashovaný s `id` výzvy.
-- **Odpovědi `/register` a `/login` neprozradí, zda e-mail existuje.**
-  Chyba ověření kódu je stejná pro neznámý účet, neplatnou adresu i špatný kód –
-  proto má `verifyLoginCode` schválně volné schéma.
-- **Rate limiting** na registraci (5/h na IP), vyžádání kódu (20/h na IP
-  **a** 5/h na adresu) a ověření kódu (20/15 min na IP). Limity žijí
-  v Cosmos DB (`rateLimits`), aby platily napříč instancemi.
-- **Adresa klienta** z `x-azure-clientip`, jinak **poslední** položka
-  `x-forwarded-for` (první si posílá klient sám).
+- **A code is valid for 10 minutes and survives 5 wrong attempts.** The defence
+  is the window and the counter, not the code length. The counter is saved even on failure.
+- **A new code invalidates the previous one.**
+- **The code is sent only as a number to type, not a link** – links get clicked by mail scanners.
+- **Only hashes in the database.** Tokens SHA-256; the code is hashed together with the challenge `id`.
+- **`/register` and `/login` responses never reveal whether an e-mail exists.**
+  The code verification error is identical for an unknown account, an invalid
+  address and a wrong code – that is why `verifyLoginCode` has a deliberately loose schema.
+- **Rate limiting** on registration (5/h per IP), code request (20/h per IP
+  **and** 5/h per address) and code verification (20/15 min per IP). Limits
+  live in Cosmos DB (`rateLimits`) so they apply across instances.
+- **Client address** from `x-azure-clientip`, otherwise the **last** entry of
+  `x-forwarded-for` (the first one is set by the client).
 - **Session cookie** `fc_session`: `HttpOnly`, `SameSite=Lax`, `Path=/`,
-  `Secure` v produkci, bez `Domain` (jeden origin). Nese náhodný token, ne data.
-- **Ověření session je v obálce endpointu** (`access: 'user'`), ne v handlerech.
-- Do logu nikdy token, kód ani obsah cookie.
+  `Secure` in production, no `Domain` (single origin). Carries a random token, not data.
+- **Session verification is in the endpoint wrapper** (`access: 'user'`), not in handlers.
+- Never log a token, code or cookie content.
 
-## Související
+## Related
 
-- [Backend](../architektura/backend.md) · [Endpointy](../architektura/endpointy.md)
-- [Data v Cosmos DB](../architektura/data-cosmos.md) – kontejnery a TTL
-- [Lokální vývoj](../provoz/lokalni-vyvoj.md) – e-maily do konzole, rate limit při vývoji
+- [Backend](../architecture/backend.md) · [Endpoints](../architecture/endpoints.md)
+- [Data in Cosmos DB](../architecture/dataCosmos.md) – containers and TTL
+- [Local development](../operations/localDevelopment.md) – e-mails to the console, rate limit during development

@@ -1,4 +1,5 @@
 import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
+import type { WeddingInput } from '@fridrich/weddy-shared';
 import type { IdentityDeps } from '../src/application/identity/deps.js';
 import type { WeddyDeps } from '../src/application/weddy/deps.js';
 import type { EmailAddress } from '../src/domain/identity/EmailAddress.js';
@@ -16,15 +17,12 @@ import type {
   TokenRepository,
   UserRepository,
 } from '../src/domain/identity/ports.js';
-import { Guest } from '../src/domain/weddy/Guest.js';
-import { PlanningItem } from '../src/domain/weddy/PlanningItem.js';
-import { Wedding } from '../src/domain/weddy/Wedding.js';
-import type {
-  GuestFilter,
-  GuestRepository,
-  PlanningItemRepository,
-  WeddingRepository,
-} from '../src/domain/weddy/ports.js';
+import { Guest } from '../src/domain/weddy/guests/Guest.js';
+import type { GuestFilter, GuestRepository } from '../src/domain/weddy/guests/GuestRepository.js';
+import { PlanningItem } from '../src/domain/weddy/planning/PlanningItem.js';
+import type { PlanningItemRepository } from '../src/domain/weddy/planning/PlanningItemRepository.js';
+import { Wedding } from '../src/domain/weddy/wedding/Wedding.js';
+import type { WeddingRepository } from '../src/domain/weddy/wedding/WeddingRepository.js';
 import { FixedClock } from '../src/domain/shared/Clock.js';
 
 /**
@@ -317,7 +315,7 @@ export function weddyTestDeps(): WeddyTestContext {
   };
 }
 
-export const validWedding = {
+export const validWedding: WeddingInput = {
   title: 'Svatba Jana & Petra',
   weddingDate: '2026-08-15',
   groom: { firstName: 'Petr', lastName: 'Novák' },

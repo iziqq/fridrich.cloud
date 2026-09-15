@@ -1,93 +1,94 @@
 ---
-title: Typy a validace – Valibot
-type: koncept
+title: Types and validation – Valibot
+type: concept
 sources:
-  - raw/2026-09-15-domenova-architektura.md
-  - kód: packages/shared/src/validation.ts, packages/weddy-shared/src
+  - raw/2026-09-15-domainArchitecture.md
+  - code: packages/shared/src/validation.ts, packages/weddy-shared/src
 updated: 2026-09-15
 ---
 
-# Typy a validace – Valibot
+# Types and validation – Valibot
 
-> Každý typ, který přechází po drátě nebo přichází od uživatele, vzniká
-> z **Valibot schématu** a TypeScript typ se z něj odvozuje
-> (`v.InferOutput` / `v.InferInput`). Ruční `interface` pro data API se
-> nepíše. Stejné schéma validuje formulář, požadavek na backendu i odpověď
-> na frontendu.
+> Every type that crosses the wire or comes from a user is created from a
+> **Valibot schema**, and the TypeScript type is derived from it
+> (`v.InferOutput` / `v.InferInput`). No hand-written `interface` for API data.
+> The same schema validates the form, the request on the backend and the
+> response on the frontend.
 
-Knihovna: [`valibot`](https://valibot.dev) `^1.5`, import vždy jako
-`import * as v from 'valibot'`. Je závislostí `packages/shared`,
-`packages/weddy-shared`, `apps/api` i `apps/portal`.
+Library: [`valibot`](https://valibot.dev) `^1.5`, always imported as
+`import * as v from 'valibot'`. It is a dependency of `packages/shared`,
+`packages/weddy-shared`, `apps/api` and `apps/portal`.
 
-## Kde schémata žijí
+## Where schemas live
 
-| Druh | Místo | Příklad |
+| Kind | Place | Example |
 |---|---|---|
-| Stavební bloky polí (text, e-mail, URL, datum) a převod chyb | `packages/shared/src/validation.ts` | `requiredText`, `optionalText`, `emailText`, `optionalHttpUrl`, `optionalIsoDate`, `issuesToDetails` |
-| Kontrakt chyb a obecné odpovědi | `packages/shared/src/api.ts` | `ApiErrorBodySchema`, `MessageResponseSchema` |
-| Doména identity a kontaktu | `packages/shared/src/identity.ts`, `contact.ts` | `UserSchema`, `AccountEmailSchema`, `ContactMessageInputSchema` |
-| Doména weddy – jeden soubor na subdoménu | `packages/weddy-shared/src/<subdoména>.ts` | `WeddingInputSchema`, `GuestSchema`, `PlanningItemInputSchema`, `BudgetSummarySchema` |
-| Obálka konkrétního endpointu | soubor `*.endpoint.ts` | `ListGuestsResponse = v.object({ guests, stats })` |
+| Field building blocks (text, e-mail, URL, date) and error conversion | `packages/shared/src/validation.ts` | `requiredText`, `optionalText`, `emailText`, `optionalHttpUrl`, `optionalIsoDate`, `issuesToDetails` |
+| Error contract and generic responses | `packages/shared/src/api.ts` | `ApiErrorBodySchema`, `MessageResponseSchema` |
+| Identity and contact domains | `packages/shared/src/identity.ts`, `contact.ts` | `UserSchema`, `AccountEmailSchema`, `ContactMessageInputSchema` |
+| Weddy domain – one file per subdomain | `packages/weddy-shared/src/<subdomain>.ts` | `WeddingInputSchema`, `GuestSchema`, `PlanningItemInputSchema`, `BudgetSummarySchema` |
+| Envelope of a specific endpoint | the `*.endpoint.ts` file | `ListGuestsResponse = v.object({ guests, stats })` |
 
-## Pojmenování
+## Naming
 
-- Schéma: `<Věc>Schema` ve sdíleném jádru, `<Jméno>Request|Response|Params|Query` v endpointu.
-- Typ: bez přípony (`type Guest = v.InferOutput<typeof GuestSchema>`).
-- Dvojice **entita × vstup**:
-  - `GuestSchema` – jak záznam vypadá v odpovědi (bez transformací, jen tvar).
-  - `GuestInputSchema` – co přichází z formuláře (pravidla, ořez, normalizace; bez `id`, časů a výchozích hodnot).
-- Výčty: konstanta `as const` + `v.picklist` + popisky:
+- Schema: `<Thing>Schema` in the shared kernel, `<Name>Request|Response|Params|Query` in an endpoint.
+- Type: without suffix (`type Guest = v.InferOutput<typeof GuestSchema>`).
+- **Entity × input** pairs:
+  - `GuestSchema` – what a record looks like in a response (no transformations, shape only).
+  - `GuestInputSchema` – what comes from a form (rules, trimming, normalisation; no `id`, timestamps or defaults).
+- Enums: an `as const` constant + `v.picklist` + labels:
   `GUEST_STATUSES` → `GuestStatusSchema` → `type GuestStatus` → `GUEST_STATUS_LABELS`.
-  Kontrola hodnoty neznámého původu: `v.is(PlanningCategorySchema, raw)`.
+  Checking a value of unknown origin: `v.is(PlanningCategorySchema, raw)`.
 
-## Pravidla
+## Rules
 
-1. **Hlášky jsou česky a pro uživatele** – předávají se každé akci
-   (`v.nonEmpty('Vyplňte jméno')`). Formulář je zobrazuje u pole beze změny.
-2. **Nepovinný text:** prázdný řetězec po ořezu je `undefined`
-   (`optionalText`). Frontend tak může posílat hodnoty polí tak, jak jsou.
-3. **Normalizace patří do schématu:** ořez mezer, e-mail malými písmeny,
-   cena zaokrouhlená na koruny. Doména dostává už čistá data.
-4. **Výchozí hodnoty nepatří do schématu,** ale do domény (`status ?? 'draft'`)
-   – jsou to business rozhodnutí, ne tvar dat.
-5. **Pravidla závislá na stavu** (přístup, jednorázovost, počet pokusů)
-   do schématu nepatří – jsou v doméně. Schéma řeší jen to, co jde poznat
-   z hodnoty samotné.
-6. **Bezpečnostní výjimka:** kde doména musí vracet jednotnou chybu, je
-   schéma endpointu schválně volné (`verifyLoginCode` bere jen dva řetězce),
-   aby validace neprozradila víc než doména.
-7. **Neznámé klíče se zahazují** (`v.object` je ve výstupu nepropouští) –
-   do domény se nedostane nic, co schéma nezná.
+1. **Messages are in Czech and meant for users** (they are product text) –
+   passed to each action (`v.nonEmpty('Vyplňte jméno')`). Forms display them
+   next to the field unchanged.
+2. **Optional text:** an empty string after trimming becomes `undefined`
+   (`optionalText`). The frontend can send field values as they are.
+3. **Normalisation belongs in the schema:** trimming whitespace, lowercase
+   e-mail, price rounded to whole crowns. The domain receives clean data.
+4. **Default values do not belong in the schema** but in the domain
+   (`status ?? 'draft'`) – they are business decisions, not data shape.
+5. **State-dependent rules** (access, one-time use, attempt counters) do not
+   belong in the schema – they are in the domain. A schema only checks what can
+   be determined from the value itself.
+6. **Security exception:** where the domain must return a uniform error, the
+   endpoint schema is deliberately loose (`verifyLoginCode` accepts just two
+   strings) so validation does not reveal more than the domain.
+7. **Unknown keys are dropped** (`v.object` does not pass them to the output) –
+   nothing the schema does not know reaches the domain.
 
-## Chyby a cesty k polím
+## Errors and field paths
 
-`issuesToDetails(issues)` převede issues na `[{ field, message }]`:
+`issuesToDetails(issues)` converts issues to `[{ field, message }]`:
 
-- `field` je tečková cesta (`groom.firstName`, `members.1.firstName`), prázdný
-  řetězec pro chybu celého těla.
-- Na jedno pole se bere **první** chyba.
-- Úplně chybějící klíč Valibot hlásí za objekt s anglickou hláškou – převod ji
-  nahradí `Vyplňte toto pole`.
+- `field` is a dot path (`groom.firstName`, `members.1.firstName`), an empty
+  string for an error of the whole body.
+- Only the **first** error per field is kept.
+- A completely missing key is reported by Valibot on the object with an English
+  message – the conversion replaces it with `Vyplňte toto pole` ("Fill in this field").
 
-Backend z toho staví `400 ValidationError`, frontend `ApiError` se stejnými
-`details`; `ApiError.fieldErrors` je mapa `pole → hláška` pro formulář.
+The backend builds `400 ValidationError` from it, the frontend an `ApiError`
+with the same `details`; `ApiError.fieldErrors` is a `field → message` map for forms.
 
-## Doména a schémata
+## Domain and schemas
 
-- Doménové objekty přijímají **výstupní typy** schémat (`GuestInput`),
-  nikoli `unknown` – parsování proběhlo v endpointu.
-- Hodnotové objekty, které jsou invariantem samy o sobě (`EmailAddress`,
-  jméno uživatele), validují znovu přes **totéž schéma** (`v.safeParse`) a při
-  chybě vyhodí `DomainError.field(...)`. Platí to i pro volání mimo HTTP.
+- Domain objects accept the **output types** of schemas (`GuestInput`), never
+  `unknown` – parsing happened in the endpoint.
+- Value objects that are an invariant on their own (`EmailAddress`, user display
+  name) re-validate with **the same schema** (`v.safeParse`) and throw
+  `DomainError.field(...)` on failure. This also covers calls outside HTTP.
 
-## Úskalí
+## Pitfalls
 
-- `v.record(picklist, …)` dělá klíče v typu nepovinné – pro rozpis „hodnota
-  pro každou kategorii" se skládá `v.object` z výčtu (viz `BudgetSummarySchema`).
-- `v.isoDate` nekontroluje existenci dne (`2026-02-31` projde) – používej `optionalIsoDate`.
-- Rok narození kontroluje schéma proti aktuálnímu roku v době parsování.
+- `v.record(picklist, …)` makes keys optional in the type – for a "value for
+  every category" breakdown compose `v.object` from the enum (see `BudgetSummarySchema`).
+- `v.isoDate` does not check that the day exists (`2026-02-31` passes) – use `optionalIsoDate`.
+- The birth year is checked against the current year at parse time.
 
-## Související
+## Related
 
-- [Endpointy](endpointy.md)
-- [Doménová architektura](domeny.md)
+- [Endpoints](endpoints.md)
+- [Domain architecture](domains.md)

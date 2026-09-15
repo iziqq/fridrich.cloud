@@ -2,7 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import AuthCard from '@/components/AuthCard.vue';
-import { ApiError, useAuthStore } from '@/stores/auth';
+import { ApiError } from '@/api/http';
+import { useAuthStore } from './auth.store';
 
 const auth = useAuthStore();
 const route = useRoute();
@@ -23,7 +24,7 @@ onMounted(async () => {
   }
 
   try {
-    await auth.verifyEmail(token);
+    await auth.activateAccount(token);
     state.value = 'done';
   } catch (cause) {
     state.value = 'failed';

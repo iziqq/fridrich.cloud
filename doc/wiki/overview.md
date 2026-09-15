@@ -1,60 +1,62 @@
 ---
-title: Přehled projektu
-type: prehled
+title: Project overview
+type: overview
 sources:
-  - historie: doc/README.md (commit 8db5e0a)
-  - kód: celý repozitář
+  - history: doc/README.md (commit 8db5e0a)
+  - code: the whole repository
 updated: 2026-09-15
 ---
 
-# Přehled projektu fridrich.cloud
+# fridrich.cloud project overview
 
-> Monorepo pro `www.fridrich.cloud`: prezentační portál Libora Fridricha
-> (vývoj na míru) a produkty pod ním. **Jedna Vue aplikace** na jedné doméně,
-> **jedno API** na Azure Functions rozdělené na domény, **Cosmos DB**.
-> Nasazení na Azure Static Web Apps Free.
+> A monorepo for `www.fridrich.cloud`: the presentation portal of Libor Fridrich
+> (custom software development) and the products under it. **One Vue
+> application** on one domain, **one API** on Azure Functions split into domains,
+> **Cosmos DB**. Deployed to Azure Static Web Apps Free.
 
-## Části
+## Parts
 
-| Část | Adresa | Popis | Stav |
+| Part | Address | Description | Status |
 |---|---|---|---|
-| **Portál** | `/` | Prezentace – o mně, služby, postup vývoje, projekty, kontakt | ✅ hotový |
-| **Identita** | `/prihlaseni`, `/registrace`, `/ucet` | Bezheslový účet společný pro všechno | ✅ hotová |
-| **IziWeddy** | `/izi-weddy` | Svatební plánovač – snoubenci, hosté, plánování, rozpočet | ✅ hotový |
-| **IziBudgy** | `/izi-budgy` | Rozpočet domácnosti | 🕓 TODO – chybí specifikace |
-| **API** | `/api` | `identity`, `contact`, `weddy` – 26 endpointů | ✅ hotové |
+| **Portal** | `/` | Presentation – about me, services, development process, projects, contact | ✅ done |
+| **Identity** | `/prihlaseni`, `/registrace`, `/ucet` | Passwordless account shared by everything | ✅ done |
+| **IziWeddy** | `/izi-weddy` | Wedding planner – couple, guests, planning, budget | ✅ done |
+| **IziBudgy** | `/izi-budgy` | Household budget | 🕓 TODO – specification missing |
+| **API** | `/api` | `identity`, `contact`, `weddy` – 26 endpoints | ✅ done |
 
 ```
                     ┌──────────────────────────────────────┐
-                    │  www.fridrich.cloud – jeden origin    │
+                    │  www.fridrich.cloud – one origin      │
                     └──────────────────┬───────────────────┘
         ┌──────────────┬───────────────┼───────────────┬──────────────┐
         ▼              ▼               ▼               ▼              ▼
        /            /prihlaseni    /izi-weddy      /izi-budgy       /api
-    Portál          identita       IziWeddy        IziBudgy      identity · contact
+     Portal          identity       IziWeddy        IziBudgy     identity · contact
                                                                   · weddy · (budgy)
 ```
 
-## Technologie
+## Technology
 
 Vue 3 (Composition API, `<script setup>`), TypeScript, Vite, Pinia, Vue Router ·
-Azure Functions v4 (Node 20) · Azure Cosmos DB (NoSQL) · **Valibot** (typy
-a validace) · Azure Static Web Apps · npm workspaces.
+Azure Functions v4 (Node 20) · Azure Cosmos DB (NoSQL) · **Valibot** (types and
+validation) · Azure Static Web Apps · npm workspaces.
 
-## Postup prací
+Language: documentation in English, product UI and user-facing messages in Czech.
 
-1. ✅ Rozdělení projektu a dokumentace
-2. ✅ Portál – kostra monorepa, `packages/design`, `apps/portal`
-3. ✅ Backend – `identity`, `weddy`, kontaktní formulář
-4. ✅ Přihlášení na portálu – bezheslová registrace a kód na e-mail
-5. ✅ Frontend IziWeddy
-6. ✅ Sloučení do jedné aplikace – produkty jako podstromy portálu
-7. ✅ Nasazení – GitHub Actions + SWA CLI
-8. ✅ Doménová architektura FE i BE, endpoint v souboru, Valibot, LLM Wiki (2026-09-15)
-9. ⬜ IziBudgy – doplnit specifikaci, potom implementovat
+## Progress
 
-## Kam dál
+1. ✅ Project split and documentation
+2. ✅ Portal – monorepo skeleton, `packages/design`, `apps/portal`
+3. ✅ Backend – `identity`, `weddy`, contact form
+4. ✅ Portal sign-in – passwordless registration and e-mail code
+5. ✅ IziWeddy frontend
+6. ✅ Merge into one application – products as portal subtrees
+7. ✅ Deployment – GitHub Actions + SWA CLI
+8. ✅ Domain architecture on FE and BE, endpoint per file, Valibot, LLM Wiki in English (2026-09-15)
+9. ⬜ IziBudgy – write the specification, then implement
 
-- Jak je kód poskládaný: [architektura/domeny.md](architektura/domeny.md)
-- Jak přidat endpoint: [architektura/endpointy.md](architektura/endpointy.md)
-- Katalog všech stránek: [index.md](index.md)
+## Where next
+
+- How the code is organised: [architecture/domains.md](architecture/domains.md)
+- How to add an endpoint: [architecture/endpoints.md](architecture/endpoints.md)
+- Catalog of all pages: [index.md](index.md)

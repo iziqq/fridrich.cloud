@@ -1,15 +1,15 @@
-import type {
-  AgeGroup,
-  FamilyInput,
-  Guest,
-  GuestInput,
-  GuestSide,
-  GuestStatus,
-} from '@fridrich/weddy-shared';
+import type { AgeGroup, Guest, GuestSide, GuestStatus } from '@fridrich/weddy-shared';
 import { calculateGuestStats, groupIntoFamilies, guestFullName } from '@fridrich/weddy-shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { familiesApi, guestsApi } from '@/weddy/api';
+import { changeGuestStatus } from './endpoints/changeGuestStatus.endpoint';
+import { createFamily, type CreateFamilyRequest } from './endpoints/createFamily.endpoint';
+import { createGuest, type CreateGuestRequest } from './endpoints/createGuest.endpoint';
+import { deleteFamily } from './endpoints/deleteFamily.endpoint';
+import { deleteGuest } from './endpoints/deleteGuest.endpoint';
+import { listGuests } from './endpoints/listGuests.endpoint';
+import { updateFamily, type UpdateFamilyRequest } from './endpoints/updateFamily.endpoint';
+import { updateGuest, type UpdateGuestRequest } from './endpoints/updateGuest.endpoint';
 
 export interface GuestFilters {
   side: GuestSide | 'all';
@@ -57,6 +57,12 @@ function normalize(value: string): string {
     .replace(/\p{Diacritic}/gu, '');
 }
 
+/**
+ * Stav subdomény `guests` – hosté, rodiny, filtry a řazení.
+ *
+ * Akce se jmenují podle změny stavu (`addFamily`), ne podle endpointu
+ * (`createFamily`), který volají.
+ */
 export const useGuestsStore = defineStore('guests', () => {
   const guests = ref<Guest[]>([]);
   const filters = ref<GuestFilters>(emptyFilters());
@@ -102,7 +108,7 @@ export const useGuestsStore = defineStore('guests', () => {
    * Filtrovaní hosté rozdělení podle strany a uvnitř podle rodin.
    *
    * Strana je v přehledu celá sekce, ne štítek u jména – vedle sebe stojí
-   * dva samostatné seznamy (doc/iziweddy.md, kap. 5.3).
+   * dva samostatné seznamy (doc/wiki/domains/weddyGuests.md).
    */
   const sections = computed(() =>
     (['groom', 'bride'] as const).map((side) => ({
@@ -124,7 +130,7 @@ export const useGuestsStore = defineStore('guests', () => {
     error.value = null;
     try {
       // Filtruje se na klientu – seznam hostů je malý a odezva je okamžitá.
-      const response = await guestsApi.list(weddingId);
+      const response = await listGuests(weddingId);
       guests.value = response.guests;
       loadedWeddingId.value = weddingId;
     } catch (cause) {
@@ -134,13 +140,17 @@ export const useGuestsStore = defineStore('guests', () => {
     }
   }
 
-  async function create(weddingId: string, input: GuestInput): Promise<void> {
-    const guest = await guestsApi.create(weddingId, input);
+  async function create(weddingId: string, request: CreateGuestRequest): Promise<void> {
+    const guest = await createGuest(weddingId, request);
     guests.value = [...guests.value, guest];
   }
 
-  async function update(weddingId: string, guestId: string, input: GuestInput): Promise<void> {
-    const guest = await guestsApi.update(weddingId, guestId, input);
+  async function update(
+    weddingId: string,
+    guestId: string,
+    request: UpdateGuestRequest,
+  ): Promise<void> {
+    const guest = await updateGuest(weddingId, guestId, request);
     guests.value = guests.value.map((existing) => (existing.id === guestId ? guest : existing));
   }
 
@@ -152,7 +162,7 @@ export const useGuestsStore = defineStore('guests', () => {
     );
 
     try {
-      const updated = await guestsApi.setStatus(weddingId, guestId, status);
+      const updated = await changeGuestStatus(weddingId, guestId, { status });
       guests.value = guests.value.map((guest) => (guest.id === guestId ? updated : guest));
     } catch (cause) {
       guests.value = previous;
@@ -161,21 +171,21 @@ export const useGuestsStore = defineStore('guests', () => {
   }
 
   async function remove(weddingId: string, guestId: string): Promise<void> {
-    await guestsApi.remove(weddingId, guestId);
+    await deleteGuest(weddingId, guestId);
     guests.value = guests.value.filter((guest) => guest.id !== guestId);
   }
 
-  async function createFamily(weddingId: string, input: FamilyInput): Promise<void> {
-    const family = await familiesApi.create(weddingId, input);
+  async function addFamily(weddingId: string, request: CreateFamilyRequest): Promise<void> {
+    const family = await createFamily(weddingId, request);
     guests.value = [...guests.value, ...family.members];
   }
 
-  async function updateFamily(
+  async function editFamily(
     weddingId: string,
     familyId: string,
-    input: FamilyInput,
+    request: UpdateFamilyRequest,
   ): Promise<void> {
-    const family = await familiesApi.update(weddingId, familyId, input);
+    const family = await updateFamily(weddingId, familyId, request);
     // Členů mohlo ubýt i přibýt, takže se celá rodina nahradí novým seznamem.
     guests.value = [
       ...guests.value.filter((guest) => guest.family?.id !== familyId),
@@ -184,7 +194,7 @@ export const useGuestsStore = defineStore('guests', () => {
   }
 
   async function removeFamily(weddingId: string, familyId: string): Promise<void> {
-    await familiesApi.remove(weddingId, familyId);
+    await deleteFamily(weddingId, familyId);
     guests.value = guests.value.filter((guest) => guest.family?.id !== familyId);
   }
 
@@ -208,8 +218,8 @@ export const useGuestsStore = defineStore('guests', () => {
     update,
     setStatus,
     remove,
-    createFamily,
-    updateFamily,
+    addFamily,
+    editFamily,
     removeFamily,
     resetFilters,
   };
