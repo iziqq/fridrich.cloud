@@ -13,9 +13,9 @@ updated: 2026-09-15
 > `apps/portal/dist` and the API as **managed functions** from `apps/api/deploy`.
 > Deployed by GitHub Actions via the SWA CLI. Goal: stay within free tiers.
 >
-> ⚠️ **Deployment has not succeeded since at least 2026-09-11** – every run fails in
-> the deploy step with `An unknown exception has occurred`. See
-> [Deployment failure](#deployment-failure-an-unknown-exception-has-occurred).
+> ⚠️ **Deployment did not succeed from at least 2026-09-11** – the deploy step failed with
+> `An unknown exception has occurred`. **Root cause found 2026-09-15:** the deployment token secret
+> ended with a newline. See [Deployment failure](#deployment-failure-an-unknown-exception-has-occurred).
 
 ## Services
 
@@ -52,7 +52,9 @@ updated: 2026-09-15
    **`client_version`** (`latest` default, `stable`, `backup`) – the StaticSitesClient build, passed to the
    CLI as the undocumented `SWA_CLI_DEPLOY_BINARY_VERSION` (push and PR runs use `latest`).
 
-The only secret: `AZURE_STATIC_WEB_APPS_API_TOKEN` (Manage deployment token).
+The only secret: `AZURE_STATIC_WEB_APPS_API_TOKEN` (Manage deployment token). The step
+**Deployment token** strips whitespace from it and exports `SWA_CLI_DEPLOYMENT_TOKEN`; if anything was
+stripped it prints a warning – paste the token again without a trailing newline.
 
 > ⚠️ **Deployment uses the SWA CLI, not the `Azure/static-web-apps-deploy@v1` action** –
 > the action cannot skip the API build. Note that it failed with the same
@@ -60,6 +62,14 @@ The only secret: `AZURE_STATIC_WEB_APPS_API_TOKEN` (Manage deployment token).
 > deployment (the earlier claim that the CLI works was never confirmed by a green run).
 
 ## Deployment failure: "An unknown exception has occurred"
+
+> ✅ **Root cause:** the secret `AZURE_STATIC_WEB_APPS_API_TOKEN` ended with a newline. StaticSitesClient
+> builds the header `Authorization: token <value>`, and a newline makes it invalid
+> (`System.FormatException: The format of value 'token ***⏎' is invalid` in
+> `ContentDistributionClient.InitializeClient`). The `stable` client (2026-05-21) swallowed the exception;
+> the `latest` client (2026-08-05) printed it. Fixed by the **Deployment token** step (whitespace stripped)
+> – re-save the secret without the newline anyway. The investigation below is kept as history: the Azure
+> regression #1750 has the same message but was **not** our cause.
 
 | What we know | Evidence |
 |---|---|

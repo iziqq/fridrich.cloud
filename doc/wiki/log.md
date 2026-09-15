@@ -255,3 +255,13 @@ Source: owner's report – the deploy step fails with `An unknown exception has 
 - The CLI uses StaticSitesClient `stable` from 2026-05-21, the time the regression started; a `latest` build from
   2026-08-05 exists. Workflow now sets `SWA_CLI_DEPLOY_BINARY_VERSION` (default `latest`, manual input `client_version`).
 - If `latest` fails too, only Azure-side steps remain (see `operations/deployment.md`).
+
+## [2026-09-15] change | Deployment root cause – newline in the deployment token
+
+- With StaticSitesClient `latest` the log finally showed the exception: `System.FormatException: The format of value
+  'token ***⏎' is invalid` in `ContentDistributionClient.InitializeClient` – the secret
+  `AZURE_STATIC_WEB_APPS_API_TOKEN` ends with a newline, which makes the `Authorization` header invalid.
+- The Azure regression hypothesis (#1750) is withdrawn for this project; Node 22 and the diagnostics stay.
+- Workflow: new step **Deployment token** strips whitespace, masks the value, exports `SWA_CLI_DEPLOYMENT_TOKEN` and warns
+  when something was stripped; deploy steps no longer read the raw secret.
+- Touched pages: `operations/deployment.md` (root cause), `decisions.md` (decision, open question 17 updated).
