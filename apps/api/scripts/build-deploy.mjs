@@ -45,7 +45,8 @@ await build({
   outfile: join(outDir, 'index.js'),
   bundle: true,
   platform: 'node',
-  target: 'node20',
+  // Stejná verze jako `apiRuntime` ve staticwebapp.config.json – Node 20 Azure už nepodporuje.
+  target: 'node22',
   format: 'esm',
   sourcemap: true,
   external: EXTERNAL,
@@ -83,9 +84,11 @@ copyFileSync(join(apiDir, 'host.json'), join(outDir, 'host.json'));
 
 // Nasazuje se i s node_modules, protože build na Azure přeskakujeme –
 // jinak by se instalovaly závislosti, které jsme právě vyloučili.
+// Na Windows je npm dávka `npm.cmd`, kterou `execFileSync` bez shellu nespustí (ENOENT).
 execFileSync('npm', ['install', '--omit=dev', '--no-audit', '--no-fund'], {
   cwd: outDir,
   stdio: 'inherit',
+  shell: process.platform === 'win32',
 });
 
 console.log(`\nHotovo: ${outDir}`);

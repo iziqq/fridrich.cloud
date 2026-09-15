@@ -9,6 +9,14 @@ on:
     types: [opened, synchronize, reopened]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      without_api:
+        # Diagnostika: nasadí jen web do prostředí `diagnostika`, bez API.
+        # Projde-li, chyba je v balíčku API; spadne-li taky, je na straně
+        # Azure nebo Static Web App (doc/wiki/operations/deployment.md).
+        description: 'Diagnostika – nasadit jen web (bez API) do prostředí "diagnostika"'
+        type: boolean
+        default: false
 
 concurrency:
   # Dvě souběžná nasazení do stejného prostředí by si přepsala výsledek.
@@ -22,9 +30,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Node 22 – stejná verze jako runtime funkcí (`apiRuntime` ve staticwebapp.config.json).
+      # Node 20 Azure Functions přestaly podporovat 30. 4. 2026.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Instalace závislostí
@@ -53,13 +63,24 @@ jobs:
         # by `@fridrich/shared` nenašel, na npm není.
         run: npm run build:api
 
+      # Co přesně jde na Azure – při chybě nasazení je to první, co je potřeba vědět.
+      - name: Obsah balíčků
+        run: |
+          echo "web: $(find apps/portal/dist -type f | wc -l) souborů, $(du -sh apps/portal/dist | cut -f1)"
+          echo "api: $(find apps/api/deploy -type f | wc -l) souborů, $(du -sh apps/api/deploy | cut -f1)"
+          ls -la apps/api/deploy
+          cat apps/api/deploy/package.json
+
       # Nasazuje SWA CLI, ne akce Azure/static-web-apps-deploy@v1.
       #
       # Ta u tohohle projektu padala na „An unknown exception has occurred"
       # bez jediného řádku navíc – neumí přeskočit build API (`skip_api_build`
       # mezi její vstupy nepatří), takže se pokoušela znovu sestavit balíček,
-      # který už hotový je. CLI nahraje, co dostane, a když něco selže, řekne co.
+      # který už hotový je. CLI nahraje, co dostane. Stejnou hlášku ale vrací
+      # i binárka StaticSitesClient pod CLI, když selže služba Azure – proto
+      # `--verbose=silly`, ať je v logu vidět aspoň ID nasazení a poslední krok.
       - name: Nasazení
+        if: ${{ !inputs.without_api }}
         env:
           SWA_CLI_DEPLOYMENT_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           # U pull requestu jde build do vlastního prostředí, ať produkce zůstane.
@@ -68,6 +89,17 @@ jobs:
           npx -y @azure/static-web-apps-cli@2 deploy apps/portal/dist \
             --api-location apps/api/deploy \
             --api-language node \
-            --api-version 20 \
+            --api-version 22 \
             --env "$ENV_NAME" \
-            --no-use-keychain
+            --no-use-keychain \
+            --verbose=silly
+
+      - name: Diagnostika – nasazení jen webu
+        if: ${{ inputs.without_api }}
+        env:
+          SWA_CLI_DEPLOYMENT_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        run: |
+          npx -y @azure/static-web-apps-cli@2 deploy apps/portal/dist \
+            --env diagnostika \
+            --no-use-keychain \
+            --verbose=silly

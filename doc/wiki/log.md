@@ -221,3 +221,21 @@ Source: [raw/2026-09-15-translations.md](../raw/2026-09-15-translations.md)
   code conventions and "What not to do".
 - New page `architecture/i18n.md`; touched `architecture/{valibot,frontend,personalData}.md`,
   `domains/{identity,portal,weddy}.md`, `overview.md`, `decisions.md` (3 decisions, open question 3 answered), `index.md`.
+
+## [2026-09-15] change | Deployment failure – Node 22 and diagnostics
+
+Source: owner's report – the deploy step fails with `An unknown exception has occurred`.
+
+- Finding: the GitHub Actions history shows **no successful deployment since at least 2026-09-11**;
+  all runs past the checks fail inside `StaticSitesClient` at "Preparing deployment". The wiki claim
+  that the SWA CLI works was never confirmed – corrected in `operations/deployment.md`.
+- Known Azure platform regression with the same symptom (static-web-apps#1750, Microsoft Q&A, 2026-05/06).
+- The app still requested `node:20`, retired by Azure Functions on 2026-04-30 → moved to **Node 22**:
+  `staticwebapp.config.json` `apiRuntime`, workflow `setup-node` and `--api-version`, esbuild `target`,
+  root `engines`.
+- Workflow: step printing package contents, `--verbose=silly`, manual `without_api` input deploying only
+  the website to preview environment `diagnostika` to separate an API problem from an Azure one.
+- `build-deploy.mjs`: `npm install` runs through a shell on Windows (was `spawnSync npm ENOENT`).
+- Verified locally: `npm run build:api` on Windows, `func start` on the bundle (Node 22) indexes all 20 functions.
+  The deployment itself could not be tested locally (needs the deployment token).
+- Touched pages: `operations/deployment.md`, `overview.md`, `decisions.md` (decision + open question 17), `index.md`.

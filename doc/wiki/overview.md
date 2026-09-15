@@ -44,7 +44,7 @@ updated: 2026-09-15
 ## Technology
 
 Vue 3 (Composition API, `<script setup>`), TypeScript, Vite, Pinia, Vue Router ·
-Azure Functions v4 (Node 20) · Azure Cosmos DB (NoSQL) · **Valibot** (types and
+Azure Functions v4 (Node 22) · Azure Cosmos DB (NoSQL) · **Valibot** (types and
 validation) · Azure Static Web Apps · npm workspaces.
 
 Language: documentation in English; product UI, validation messages and e-mails in **Czech and English** (vue-i18n, switcher, [architecture/i18n.md](architecture/i18n.md)); legal documents Czech only.

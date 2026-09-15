@@ -46,4 +46,4 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | Page | Summary | Updated |
 |---|---|---|
 | [operations/localDevelopment.md](operations/localDevelopment.md) | Running locally, Cosmos DB emulator, e-mails to the console, rate limit during development | 2026-09-15 |
-| [operations/deployment.md](operations/deployment.md) | Azure SWA Free, pipeline, API bundle, Application settings | 2026-09-15 |
+| [operations/deployment.md](operations/deployment.md) | Azure SWA Free, pipeline, API bundle, Node 22, Application settings, failing deployment diagnosis | 2026-09-15 |

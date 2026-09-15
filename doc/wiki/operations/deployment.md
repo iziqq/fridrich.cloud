@@ -12,6 +12,10 @@ updated: 2026-09-15
 > One **Azure Static Web App (Free)** on `www.fridrich.cloud`: the website from
 > `apps/portal/dist` and the API as **managed functions** from `apps/api/deploy`.
 > Deployed by GitHub Actions via the SWA CLI. Goal: stay within free tiers.
+>
+> ⚠️ **Deployment has not succeeded since at least 2026-09-11** – every run fails in
+> the deploy step with `An unknown exception has occurred`. See
+> [Deployment failure](#deployment-failure-an-unknown-exception-has-occurred).
 
 ## Services
 
@@ -25,24 +29,55 @@ updated: 2026-09-15
 > ⚠️ **The API must not be a standalone Function App** – linking your own
 > Functions app is a Standard plan feature (~$9/month). Consequences: no managed
 > identity (Cosmos via `COSMOS_KEY`), no Key Vault references, HTTP triggers only,
-> runtime `node:20` from `staticwebapp.config.json`.
+> runtime `node:22` from `staticwebapp.config.json`.
+
+> ⚠️ **Node version is set in four places and must match:** `platform.apiRuntime` in
+> `staticwebapp.config.json`, `--api-version` and `setup-node` in the workflow, esbuild
+> `target` in `build-deploy.mjs` (plus `engines` in the root `package.json`). Node 20 lost
+> Azure Functions support on 2026-04-30; the project moved to Node 22 (supported until 2027-04).
 
 ## Pipeline (`.github/workflows/azure-static-web-apps.yml`)
 
-1. `npm ci` (builds the shared packages)
+1. Node 22, `npm ci` (builds the shared packages)
 2. `npm run typecheck`, `npm run lint`, `npm run test`
 3. **Safeguard: at least 60 API tests** – `node --test` with no files found ends
    with zero tests and exit code 0. 117 tests today.
 4. `npm run build` → `apps/portal/dist` (including `staticwebapp.config.json` from `public/`)
 5. `npm run build:api` → `apps/api/deploy`
-6. `npx @azure/static-web-apps-cli@2 deploy` – a PR goes to environment `pr-<number>`
+6. **Package contents** – file counts, sizes and `deploy/package.json` printed to the log.
+7. `npx @azure/static-web-apps-cli@2 deploy … --verbose=silly` – a PR goes to environment `pr-<number>`
    (Azure turns it into `pr123`, Free supports 3), `main` to `production`.
-   Can also be triggered manually (`workflow_dispatch`).
+   Can also be triggered manually (`workflow_dispatch`), optionally with **`without_api`** –
+   a diagnostic run that deploys only the website to the preview environment `diagnostika`.
 
 The only secret: `AZURE_STATIC_WEB_APPS_API_TOKEN` (Manage deployment token).
 
 > ⚠️ **Deployment uses the SWA CLI, not the `Azure/static-web-apps-deploy@v1` action** –
-> the action cannot skip the API build and failed with `An unknown exception has occurred`.
+> the action cannot skip the API build. Note that it failed with the same
+> `An unknown exception has occurred` as the CLI does today, so the switch did not fix the
+> deployment (the earlier claim that the CLI works was never confirmed by a green run).
+
+## Deployment failure: "An unknown exception has occurred"
+
+| What we know | Evidence |
+|---|---|
+| Every workflow run since 2026-09-11 that got past the checks failed in the deploy step | GitHub Actions history (12 runs, commits `a2f632e` … `ac9c085`) |
+| It fails inside `StaticSitesClient` at "Preparing deployment", before upload; the inner exception is swallowed | CLI 2.0.10 log; same message with the GitHub action |
+| The API bundle itself is valid | locally `func start` in `apps/api/deploy` (Node 22) indexes all 20 functions |
+| Microsoft has an open platform-side regression with the same symptom since 2026-05/06 | [static-web-apps#1750](https://github.com/Azure/static-web-apps/issues/1750), [Microsoft Q&A](https://learn.microsoft.com/en-us/answers/questions/5929128/swa-fails-immediately-after-deployment-with-the-sw) |
+| The app still requested the retired `node:20` runtime | fixed 2026-09-15 → `node:22` |
+| "missing property jobs.build_and_deploy_job" in the log is only a warning | the CLI looks for the job name the portal generates; it does not affect deployment |
+
+Diagnosis, in this order:
+
+1. **Push the Node 22 change** and read the deploy log (`--verbose=silly` prints the
+   deployment ID and the last step).
+2. If it still fails, **run the workflow manually with `without_api`**. Success → the problem is
+   the API part (runtime, bundle); failure → the Static Web App / Azure side.
+3. Azure side: check the resource's region and **Deployment history** in the portal,
+   regenerate the deployment token (update the GitHub secret), and if it keeps failing,
+   **create a new Static Web App in a different region** (Free, same repo, new token, move the custom
+   domain and Application settings) or open an Azure support request with the deployment ID.
 
 ## The API as a self-contained bundle
 
