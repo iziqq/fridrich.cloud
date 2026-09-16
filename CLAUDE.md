@@ -9,7 +9,7 @@ knowledge lives in the wiki – this file is the **schema**.
 `www.fridrich.cloud` – a presentation portal and products under it, in one
 npm-workspaces monorepo:
 
-- **Frontend** – `apps/portal`: one Vue 3 app (Composition API, `<script setup lang="ts">`, Vite, Pinia, Vue Router). Products (IziWeddy, IziBudgy) are route subtrees.
+- **Frontend** – `apps/portal`: one Vue 3 app (Composition API, `<script setup lang="ts">`, Vite, Pinia, Vue Router). The home page is a **hub of the applications**; products (IziWeddy, IziBudgy) are route subtrees listed in `content/apps.ts`.
 - **Backend** – `apps/api`: one Azure Functions app (Node.js, programming model v4, HTTP triggers only), TypeScript.
 - **Database** – Azure Cosmos DB (NoSQL API).
 - **Shared kernel** – `packages/shared`, `packages/weddy-shared`, `packages/budgy-shared`: Valibot schemas, enums, pure calculations used by both apps.

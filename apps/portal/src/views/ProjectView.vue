@@ -30,13 +30,13 @@ const project = computed(() =>
 
       <div class="actions">
         <AppButton v-if="project.url" :href="project.url">{{ t('portal.projects.openApp') }}</AppButton>
-        <RouterLink to="/#projekty" class="back mono">{{ t('portal.projects.backToProjects') }}</RouterLink>
+        <RouterLink to="/o-mne#projekty" class="back mono">{{ t('portal.projects.backToProjects') }}</RouterLink>
       </div>
     </div>
 
     <div v-else class="container">
       <SectionHeading :text="t('portal.projects.notFound')" :level="1" />
-      <RouterLink to="/#projekty" class="back mono">{{ t('portal.projects.backToProjects') }}</RouterLink>
+      <RouterLink to="/o-mne#projekty" class="back mono">{{ t('portal.projects.backToProjects') }}</RouterLink>
     </div>
   </section>
 </template>

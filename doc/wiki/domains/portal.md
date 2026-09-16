@@ -4,15 +4,17 @@ type: domain
 sources:
   - raw/portalSpec.md (content, navigation; its cyberpunk design system is superseded)
   - raw/2026-09-15-glassDesign.md
+  - raw/2026-09-17-portalAsAppHub.md
   - code: apps/portal/src/{components,sections,content,views}, packages/design
-updated: 2026-09-15
+updated: 2026-09-17
 ---
 
 # Portal `www.fridrich.cloud`
 
-> Presentation website of Libor Fridrich – **custom software development**. The
-> main goal is an enquiry through the contact form; it is also the gateway to the
-> products. Visual style **Glass** – dark, warm background with orange glows and frosted glass
+> The **gateway to the applications** and the presentation of Libor Fridrich –
+> custom software development. The home page is a hub: tiles of the apps and
+> signing in, nothing else. The presentation lives on its own page `/o-mne`,
+> where the contact form still is. Visual style **Glass** – dark, warm background with orange glows and frosted glass
 > surfaces (inspired by Apple, not a copy). The portal is not a
 > business domain but content and look; its only API calls are
 > [contact](contact.md) and sign-in ([identity](identity.md)). Website texts are Czech and English (switcher in the navigation).
@@ -24,11 +26,45 @@ The full specification (section copy, effects, assets) is in the source
 [raw/portalSpec.md](../../raw/portalSpec.md). This page holds the rules every
 change must respect.
 
-## Content and navigation
+## Pages and navigation
 
-Menu: *O mně · Služby · Vývoj · Projekty · Kontakt · Přihlásit se* (About me ·
-Services · Development · Projects · Contact · Sign in); after sign-in the user's
-name → account. *Přihlásit se* is hidden when the GDPR switch is off. The bar is a floating glass pill that **stays visible while scrolling** (it used to hide on scroll down) and shows the **fox logo** (`apps/portal/src/assets/logo.svg`). The active section is highlighted while scrolling (`useActiveSection`).
+| Path | Page | Content |
+|---|---|---|
+| `/` | `AppsView.vue` | **The hub** – a tile per application, one "more will come" tile, and a sign-in block for an anonymous visitor |
+| `/o-mne` | `AboutView.vue` | The presentation as one page: hero, O mně, Služby, Vývoj, Projekty, Kontakt (anchors `#o-mne`, `#sluzby`, `#vyvoj`, `#projekty`, `#kontakt`) |
+| `/projekty/:id` | `ProjectView.vue` | Project detail |
+| `/ochrana-osobnich-udaju`, `/obchodni-podminky` | `LegalView.vue` | Legal documents, content in `content/legal.ts` |
+
+Menu: *Aplikace · O mně · Kontakt · Přihlásit se* (Apps · About · Contact ·
+Sign in); after sign-in the user's name → account. *Přihlásit se* is hidden when
+the GDPR switch is off. The bar is a floating glass pill that **stays visible
+while scrolling** and shows the **fox logo** (`apps/portal/src/assets/logo.svg`).
+The item the visitor stands on is highlighted; the anchor counts separately, so
+`/o-mne#kontakt` does not light up *O mně* and *Kontakt* at once.
+
+> ℹ️ **Old links keep working.** `/#sluzby` and the other anchors of the former
+> one-pager are redirected to `/o-mne#…` in `router/index.ts` – a hash is not
+> part of the path, so a `redirect` in the route definition would not catch it.
+
+### The app registry
+
+The hub is driven by `content/apps.ts`; each product keeps its own description
+next to its routes (`weddy/app.ts`, `budgy/app.ts`):
+
+| Field | Meaning |
+|---|---|
+| `id` | key into `portal.apps.items.<id>` (name, tagline) |
+| `path` | where the tile leads; **missing = the tile is only a description**, so nothing links to a 404 |
+| `status` | `live` / `development` / `planned` – the badge on the tile |
+| `icon` | emoji on the tile |
+| `requiresAccount` | the tile says so before the visitor clicks |
+
+An app requiring an account loses its `path` when `PERSONAL_DATA_COLLECTION_ENABLED`
+is off, because its routes are not registered at all. **Adding another
+application** is a route subtree, an `app.ts`, two catalog entries and one line
+in the registry.
+
+### Sections of the `/o-mne` page
 
 | Section | Content |
 |---|---|
@@ -36,10 +72,9 @@ name → account. *Přihlásit se* is hidden when the GDPR switch is off. The ba
 | About me | 10+ years full stack, large international companies as well as smaller custom development, industries strip |
 | Services | Custom web applications · Cloud (Azure) · Integration and automation · Consulting and code review |
 | Development | **Key section** – 6 steps: kick-off meeting → brief confirmation → analysis → mocked demo → main development with a test environment → production |
-| Projects | IziWeddy (in development), IziBudgy (coming soon); the *Otevřít aplikaci* (Open app) button only with the GDPR switch on |
+| Projects | IziWeddy and IziBudgy as portfolio cards (the hub tiles are something else – they are the way in); the *Otevřít aplikaci* (Open app) button only with the GDPR switch on |
 | Contact | Form name/e-mail/message + honeypot, information notice with a link to the privacy policy, direct contacts. With the switch off: only the e-mail address and a `Napsat e-mail` (Write an e-mail) `mailto:` button |
-| Footer | Products, e-mail, links *Ochrana osobních údajů* (Privacy) and *Obchodní podmínky* (Terms); bottom line with name and IČO (the registered address is in the legal documents) |
-| Legal pages | `/ochrana-osobnich-udaju`, `/obchodni-podminky` – `LegalView.vue`, content in `content/legal.ts` |
+| Footer | Products, e-mail, *O mně*, links *Ochrana osobních údajů* (Privacy) and *Obchodní podmínky* (Terms); bottom line with name and IČO (the registered address is in the legal documents) |
 
 Copy is not hard-coded in components: texts are in the `portal.*` catalog (`apps/portal/src/i18n/locales/portal.ts`, cs + en), structural data (ids, stack, status, links, company details) in `apps/portal/src/content/site.ts`. Legal documents (`content/legal.ts`) are Czech only.
 

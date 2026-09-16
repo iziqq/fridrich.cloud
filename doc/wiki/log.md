@@ -597,3 +597,33 @@ IziWeddy's) and a **fixed list of categories**.
   `domains/budgyBudget.md`. Touched: `architecture/frontend.md`,
   `architecture/personalData.md`, `architecture/dataCosmos.md`, `overview.md`,
   `raw/README.md`, index.
+
+## [2026-09-17] ingest | The portal is an app hub, the presentation moved to /o-mne
+
+Source: [raw/2026-09-17-portalAsAppHub.md](../raw/2026-09-17-portalAsAppHub.md)
+– the portal should be mainly about showing the applications and signing in,
+further "mini applications" will be added, and *O mně* (About me) should be a
+page like the products.
+
+Decided with the owner: the home page holds **applications and sign-in only**,
+the whole of today's one-pager moves to **`/o-mne`** with its anchors, and the
+coming apps will be **full products** like IziWeddy and IziBudgy, not
+browser-only toys.
+
+- `views/AppsView.vue` is the new `/`: a tile per app, a "more will come" tile
+  and a sign-in block for anonymous visitors. `HomeView.vue` → `AboutView.vue`
+  at `/o-mne`, unchanged inside.
+- **App registry** `content/apps.ts` with each product's description next to its
+  routes (`weddy/app.ts`, `budgy/app.ts`). A tile without a `path` is only a
+  description, so an app hidden by `PERSONAL_DATA_COLLECTION_ENABLED` or one
+  that does not exist yet never links to a 404.
+- Navigation is by page now (*Aplikace · O mně · Kontakt*), not by scrolling
+  through sections; `composables/useActiveSection.ts` was deleted with it. The
+  anchor counts separately in the active state, otherwise `/o-mne#kontakt` lit
+  up two items.
+- Old `/#sluzby`-style links are redirected to `/o-mne#…` in `router/index.ts`:
+  a hash is not part of the path, so a route `redirect` would not catch it.
+- Footer gained an *O mně* link; the project detail's back link points to
+  `/o-mne#projekty`.
+- Touched pages: `domains/portal.md` (rewritten around the hub and the
+  registry), `architecture/frontend.md` (addresses), `overview.md`, index.

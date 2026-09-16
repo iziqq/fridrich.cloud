@@ -211,7 +211,8 @@ inputs, textareas and buttons.
 
 | Path | Content |
 |---|---|
-| `/`, `/#o-mne`, `/#sluzby`, `/#vyvoj`, `/#projekty`, `/#kontakt` | Portal – one-page website |
+| `/` | Portal – the hub of applications and sign-in ([portal.md](../domains/portal.md)) |
+| `/o-mne`, `/o-mne#sluzby`, `/o-mne#vyvoj`, `/o-mne#projekty`, `/o-mne#kontakt` | Presentation on one page (old `/#…` links are redirected) |
 | `/projekty/:id` | Product detail |
 | `/prihlaseni`, `/registrace`, `/overeni-emailu`, `/ucet` | Identity (login, registration, e-mail verification, account incl. deletion) |
 | `/ochrana-osobnich-udaju`, `/obchodni-podminky` | Privacy policy and terms (`LegalView`, always registered) |

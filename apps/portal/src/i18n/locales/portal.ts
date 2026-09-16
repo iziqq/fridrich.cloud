@@ -20,11 +20,40 @@ export const portalCs = {
     openMenu: 'Otevřít menu',
     closeMenu: 'Zavřít menu',
     items: {
+      apps: 'Aplikace',
       about: 'O mně',
-      services: 'Služby',
-      process: 'Vývoj',
-      projects: 'Projekty',
       contact: 'Kontakt',
+    },
+  },
+  apps: {
+    label: 'Aplikace',
+    title: 'Co tu běží',
+    lead: 'Aplikace, které tu provozuju. Jeden účet platí pro všechny – přihlásíte se jednou.',
+    open: 'Otevřít',
+    needsAccount: 'vyžaduje účet',
+    status: {
+      live: 'Hotovo',
+      development: 'Ve vývoji',
+      planned: 'Připravuji',
+    },
+    items: {
+      weddy: {
+        name: 'IziWeddy',
+        tagline: 'Plánování svatby – snoubenci, hosté, přípravy a rozpočet na jednom místě.',
+      },
+      budgy: {
+        name: 'IziBudgy',
+        tagline: 'Rozpočet domácnosti po měsících – příjmy, pravidelné i jednorázové výdaje.',
+      },
+    },
+    more: {
+      title: 'Další přibudou',
+      text: 'Chystám menší aplikace na věci, které řeším sám. Co se osvědčí, objeví se tady.',
+    },
+    signIn: {
+      title: 'Jeden účet pro všechny aplikace',
+      text: 'Bez hesla – přihlásíte se odkazem nebo kódem z e-mailu.',
+      action: 'Přihlásit se',
     },
   },
   hero: {
@@ -220,11 +249,40 @@ export const portalEn: Catalog<typeof portalCs> = {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     items: {
+      apps: 'Apps',
       about: 'About',
-      services: 'Services',
-      process: 'Process',
-      projects: 'Projects',
       contact: 'Contact',
+    },
+  },
+  apps: {
+    label: 'Apps',
+    title: 'What runs here',
+    lead: 'The applications I run here. One account works for all of them – you sign in once.',
+    open: 'Open',
+    needsAccount: 'account required',
+    status: {
+      live: 'Done',
+      development: 'In development',
+      planned: 'Coming',
+    },
+    items: {
+      weddy: {
+        name: 'IziWeddy',
+        tagline: 'Wedding planning – the couple, guests, preparations and the budget in one place.',
+      },
+      budgy: {
+        name: 'IziBudgy',
+        tagline: 'A household budget by months – income, recurring and one-off expenses.',
+      },
+    },
+    more: {
+      title: 'More will come',
+      text: 'I am building smaller apps for things I deal with myself. Whatever proves useful shows up here.',
+    },
+    signIn: {
+      title: 'One account for every app',
+      text: 'No password – you sign in with a link or a code from your e-mail.',
+      action: 'Sign in',
     },
   },
   hero: {

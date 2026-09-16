@@ -9,7 +9,7 @@ updated: 2026-09-17
 
 # fridrich.cloud project overview
 
-> A monorepo for `www.fridrich.cloud`: the presentation portal of Libor Fridrich
+> A monorepo for `www.fridrich.cloud`: the portal of Libor Fridrich
 > (custom software development) and the products under it. **One Vue
 > application** on one domain, **one API** on Azure Functions split into domains,
 > **Cosmos DB**. Deployed to Azure Static Web Apps Free.
@@ -18,7 +18,7 @@ updated: 2026-09-17
 
 | Part | Address | Description | Status |
 |---|---|---|---|
-| **Portal** | `/` | Presentation – about me, services, development process, projects, contact | ✅ done |
+| **Portal** | `/` | Hub of the applications and sign-in; the presentation (about me, services, process, projects, contact) on `/o-mne` | ✅ done |
 | **Identity** | `/prihlaseni`, `/registrace`, `/ucet` | Passwordless account shared by everything, self-service deletion | ✅ done |
 | **IziWeddy** | `/izi-weddy` | Wedding planner – couple, guests, planning, budget; a plan can be **shared**: invitation by e-mail and roles admin / manager / viewer | ✅ done |
 | **Legal** | `/ochrana-osobnich-udaju`, `/obchodni-podminky` | Privacy policy and terms | ✅ done |

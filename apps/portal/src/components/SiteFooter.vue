@@ -28,6 +28,7 @@ const year = new Date().getFullYear();
         <p class="mono heading">{{ t('portal.footer.contactHeading') }}</p>
         <ul>
           <li><a :href="`mailto:${site.email}`">{{ site.email }}</a></li>
+          <li><RouterLink to="/o-mne">{{ t('portal.nav.items.about') }}</RouterLink></li>
           <li><RouterLink to="/ochrana-osobnich-udaju">{{ t('portal.footer.privacy') }}</RouterLink></li>
           <li><RouterLink to="/obchodni-podminky">{{ t('portal.footer.terms') }}</RouterLink></li>
         </ul>

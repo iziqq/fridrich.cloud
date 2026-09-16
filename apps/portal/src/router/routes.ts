@@ -1,6 +1,6 @@
 import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 import type { RouteRecordRaw } from 'vue-router';
-import HomeView from '@/views/HomeView.vue';
+import AppsView from '@/views/AppsView.vue';
 import { budgyRoutes } from '@/budgy/routes';
 import { weddyRoutes } from '@/weddy/routes';
 
@@ -51,7 +51,9 @@ const personalDataRoutes: RouteRecordRaw[] = [
 
 /** Routy zvlášť od routeru, ať jdou vyzkoušet i bez prohlížeče. */
 export const routes: RouteRecordRaw[] = [
-  { path: '/', name: 'home', component: HomeView },
+  // Úvod je rozcestník aplikací; vizitka má vlastní stránku jako produkty.
+  { path: '/', name: 'home', component: AppsView },
+  { path: '/o-mne', name: 'about', component: () => import('@/views/AboutView.vue') },
   {
     path: '/projekty/:id',
     name: 'project',

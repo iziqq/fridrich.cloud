@@ -6,7 +6,6 @@ import { RouterLink, useRoute } from 'vue-router';
 import logoUrl from '@/assets/logo.svg';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import { navItems, site } from '@/content/site';
-import { useActiveSection } from '@/composables/useActiveSection';
 import { useAuthStore } from '@/identity/auth.store';
 
 const route = useRoute();
@@ -14,9 +13,6 @@ const { t } = useI18n();
 const auth = useAuthStore();
 
 const menuOpen = ref(false);
-
-const sectionIds = navItems.map((item) => item.hash.slice(1));
-const activeSection = useActiveSection(sectionIds);
 
 /*
  * Lišta zůstává při scrollu vždy nahoře – navigace i přepínač jazyka mají být
@@ -39,13 +35,15 @@ watch(menuOpen, (open) => {
 // Přechod na jinou stránku menu vždy zavře.
 watch(() => route.fullPath, () => (menuOpen.value = false));
 
-function isActive(hash: string): boolean {
-  return route.path === '/' && activeSection.value === hash.slice(1);
-}
+/*
+ * Zvýrazňuje se položka, na které uživatel stojí. Kotva se počítá zvlášť –
+ * jinak by na `/o-mne#kontakt` svítily „O mně" i „Kontakt" naráz.
+ */
+function isActive(to: string): boolean {
+  const [path, hash] = to.split('#');
+  if (route.path !== path) return false;
 
-/** Na podstránkách musí kotva vést zpět na domovskou stránku. */
-function target(hash: string): string {
-  return route.path === '/' ? hash : `/${hash}`;
+  return hash ? route.hash === `#${hash}` : route.hash === '';
 }
 </script>
 
@@ -58,10 +56,10 @@ function target(hash: string): string {
       </RouterLink>
 
       <ul class="links">
-        <li v-for="item in navItems" :key="item.hash">
-          <a :href="target(item.hash)" :class="{ 'is-active': isActive(item.hash) }">
+        <li v-for="item in navItems" :key="item.to">
+          <RouterLink :to="item.to" :class="{ 'is-active': isActive(item.to) }">
             {{ t(`portal.nav.items.${item.id}`) }}
-          </a>
+          </RouterLink>
         </li>
       </ul>
 
@@ -92,11 +90,11 @@ function target(hash: string): string {
     <!-- Mobilní menu přes celou obrazovku na matném skle, položky postupně najíždějí. -->
     <div v-if="menuOpen" id="mobile-menu" class="overlay">
       <ul>
-        <li v-for="(item, index) in navItems" :key="item.hash" :style="{ '--i': index }">
-          <a :href="target(item.hash)" @click="menuOpen = false">
+        <li v-for="(item, index) in navItems" :key="item.to" :style="{ '--i': index }">
+          <RouterLink :to="item.to" @click="menuOpen = false">
             <span class="mono index">{{ String(index + 1).padStart(2, '0') }}</span>
             {{ t(`portal.nav.items.${item.id}`) }}
-          </a>
+          </RouterLink>
         </li>
         <li
           v-if="PERSONAL_DATA_COLLECTION_ENABLED"

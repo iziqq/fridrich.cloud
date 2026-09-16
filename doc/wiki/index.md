@@ -42,7 +42,7 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [domains/budgy.md](domains/budgy.md) | IziBudgy: subdomains, decisions of the first version, personal data, look | 2026-09-17 |
 | [domains/budgyEntries.md](domains/budgyEntries.md) | Income and expenses: fields, 11 categories, why a month is not a record, 4 endpoints | 2026-09-17 |
 | [domains/budgyBudget.md](domains/budgyBudget.md) | The month on screen: summary, donut and six-month trend, where it is calculated | 2026-09-17 |
-| [domains/portal.md](domains/portal.md) | Portal: content, binding rules, Glass design (dark + orange) tokens and components, accessibility | 2026-09-15 |
+| [domains/portal.md](domains/portal.md) | The portal: the hub at `/`, the presentation at `/o-mne`, the app registry, navigation, binding content rules, Glass design | 2026-09-17 |
 
 ## Operations
 

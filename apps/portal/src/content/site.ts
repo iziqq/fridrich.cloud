@@ -9,12 +9,13 @@
 
 import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 
-export type NavItemId = 'about' | 'services' | 'process' | 'projects' | 'contact';
+export type NavItemId = 'apps' | 'about' | 'contact';
 
 export interface NavItem {
   /** Klíč `portal.nav.items.<id>`. */
   id: NavItemId;
-  hash: string;
+  /** Cesta v portálu, případně i s kotvou (`/o-mne#kontakt`). */
+  to: string;
 }
 
 export interface Stat {
@@ -66,11 +67,9 @@ export const site = {
 
 // Kotvy zůstávají české – jsou součástí adres, které se podle jazyka nemění.
 export const navItems: NavItem[] = [
-  { id: 'about', hash: '#o-mne' },
-  { id: 'services', hash: '#sluzby' },
-  { id: 'process', hash: '#vyvoj' },
-  { id: 'projects', hash: '#projekty' },
-  { id: 'contact', hash: '#kontakt' },
+  { id: 'apps', to: '/' },
+  { id: 'about', to: '/o-mne' },
+  { id: 'contact', to: '/o-mne#kontakt' },
 ];
 
 export const hero = {
