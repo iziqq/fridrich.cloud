@@ -1,21 +1,30 @@
 <script setup lang="ts">
 import { formatCurrency } from '@fridrich/weddy-shared';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import { currentLocale, translateMessage } from '@/i18n';
-import EmptyState from '@/weddy/components/EmptyState.vue';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import { useAuthStore } from '@/identity/auth.store';
 import { weddyPath } from '@/weddy/routes';
+import DashboardWelcome from './DashboardWelcome.vue';
+import WeddingOverview from './WeddingOverview.vue';
+import { useWeddingFormats } from './weddingFormats';
 import { useWeddingStore } from './wedding.store';
 
+/**
+ * Rozcestník plánovače.
+ *
+ * Má tři podoby podle toho, co uživatel má: uvítání bez plánování, souhrn
+ * jediné svatby a seznam karet od dvou výš (doc/wiki/domains/weddyWedding.md).
+ */
 const { t } = useI18n();
 const weddings = useWeddingStore();
 const auth = useAuthStore();
 const router = useRouter();
+const { countdown, formatDate } = useWeddingFormats();
 
 /* Po odhlášení nemá plánovač co zobrazit, tak se jde na portál. */
 async function signOut(): Promise<void> {
@@ -25,24 +34,13 @@ async function signOut(): Promise<void> {
 
 onMounted(() => weddings.loadList());
 
-/** Popisek odpočtu – po svatbě má znít jinak než před ní. */
-function countdown(days: number | undefined): string | undefined {
-  if (days === undefined) return undefined;
-  if (days === 0) return t('weddy.dashboard.today');
-  if (days < 0) return t('weddy.dashboard.daysAgo', Math.abs(days));
-  return t('weddy.dashboard.daysLeft', days);
-}
+/** Jediné plánování se ukazuje rovnou celé, ne jako seznam o jedné položce. */
+const single = computed(() =>
+  weddings.summaries.length === 1 ? weddings.summaries[0] : undefined,
+);
 
-/* Formát data podle jazyka rozhraní – čtení `currentLocale` zajistí překreslení po přepnutí. */
-function formatDate(iso: string | undefined): string {
-  if (!iso) return t('weddy.dashboard.noDate');
-  return new Date(`${iso}T00:00:00Z`).toLocaleDateString(currentLocale.value, {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-}
+/* Nadpis stránky nese uvítání i souhrn – v hlavičce by byl podruhé. */
+const showTitle = computed(() => weddings.summaries.length > 1);
 </script>
 
 <template>
@@ -50,7 +48,7 @@ function formatDate(iso: string | undefined): string {
     <header class="head container">
       <div>
         <p class="hello">{{ auth.user?.displayName }}</p>
-        <h1>{{ t('weddy.dashboard.title') }}</h1>
+        <h1 v-if="showTitle">{{ t('weddy.dashboard.title') }}</h1>
       </div>
       <!-- Plánovač nemá navigaci portálu, jazyk se proto přepíná přímo tady. -->
       <div class="head-actions">
@@ -65,47 +63,49 @@ function formatDate(iso: string | undefined): string {
       <LoadingBlock v-if="weddings.loading && weddings.summaries.length === 0" />
       <ErrorBlock v-else-if="weddings.error" :message="translateMessage(weddings.error)" />
 
-      <EmptyState
-        v-else-if="weddings.summaries.length === 0"
-        icon="💍"
-        :title="t('weddy.dashboard.emptyTitle')"
-        :description="t('weddy.dashboard.emptyDescription')"
-      >
-        <RouterLink :to="weddyPath('/weddings/new')" class="btn btn-primary">{{ t('weddy.dashboard.add') }}</RouterLink>
-      </EmptyState>
+      <DashboardWelcome v-else-if="weddings.summaries.length === 0" />
 
-      <ul v-else class="list">
-        <li v-for="wedding in weddings.summaries" :key="wedding.id">
-          <RouterLink :to="weddyPath(`/weddings/${wedding.id}/couple`)" class="card wedding">
-            <div class="title-row">
-              <h2>{{ wedding.title }}</h2>
-              <span v-if="countdown(wedding.daysUntilWedding)" class="countdown">
-                {{ countdown(wedding.daysUntilWedding) }}
-              </span>
-            </div>
+      <template v-else-if="single">
+        <WeddingOverview :summary="single" />
+        <RouterLink :to="weddyPath('/weddings/new')" class="btn btn-ghost add-another">
+          {{ t('weddy.dashboard.addAnother') }}
+        </RouterLink>
+      </template>
 
-            <p class="couple">
-              {{ wedding.groom.firstName }} &amp; {{ wedding.bride.firstName }}
-            </p>
-            <p class="date">{{ formatDate(wedding.weddingDate) }}</p>
-
-            <dl class="stats">
-              <div>
-                <dt>{{ t('weddy.dashboard.stats.guests') }}</dt>
-                <dd>{{ wedding.acceptedGuestCount }} / {{ wedding.guestCount }}</dd>
+      <template v-else>
+        <ul class="list">
+          <li v-for="wedding in weddings.summaries" :key="wedding.id">
+            <RouterLink :to="weddyPath(`/weddings/${wedding.id}/couple`)" class="card wedding">
+              <div class="title-row">
+                <h2>{{ wedding.title }}</h2>
+                <span v-if="countdown(wedding.daysUntilWedding)" class="countdown">
+                  {{ countdown(wedding.daysUntilWedding) }}
+                </span>
               </div>
-              <div>
-                <dt>{{ t('weddy.dashboard.stats.budget') }}</dt>
-                <dd>{{ formatCurrency(wedding.budgetTotal, currentLocale) }}</dd>
-              </div>
-            </dl>
-          </RouterLink>
-        </li>
-      </ul>
 
-      <RouterLink v-if="weddings.summaries.length > 0" :to="weddyPath('/weddings/new')" class="btn btn-primary add">
-        {{ t('weddy.dashboard.add') }}
-      </RouterLink>
+              <p class="couple">
+                {{ wedding.groom.firstName }} &amp; {{ wedding.bride.firstName }}
+              </p>
+              <p class="date">{{ formatDate(wedding.weddingDate) }}</p>
+
+              <dl class="stats">
+                <div>
+                  <dt>{{ t('weddy.dashboard.stats.guests') }}</dt>
+                  <dd>{{ wedding.acceptedGuestCount }} / {{ wedding.guestCount }}</dd>
+                </div>
+                <div>
+                  <dt>{{ t('weddy.dashboard.stats.budget') }}</dt>
+                  <dd>{{ formatCurrency(wedding.budgetTotal, currentLocale) }}</dd>
+                </div>
+              </dl>
+            </RouterLink>
+          </li>
+        </ul>
+
+        <RouterLink :to="weddyPath('/weddings/new')" class="btn btn-primary add">
+          {{ t('weddy.dashboard.add') }}
+        </RouterLink>
+      </template>
     </div>
   </main>
 </template>
@@ -220,9 +220,14 @@ dd {
   margin-top: var(--space-3);
 }
 
+/* Druhé plánování je výjimka, ne hlavní akce – proto jen nenápadný odkaz. */
+.add-another {
+  margin-top: var(--space-2);
+}
+
 @media (--tablet) {
   .list {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

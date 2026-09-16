@@ -124,6 +124,8 @@ export const WeddingSummarySchema = v.object({
   guestCount: v.number(),
   acceptedGuestCount: v.number(),
   budgetTotal: v.number(),
+  /** Sekce plánování, ve kterých je aspoň jedna schválená položka (z `PLANNING_CATEGORIES`). */
+  decidedSectionCount: v.number(),
   /** Počet dní do svatby; chybí, pokud datum není vyplněné. */
   daysUntilWedding: v.optional(v.number()),
 });

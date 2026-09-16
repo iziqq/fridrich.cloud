@@ -34,7 +34,7 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [domains/identity.md](domains/identity.md) | Passwordless identity: flows, domain model, 8 endpoints incl. account deletion and retention, security rules | 2026-09-15 |
 | [domains/contact.md](domains/contact.md) | Contact form: rules, honeypot, rate limit, 1-year retention, endpoint | 2026-09-15 |
 | [domains/weddy.md](domains/weddy.md) | IziWeddy: subdomains, access via `loadWeddingFor`, routes, mobile UI principles | 2026-09-15 |
-| [domains/weddyWedding.md](domains/weddyWedding.md) | Plans and the couple: dashboard, field rules, 5 endpoints, code | 2026-09-15 |
+| [domains/weddyWedding.md](domains/weddyWedding.md) | Plans and the couple: dashboard in three shapes (welcome / summary / list), field rules, 5 endpoints, code | 2026-09-16 |
 | [domains/weddyGuests.md](domains/weddyGuests.md) | Guests and families: enums, family rules, list, statistics, 8 endpoints | 2026-09-15 |
 | [domains/weddyPlanning.md](domains/weddyPlanning.md) | 11 sections, items, prices, 5 endpoints | 2026-09-15 |
 | [domains/weddyBudget.md](domains/weddyBudget.md) | Budget from items: calculation, where it is computed, `getBudget` endpoint | 2026-09-15 |

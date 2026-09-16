@@ -129,3 +129,19 @@ export const PlanningItemInputSchema = v.object({
   status: v.optional(PlanningItemStatusSchema),
 });
 export type PlanningItemInput = v.InferOutput<typeof PlanningItemInputSchema>;
+
+/**
+ * Počet sekcí, ve kterých je aspoň jedna schválená položka.
+ *
+ * Hrubá míra toho, jak daleko příprava je – dashboard ji ukazuje jako
+ * „rozhodnuto 7 z 11". Počítá se z položek, nikde se neukládá.
+ */
+export function countDecidedSections(items: readonly PlanningItem[]): number {
+  const decided = new Set<PlanningCategory>();
+
+  for (const item of items) {
+    if (item.status === 'accepted') decided.add(item.category);
+  }
+
+  return decided.size;
+}

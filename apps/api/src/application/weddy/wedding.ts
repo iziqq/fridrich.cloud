@@ -1,5 +1,11 @@
 import type { Wedding as WeddingData, WeddingInput, WeddingSummary } from '@fridrich/weddy-shared';
-import { calculateBudget, calculateGuestStats, daysUntil, weddingKeys } from '@fridrich/weddy-shared';
+import {
+  calculateBudget,
+  calculateGuestStats,
+  countDecidedSections,
+  daysUntil,
+  weddingKeys,
+} from '@fridrich/weddy-shared';
 import { DomainError } from '../../domain/shared/DomainError.js';
 import { Wedding } from '../../domain/weddy/wedding/Wedding.js';
 import type { WeddyDeps } from './deps.js';
@@ -37,14 +43,16 @@ export async function listWeddings(deps: WeddyDeps, userId: string): Promise<Wed
         deps.items.list(wedding.id),
       ]);
 
+      const itemStates = items.map((item) => item.toState());
       const stats = calculateGuestStats(guests.map((guest) => guest.toState()));
-      const budget = calculateBudget(items.map((item) => item.toState()));
+      const budget = calculateBudget(itemStates);
 
       const summary: WeddingSummary = {
         ...wedding.toPublic(),
         guestCount: stats.total,
         acceptedGuestCount: stats.accepted,
         budgetTotal: budget.total,
+        decidedSectionCount: countDecidedSections(itemStates),
       };
 
       const days = daysUntil(wedding.weddingDate, deps.clock.now());

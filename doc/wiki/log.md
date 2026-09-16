@@ -300,3 +300,27 @@ Source: [raw/2026-09-15-glassDesign.md](../raw/2026-09-15-glassDesign.md)
 - Verified in headless Chrome at 1024 and 360 px: after scrolling ~2 300 px the bar is still 16 px from the top,
   the logo loads, `/favicon.svg` is served as `image/svg+xml`.
 - Touched pages: `domains/portal.md`.
+
+## [2026-09-16] ingest | IziWeddy dashboard: welcome screen and single-plan summary
+
+Source: [raw/2026-09-16-weddyDashboard.md](../raw/2026-09-16-weddyDashboard.md)
+
+- Dashboard now has three shapes (details in [domains/weddyWedding.md](domains/weddyWedding.md#features)):
+  welcome screen with four section tiles when there is no plan, a large summary
+  with stats and quick links for exactly one plan, the grid of cards from two up.
+- `WeddingSummary` gained `decidedSectionCount` (planning sections with at least
+  one accepted item). New pure function `countDecidedSections` in
+  `packages/weddy-shared/src/planning.ts`, filled in by `listWeddings`.
+- New frontend files: `weddy/wedding/DashboardWelcome.vue`, `WeddingOverview.vue`,
+  `weddingFormats.ts` (shared `formatDate` / `countdown`); `DashboardView.vue`
+  only chooses between the three shapes. New keys `weddy.dashboard.welcome.*`,
+  `stats.sections*`, `stats.*Hint`, `addAnother` in cs and en; `emptyTitle` and
+  `emptyDescription` removed.
+- Tests: 2 new (decided sections), 126 → 128 passing.
+- Verified in headless Chrome at 360 / 768 / 1024 px in Czech and English on a
+  temporary preview page (the dashboard is behind login), then removed. Two
+  alignment bugs found and fixed: centred paragraphs were shifted left by the
+  global `p { max-width: 70ch }` without `margin-inline: auto`.
+- Touched pages: `domains/weddyWedding.md`, `decisions.md`, `index.md`;
+  raw source listed in `doc/raw/README.md`.
+

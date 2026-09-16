@@ -10,9 +10,10 @@ sources:
   - raw/2026-09-15-legalDocumentsAndRetention.md
   - raw/2026-09-15-translations.md
   - raw/2026-09-15-glassDesign.md
+  - raw/2026-09-16-weddyDashboard.md
   - raw/iziweddySpec.md (ch. 12), raw/portalSpec.md (ch. 11)
   - history: doc/architecture.md (Open questions, Answered)
-updated: 2026-09-15
+updated: 2026-09-16
 ---
 
 # Decisions and open questions
@@ -25,6 +26,7 @@ updated: 2026-09-15
 
 | Date | Decision | Why | Detail |
 |---|---|---|---|
+| 2026-09-16 | **IziWeddy dashboard has three shapes** – welcome screen with section tiles for no plan, a large summary with stats and quick links for one plan, the grid of cards from two up; `WeddingSummary` gained `decidedSectionCount` | Owner's choice. A list of a single card forces a pointless click, and an empty dashed box says nothing about what the planner can do. The progress tile needed one more number, computed like the budget instead of stored. | [raw/2026-09-16-weddyDashboard.md](../raw/2026-09-16-weddyDashboard.md), [weddyWedding.md](domains/weddyWedding.md#features) |
 | 2026-09-15 | **Portal design "Glass" (dark + orange) replaces cyberpunk** – frosted glass surfaces, orange glows, Inter, rounded shapes and pills; components `AppButton`/`SectionHeading` replace `CyberButton`/`GlitchHeading`; e-mails use the same palette | Owner found cyberpunk too generic. Tokens stay semantic (`--color-*`), so IziWeddy's theme is untouched; glass has solid fallbacks for reduced transparency and browsers without `backdrop-filter`. Supersedes the design system of `portalSpec.md`. | [raw/2026-09-15-glassDesign.md](../raw/2026-09-15-glassDesign.md), [portal.md](domains/portal.md#design-glass) |
 | 2026-09-15 | **Workflow strips whitespace from the deployment token and uses StaticSitesClient `latest`** | A trailing newline in the secret broke the `Authorization` header; only the newer client reports the real exception instead of "unknown exception" | [deployment.md](operations/deployment.md#deployment-failure-an-unknown-exception-has-occurred) |
 | 2026-09-15 | **Node 22 for the API runtime, CI and bundle** (was 20) | Azure Functions dropped Node 20 on 2026-04-30; a retired `apiRuntime` is a candidate cause of the failing deployment and would stop the API anyway | [deployment.md](operations/deployment.md#deployment-failure-an-unknown-exception-has-occurred) |

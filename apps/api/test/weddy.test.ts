@@ -103,6 +103,37 @@ describe('plánování svatby', () => {
     assert.equal(summary?.guestCount, 2);
     assert.equal(summary?.acceptedGuestCount, 1);
     assert.equal(summary?.budgetTotal, 3000);
+    // Návrh se za rozhodnutou sekci nepočítá.
+    assert.equal(summary?.decidedSectionCount, 0);
+  });
+
+  it('dashboard počítá sekce, ve kterých je schválená položka', async () => {
+    const { deps, weddingId } = await withWedding();
+
+    await createItem(
+      deps,
+      weddingId,
+      { category: 'ceremonyVenue', name: 'Zámek', price: 45000, status: 'accepted' },
+      OWNER,
+    );
+    // Druhá schválená položka v téže sekci počet nezvýší.
+    await createItem(
+      deps,
+      weddingId,
+      { category: 'ceremonyVenue', name: 'Altán', status: 'accepted' },
+      OWNER,
+    );
+    await createItem(
+      deps,
+      weddingId,
+      { category: 'dress', name: 'Šaty', status: 'accepted' },
+      OWNER,
+    );
+    await createItem(deps, weddingId, { category: 'flowers', name: 'Kytice' }, OWNER);
+
+    const [summary] = await listWeddings(deps, OWNER);
+
+    assert.equal(summary?.decidedSectionCount, 2);
   });
 
   it('dashboard ukazuje jen svatby daného uživatele', async () => {

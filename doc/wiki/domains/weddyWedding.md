@@ -3,8 +3,9 @@ title: weddy / wedding – plans and the couple
 type: domain
 sources:
   - raw/iziweddySpec.md (ch. 4, 5.1, 5.2, 8)
+  - raw/2026-09-16-weddyDashboard.md
   - code: packages/weddy-shared/src/wedding.ts, apps/api/src/domain/weddy/wedding, apps/portal/src/weddy/wedding
-updated: 2026-09-15
+updated: 2026-09-16
 ---
 
 # `weddy / wedding` – plans and the couple
@@ -15,9 +16,18 @@ updated: 2026-09-15
 
 ## Features
 
-**Dashboard** (overview only): cards of all the user's plans – title and names
-of the couple, date and days until the wedding, guests total / accepted, total
-budget. A "Přidat plánování" (Add plan) button, clicking a card opens the detail.
+**Dashboard** (`/izi-weddy`, `DashboardView.vue`) has three shapes, because a
+list with a single card is a signpost to nowhere:
+
+| Plans | What is shown | Component |
+|---|---|---|
+| 0 | Welcome screen: ring mark, heading, one sentence about the planner, a prominent *Založit plánování* (Create a wedding plan) button and four tiles with the sections – the same four the wedding detail has as tabs, so navigation is familiar afterwards. | `DashboardWelcome.vue` |
+| 1 | Large summary of that wedding: title, couple, date with the countdown pill, three stat tiles (guests accepted / invited, budget total, sections decided with a progress bar) and four quick links to the tabs. Below it a quiet *Přidat další plánování* (Add another plan) link. | `WeddingOverview.vue` |
+| 2+ | Grid of cards – title, countdown, couple, date, guests and budget; one column on mobile, two from tablet. A primary *Přidat plánování* button below. | `DashboardView.vue` |
+
+The page heading (`h1`) belongs to the welcome screen or the summary; the header
+shows the plain list title only for two plans and more, so a screen never has
+two headings.
 
 **Couple:** one form – a Wedding block (title, date) and Groom and Bride blocks
 with the same fields. Creating a new plan uses the same form (`WeddingForm.vue`).
@@ -43,12 +53,15 @@ Domain:
 - Deleting a wedding deletes its guests and items; the wedding is deleted
   **last** (Cosmos has no transactions – a crash midway can be retried).
 - `daysUntilWedding` = whole days until the date (negative after the wedding), computed from `Clock`.
+- `decidedSectionCount` = planning sections with at least one accepted item
+  (`countDecidedSections` in the shared kernel, out of `PLANNING_CATEGORIES.length`).
+  A rough measure of progress; like the budget it is calculated, never stored.
 
 ## Endpoints
 
 | Endpoint | Method and path | Request → Response |
 |---|---|---|
-| `listWeddings` | `GET /api/weddy/weddings` | → `WeddingSummary[]` (Wedding + `guestCount`, `acceptedGuestCount`, `budgetTotal`, `daysUntilWedding?`) |
+| `listWeddings` | `GET /api/weddy/weddings` | → `WeddingSummary[]` (Wedding + `guestCount`, `acceptedGuestCount`, `budgetTotal`, `decidedSectionCount`, `daysUntilWedding?`) |
 | `createWedding` | `POST /api/weddy/weddings` | `WeddingInput` → `201 Wedding` |
 | `getWedding` | `GET /api/weddy/weddings/{weddingId}` | → `Wedding` |
 | `updateWedding` | `PUT /api/weddy/weddings/{weddingId}` | `WeddingInput` → `Wedding` |
@@ -64,7 +77,8 @@ Domain:
 | BE endpoints | `apps/api/src/endpoints/weddy/wedding/` |
 | FE endpoints | `apps/portal/src/weddy/wedding/endpoints/` |
 | Store | `wedding.store.ts` – `summaries`, `current`, `loadList`, `loadOne`, `create`, `update`, `remove` |
-| UI | `DashboardView`, `WeddingNewView`, `CoupleView`, `WeddingForm`, `WeddingLayout` (loads `current` for the header) |
+| UI | `DashboardView` (three shapes above), `DashboardWelcome`, `WeddingOverview`, `WeddingNewView`, `CoupleView`, `WeddingForm`, `WeddingLayout` (loads `current` for the header) |
+| Formatting | `weddingFormats.ts` – `formatDate` and `countdown` shared by the dashboard and the summary |
 | Storage | container `weddings`, PK `/id` |
 
 ## Related
