@@ -61,6 +61,15 @@ export interface AppConfig {
    * údržbové endpointy odmítnou každý požadavek.
    */
   maintenanceToken?: string;
+  /**
+   * Koření pro otisky údajů, které se jen porovnávají (IP, e-mail pozvánky).
+   *
+   * Bez něj by z otisku šlo dopočítat původní hodnotu hrubou silou. V provozu
+   * je povinné – nevyplněné shodí jen to, co otisky potřebuje (přihlášení,
+   * formulář, pozvánky), ne celý web. Mimo provoz se použije vývojová
+   * hodnota. Změna koření zneplatní existující otisky.
+   */
+  pseudonymPepper?: string;
   email: {
     /** Připojovací řetězec Azure Communication Services; prázdný = jiný odesílatel. */
     connectionString?: string;
@@ -151,6 +160,10 @@ export function getConfig(): AppConfig {
   } else if (smtpHost || smtpUser || smtpPassword) {
     throw new Error('Neúplné nastavení SMTP – vyplňte SMTP_HOST, SMTP_USER i SMTP_PASSWORD.');
   }
+
+  const pepper = process.env['PSEUDONYM_PEPPER'];
+  if (pepper) config.pseudonymPepper = pepper;
+  else if (!isProduction) config.pseudonymPepper = 'local-development-pepper';
 
   cached = config;
   return config;

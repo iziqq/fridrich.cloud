@@ -7,6 +7,14 @@ export interface WeddingInvitationState {
   weddingId: string;
   /** E-mail pozvaného, malými písmeny – účet k němu zatím nepatří. */
   email: string;
+  /**
+   * Otisk téhož e-mailu.
+   *
+   * Podle něj se pozvánka hledá po registraci účtu, takže dotaz nemusí
+   * adresu vůbec znát. Adresa samotná zůstává: pozvánku je potřeba odeslat
+   * a admin ji v nastavení vidí, dokud čeká.
+   */
+  emailHash: string;
   role: InvitableRole;
   invitedAt: string;
   expiresAt: string;
@@ -27,6 +35,7 @@ export class WeddingInvitation {
     id: string;
     weddingId: string;
     email: string;
+    emailHash: string;
     role: InvitableRole;
     clock: Clock;
   }): WeddingInvitation {
@@ -39,6 +48,7 @@ export class WeddingInvitation {
       id: input.id,
       weddingId: input.weddingId,
       email: input.email,
+      emailHash: input.emailHash,
       role: input.role,
       invitedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),

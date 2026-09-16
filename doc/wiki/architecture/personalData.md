@@ -21,12 +21,12 @@ updated: 2026-09-17
 
 | Feature | Personal data | Stored in | Retention | Code |
 |---|---|---|---|---|
-| Contact form | name, e-mail, message, IP | `contactMessages`, `rateLimits`, e-mail to the Gmail inbox | message **365 days** (container TTL); IP ≤ 24 h; inbox copy deleted manually within a year | `ContactSection.vue`, `submitContactMessage` |
-| Registration | name, e-mail, **terms version + acceptance time**, IP | `users`, `tokens`, `rateLimits` | until the account is deleted | `RegisterView.vue`, `register` |
-| Login and session | e-mail, IP, hashes of links/codes/sessions, `lastSeenAt` | `loginCodes`, `sessions`, `tokens`, `users` | code 1 h, link 30 days, session record 60 days, counters ≤ 24 h | `LoginView.vue`, `requestLoginCode`, `verifyLoginCode` |
+| Contact form | name, e-mail, message, **fingerprint of the IP** | `contactMessages`, `rateLimits`, e-mail to the Gmail inbox | message **365 days** (container TTL); rate-limit fingerprint ≤ 24 h; inbox copy deleted manually within a year | `ContactSection.vue`, `submitContactMessage` |
+| Registration | name, e-mail, **terms version + acceptance time**, fingerprint of the IP | `users`, `tokens`, `rateLimits` | until the account is deleted | `RegisterView.vue`, `register` |
+| Login and session | e-mail, fingerprints of the IP and the e-mail in counters, hashes of links/codes/sessions, `lastSeenAt` | `loginCodes`, `sessions`, `tokens`, `users` | code 1 h, link 30 days, session record 60 days, counters ≤ 24 h | `LoginView.vue`, `requestLoginCode`, `verifyLoginCode` |
 | Account | name, e-mail, verification, last activity, UI language (`locale`) | `users` | until deletion; **inactive 365 days → deleted** (warning 30 days before) | `AccountView.vue`, `getCurrentUser` |
 | IziWeddy | couple: first and last name only; guests (**third parties**): name, side, age group, status, family, note; items: name, URL, price, status | `weddings`, `guests`, `planningItems` | until the wedding or the account is deleted | `apps/portal/src/weddy`, `/api/weddy/*` |
-| IziWeddy sharing | e-mail and role of an invited person (**a third party who may have no account**); for members the list of user ids and their roles | `weddingInvitations`, `members` on the wedding | unaccepted invitation **30 days** (container TTL), then automatic deletion; membership until access is removed or the plan/account is deleted | `application/weddy/access.ts`, `/api/weddy/weddings/{weddingId}/access` |
+| IziWeddy sharing | e-mail of an invited person (**a third party who may have no account**) plus its fingerprint for the lookup, and the role; for members the list of user ids and their roles | `weddingInvitations`, `members` on the wedding | unaccepted invitation **30 days** (container TTL), then automatic deletion; membership until access is removed or the plan/account is deleted | `application/weddy/access.ts`, `/api/weddy/weddings/{weddingId}/access` |
 | IziBudgy | household budget entries: name, amount, category, date or validity range, note – income and expenses | `budgetEntries` | until the entry or the account is deleted | `apps/portal/src/budgy`, `/api/budgy/*` |
 | System e-mails | recipient address, content | Gmail sent mail | manual, within a year | `application/identity/emails.ts` |
 | Session cookie | `fc_session` – random token | browser | 30 days or logout | `http/cookies.ts` |
@@ -34,6 +34,10 @@ updated: 2026-09-17
 
 Not collected: analytics, tracking, third-party embeds, fonts from a CDN – so no cookie banner is needed
 (the only cookie is technically necessary).
+
+Values that are only ever compared are stored as **fingerprints** (HMAC with a
+secret pepper), not in the clear – which ones and why is in
+[security.md](security.md).
 
 ## Legal documents
 

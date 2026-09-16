@@ -24,6 +24,7 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [architecture/frontend.md](architecture/frontend.md) | `apps/portal`: domain folders, store vs. view, page shell with a bottom-anchored footer, responsive breakpoints, product routing and look (incl. teleported overlays and why the product draws its own form controls), addresses | 2026-09-17 |
 | [architecture/monorepo.md](architecture/monorepo.md) | Split principles, repository structure, shared packages, what goes where, scripts | 2026-09-15 |
 | [architecture/i18n.md](architecture/i18n.md) | Translations: vue-i18n catalogs (cs/en), message keys from schemas and API, language choice, e-mails per locale | 2026-09-15 |
+| [architecture/security.md](architecture/security.md) | What is hashed and why (HMAC with a pepper), what is deliberately not, what already protects the data, what is open | 2026-09-17 |
 | [architecture/personalData.md](architecture/personalData.md) | GDPR: what collects personal data, legal documents, account deletion, retention scheduler, the switch | 2026-09-17 |
 | [architecture/dataCosmos.md](architecture/dataCosmos.md) | Cosmos DB: containers, partition keys, TTL, RU/s capacity, repository rules | 2026-09-17 |
 

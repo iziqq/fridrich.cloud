@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
-import { tokenGenerator } from '../src/infrastructure/crypto.js';
+import { fingerprint, tokenGenerator } from '../src/infrastructure/crypto.js';
 
 /**
  * Testy skutečného generátoru.
@@ -42,5 +42,25 @@ describe('tokenGenerator', () => {
     assert.ok(!tokenGenerator.matches(hash, 'id-1:123457'));
     // Stejný kód pod jinou výzvou nesmí projít – proto se hashuje spolu s id.
     assert.ok(!tokenGenerator.matches(hash, 'id-2:123456'));
+  });
+});
+
+describe('otisk údaje (fingerprint)', () => {
+  const ip = '198.51.100.7';
+
+  it('z téže hodnoty vyjde týž otisk, z jiné jiný', () => {
+    assert.equal(fingerprint.of(ip), fingerprint.of(ip));
+    assert.notEqual(fingerprint.of(ip), fingerprint.of('198.51.100.8'));
+  });
+
+  it('otisk původní hodnotu neobsahuje', () => {
+    const hash = fingerprint.of('jan@example.com');
+
+    assert.doesNotMatch(hash, /jan|example/u);
+    assert.match(hash, /^[0-9a-f]{64}$/u, 'HMAC-SHA256 v šestnáctkové soustavě');
+  });
+
+  it('zápis adresy nerozhoduje – porovnává se tatáž adresa', () => {
+    assert.equal(fingerprint.of('  Jan@Example.com '), fingerprint.of('jan@example.com'));
   });
 });

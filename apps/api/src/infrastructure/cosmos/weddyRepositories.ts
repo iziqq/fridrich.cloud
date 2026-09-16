@@ -249,12 +249,12 @@ export const weddingInvitationCosmosRepository: WeddingInvitationRepository = {
     return resources.map((state) => WeddingInvitation.fromState(stripSystemFields(state)));
   },
 
-  async listForEmail(email) {
+  async listForEmailHash(emailHash) {
     const container = await getContainer(CONTAINERS.weddingInvitations);
     const { resources } = await container.items
       .query<WeddingInvitationState>({
-        query: 'SELECT * FROM c WHERE c.email = @email',
-        parameters: [{ name: '@email', value: email }],
+        query: 'SELECT * FROM c WHERE c.emailHash = @emailHash',
+        parameters: [{ name: '@emailHash', value: emailHash }],
       })
       .fetchAll();
 

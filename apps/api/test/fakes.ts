@@ -34,6 +34,7 @@ import { WeddingInvitation } from '../src/domain/weddy/wedding/WeddingInvitation
 import type { WeddingInvitationRepository } from '../src/domain/weddy/wedding/WeddingInvitationRepository.js';
 import type { DirectoryUser, UserDirectory } from '../src/domain/weddy/wedding/UserDirectory.js';
 import { FixedClock } from '../src/domain/shared/Clock.js';
+import type { Fingerprint } from '../src/domain/shared/Fingerprint.js';
 
 /**
  * Paměťové náhrady portů.
@@ -384,9 +385,9 @@ export class InMemoryWeddingInvitationRepository implements WeddingInvitationRep
       .map((state) => WeddingInvitation.fromState(state));
   }
 
-  async listForEmail(email: string): Promise<WeddingInvitation[]> {
+  async listForEmailHash(emailHash: string): Promise<WeddingInvitation[]> {
     return [...this.items.values()]
-      .filter((state) => state.email === email)
+      .filter((state) => state.emailHash === emailHash)
       .map((state) => WeddingInvitation.fromState(state));
   }
 
@@ -474,6 +475,14 @@ export interface WeddyTestContext extends WeddyDeps {
   clock: FixedClock;
 }
 
+/*
+ * Otisk pro testy – čitelný, ale odlišný od vstupu, takže v očekávaných
+ * datech pozná, že se ukládá otisk a ne hodnota sama.
+ */
+export const testFingerprint: Fingerprint = {
+  of: (value) => `fp:${value.trim().toLowerCase()}`,
+};
+
 export function weddyTestDeps(): WeddyTestContext {
   return {
     weddings: new InMemoryWeddingRepository(),
@@ -483,6 +492,7 @@ export function weddyTestDeps(): WeddyTestContext {
     invitations: new InMemoryWeddingInvitationRepository(),
     directory: new FakeUserDirectory(),
     email: new CollectingEmailSender(),
+    fingerprint: testFingerprint,
     appUrl: 'https://www.fridrich.cloud',
     ids: new SequentialIds(),
     clock: new FixedClock(new Date('2026-01-01T10:00:00.000Z')),

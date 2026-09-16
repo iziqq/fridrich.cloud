@@ -1,6 +1,8 @@
-import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
+import { getConfig } from '../config.js';
 import type { IdGenerator, TokenGenerator } from '../domain/identity/ports.js';
+import type { Fingerprint } from '../domain/shared/Fingerprint.js';
 
 /**
  * Náhodné hodnoty pro session cookie, e-mailové odkazy a přihlašovací kódy.
@@ -47,3 +49,28 @@ export function safeEquals(a: string, b: string): boolean {
   if (bufferA.length !== bufferB.length) return false;
   return timingSafeEqual(bufferA, bufferB);
 }
+
+/**
+ * Otisk údaje, který se jen porovnává (IP adresa, e-mail pozvánky).
+ *
+ * Na rozdíl od tokenů tady jde o hodnoty z malé, uhodnutelné množiny – IPv4
+ * adres jsou čtyři miliardy, e-maily se dají vzít ze seznamu. Holý SHA-256 by
+ * se dal předpočítat, proto HMAC s tajným kořením z nastavení: bez něj z otisku
+ * nikdo původní hodnotu nedostane. Hodnota se před otiskem sjednotí (ořez,
+ * malá písmena), aby `Jan@Example.com ` a `jan@example.com` daly tentýž otisk.
+ */
+export const fingerprint: Fingerprint = {
+  of(value: string): string {
+    const pepper = getConfig().pseudonymPepper;
+    /*
+     * Radši spadnout než počítat otisky bez koření: takový otisk by se dal
+     * hrubou silou rozluštit a tvářil by se přitom jako ochrana. Chyba
+     * shodí jen cesty, které otisky používají – zbytek webu běží dál.
+     */
+    if (!pepper) throw new Error('Chybí povinné nastavení "PSEUDONYM_PEPPER".');
+
+    return createHmac('sha256', pepper)
+      .update(value.trim().toLowerCase())
+      .digest('hex');
+  },
+};

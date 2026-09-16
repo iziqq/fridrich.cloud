@@ -7,8 +7,13 @@ export interface ContactMessageState {
   email: string;
   message: string;
   createdAt: string;
-  /** Adresa odesílatele kvůli rate limitingu a přehledu o zneužití. */
-  sourceIp?: string;
+  /**
+   * Otisk adresy odesílatele – kvůli přehledu o zneužití.
+   *
+   * Adresa samotná by ve zprávě ležela rok a k ničemu by nebyla: porovnat
+   * dvě zprávy „ze stejné adresy" jde i z otisku.
+   */
+  sourceIpHash?: string;
 }
 
 /**
@@ -24,7 +29,7 @@ export class ContactMessage {
   static create(input: {
     id: string;
     message: ContactMessageInput;
-    sourceIp?: string;
+    sourceIpHash?: string;
     clock: Clock;
   }): ContactMessage {
     const state: ContactMessageState = {
@@ -35,7 +40,7 @@ export class ContactMessage {
       createdAt: input.clock.now().toISOString(),
     };
 
-    if (input.sourceIp) state.sourceIp = input.sourceIp;
+    if (input.sourceIpHash) state.sourceIpHash = input.sourceIpHash;
 
     return new ContactMessage(state);
   }

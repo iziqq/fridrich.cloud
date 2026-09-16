@@ -10,6 +10,7 @@
     "COSMOS_THROUGHPUT": "",
     "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:5174,http://localhost:5175",
     "APP_URL": "http://localhost:5173",
+    "PSEUDONYM_PEPPER": "local-development-pepper",
     "CONTACT_INBOX": "liborfridrich@gmail.com",
     "EMAIL_FROM": "no-reply@fridrich.cloud",
     "SMTP_HOST": "",

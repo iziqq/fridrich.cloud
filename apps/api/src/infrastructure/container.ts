@@ -7,7 +7,7 @@ import type { WeddyDeps } from '../application/weddy/deps.js';
 import { claimWeddingInvitations } from '../application/weddy/access.js';
 import { eraseUserBudgyData } from '../application/budgy/entries.js';
 import { eraseUserWeddyData } from '../application/weddy/wedding.js';
-import { tokenGenerator, uuidGenerator } from './crypto.js';
+import { fingerprint, tokenGenerator, uuidGenerator } from './crypto.js';
 import { createEmailSender } from './email/senders.js';
 import {
   loginCodeCosmosRepository,
@@ -77,6 +77,7 @@ export function weddyDeps(): WeddyDeps {
     invitations: weddingInvitationCosmosRepository,
     directory: cosmosUserDirectory,
     email: createEmailSender(),
+    fingerprint,
     appUrl: getConfig().appUrl,
     ids: uuidGenerator,
     clock: systemClock,
@@ -102,6 +103,7 @@ export function contactDeps(): ContactDeps {
     ids: uuidGenerator,
     clock: systemClock,
     rateLimiter: cosmosRateLimiter,
+    fingerprint,
     inboxAddress: getConfig().email.inbox,
   };
 

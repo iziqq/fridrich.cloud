@@ -17,7 +17,7 @@ import {
   updateWeddingSettings,
 } from '../src/application/weddy/wedding.js';
 import { isDomainError } from '../src/domain/shared/DomainError.js';
-import { validWedding, weddyTestDeps, type WeddyTestContext } from './fakes.js';
+import { testFingerprint, validWedding, weddyTestDeps, type WeddyTestContext } from './fakes.js';
 
 /**
  * Přístupy k plánování: admin je zakladatel, manager mění obsah, viewer čte.
@@ -136,6 +136,28 @@ describe('role v plánování', () => {
 });
 
 describe('pozvání do plánování', () => {
+  it('pozvánka se hledá podle otisku adresy, ne podle adresy', async () => {
+    const { deps, weddingId } = await withWedding();
+    await inviteToWedding(
+      deps,
+      weddingId,
+      { email: 'novy@example.com', role: 'viewer', locale: 'cs' },
+      ADMIN,
+    );
+
+    const stored = [...deps.invitations.items.values()][0];
+    assert.equal(stored?.emailHash, testFingerprint.of('novy@example.com'));
+    assert.equal(
+      (await deps.invitations.listForEmailHash('novy@example.com')).length,
+      0,
+      'čitelná adresa už jako klíč neslouží',
+    );
+    assert.equal(
+      (await deps.invitations.listForEmailHash(testFingerprint.of('novy@example.com'))).length,
+      1,
+    );
+  });
+
   it('existující účet dostane přístup hned a dozví se to e-mailem', async () => {
     const { deps, weddingId } = await withWedding();
     deps.directory.add(jana);

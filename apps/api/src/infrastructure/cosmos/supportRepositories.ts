@@ -5,6 +5,7 @@ import {
   type ContactMessageState,
 } from '../../domain/contact/ContactMessage.js';
 import type { RateLimiter } from '../../domain/identity/ports.js';
+import { fingerprint } from '../crypto.js';
 import { getContainer, isNotFound, stripSystemFields } from './client.js';
 
 export const contactMessageCosmosRepository: ContactMessageRepository = {
@@ -32,8 +33,15 @@ interface RateLimitDocument {
 export const cosmosRateLimiter: RateLimiter = {
   async consume(key, limit, windowMs) {
     const container = await getContainer(CONTAINERS.rateLimits);
-    // Klíč může obsahovat e-mail nebo IP – do `id` v Cosmos DB nesmí `/`, `\`, `#`, `?`.
-    const id = key.replace(/[/\\#?]/g, '_');
+    /*
+     * Klíč je `akce:hodnota`, kde hodnota je e-mail nebo IP. Uložit se z něj
+     * smí jen otisk: kontejner pak neobsahuje čitelný osobní údaj a přitom
+     * počítadlo funguje dál, protože táž hodnota dá týž otisk. Akce zůstává
+     * čitelná – neříká nic o člověku a hodí se při hledání problémů.
+     */
+    const separator = key.indexOf(':');
+    const action = (separator === -1 ? key : key.slice(0, separator)).replace(/[/\\#?]/g, '_');
+    const id = separator === -1 ? action : `${action}:${fingerprint.of(key.slice(separator + 1))}`;
     const now = Date.now();
     const ttl = Math.ceil(windowMs / 1000) + 60;
 

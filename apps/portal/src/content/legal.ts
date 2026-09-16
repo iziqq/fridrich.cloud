@@ -79,9 +79,9 @@ export const privacyPolicy: LegalDocument = {
           rows: [
             [
               'Kontaktní formulář',
-              'jméno, e-mail, text zprávy, IP adresa',
-              'Odpověď na poptávku a jednání o zakázce – opatření před uzavřením smlouvy na vaši žádost (čl. 6 odst. 1 písm. b) GDPR). IP adresa slouží k ochraně formuláře proti zneužití – oprávněný zájem (čl. 6 odst. 1 písm. f) GDPR).',
-              `Zpráva ${contactRetention} od přijetí, poté se automaticky smaže. IP adresa nejvýše 24 hodin. Vznikne-li z poptávky zakázka, uchovávám komunikaci po dobu trvání smlouvy a promlčecí lhůty.`,
+              'jméno, e-mail, text zprávy, otisk (hash) IP adresy',
+              'Odpověď na poptávku a jednání o zakázce – opatření před uzavřením smlouvy na vaši žádost (čl. 6 odst. 1 písm. b) GDPR). Otisk IP adresy slouží k ochraně formuláře proti zneužití – oprávněný zájem (čl. 6 odst. 1 písm. f) GDPR). Samotnou IP adresu neukládám; z otisku ji nelze zpětně zjistit.',
+              `Zpráva ${contactRetention} od přijetí, poté se automaticky smaže. Otisk IP adresy v počítadle pokusů nejvýše 24 hodin. Vznikne-li z poptávky zakázka, uchovávám komunikaci po dobu trvání smlouvy a promlčecí lhůty.`,
             ],
             [
               'Uživatelský účet',
@@ -91,8 +91,8 @@ export const privacyPolicy: LegalDocument = {
             ],
             [
               'Přihlašování a zabezpečení',
-              'otisky (hashe) aktivačních odkazů, přihlašovacích kódů a přihlášení; IP adresa a e-mail u omezení počtu pokusů',
-              'Přihlášení bez hesla a ochrana účtu před zneužitím – plnění smlouvy a oprávněný zájem (čl. 6 odst. 1 písm. b) a f) GDPR).',
+              'otisky (hashe) aktivačních odkazů, přihlašovacích kódů a přihlášení; otisky IP adresy a e-mailu u omezení počtu pokusů',
+              'Přihlášení bez hesla a ochrana účtu před zneužitím – plnění smlouvy a oprávněný zájem (čl. 6 odst. 1 písm. b) a f) GDPR). V počítadlech pokusů leží jen otisky, ne samotná adresa ani e-mail.',
               'Aktivační odkaz 30 dní, přihlašovací kód 1 hodinu, záznam o přihlášení 60 dní (přihlášení platí 30 dní), počítadla pokusů nejvýše 24 hodin.',
             ],
             [
@@ -109,7 +109,7 @@ export const privacyPolicy: LegalDocument = {
             ],
             [
               'Sdílení plánování v IziWeddy',
-              'e-mail pozvaného člověka a zvolená role; u lidí s účtem seznam uživatelů, kteří k plánování mají přístup, a jejich role',
+              'e-mail pozvaného člověka a jeho otisk, zvolená role; u lidí s účtem seznam uživatelů, kteří k plánování mají přístup, a jejich role',
               'Sdílení plánování s dalšími lidmi na žádost uživatele – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR); u pozvaného, který účet nemá, oprávněný zájem na doručení pozvánky (písm. f).',
               `Nepřijatá pozvánka ${invitationRetention} od odeslání, poté se automaticky smaže. Po registraci se změní na přístup k plánování a trvá do odebrání přístupu, smazání plánování nebo účtu.`,
             ],

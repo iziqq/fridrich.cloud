@@ -97,13 +97,15 @@ export async function inviteToWedding(
     return listWeddingAccess(deps, weddingId, userId);
   }
 
-  const waiting = await deps.invitations.listForEmail(command.email);
+  const emailHash = deps.fingerprint.of(command.email);
+  const waiting = await deps.invitations.listForEmailHash(emailHash);
   if (waiting.some((invitation) => invitation.weddingId === weddingId)) {
     throw DomainError.conflict(weddingKeys.alreadyInvited);
   }
 
   const invitation = WeddingInvitation.issue({
     id: deps.ids.next(),
+    emailHash,
     weddingId,
     email: command.email,
     role: command.role,
@@ -180,7 +182,7 @@ export async function claimWeddingInvitations(
   deps: WeddyDeps,
   user: { id: string; email: string },
 ): Promise<void> {
-  const invitations = await deps.invitations.listForEmail(user.email);
+  const invitations = await deps.invitations.listForEmailHash(deps.fingerprint.of(user.email));
 
   for (const invitation of invitations) {
     const wedding = await deps.weddings.findById(invitation.weddingId);

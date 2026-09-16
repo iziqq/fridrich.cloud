@@ -21,10 +21,10 @@ updated: 2026-09-17
 | `tokens` | `/userId` | identity | activation links, TTL 30 days |
 | `loginCodes` | `/userId` | identity | login codes, TTL 1 hour |
 | `sessions` | `/userId` | identity | TTL 60 days |
-| `rateLimits` | `/id` | shared | TTL 24 hours |
+| `rateLimits` | `/id` | shared | TTL 24 hours; `id` is `action:fingerprint`, so no readable IP or e-mail is stored ([security.md](security.md)) |
 | `contactMessages` | `/id` | contact | TTL 365 days (privacy policy) |
 | `weddings` | `/id` | weddy / wedding | the couple and `members` (`userId`, `role`, `addedAt`) plus the derived `memberIds` |
-| `weddingInvitations` | `/weddingId` | weddy / access | pending invitation by e-mail, TTL 30 days (`WEDDING_INVITATION_RETENTION_DAYS`) |
+| `weddingInvitations` | `/weddingId` | weddy / access | pending invitation by e-mail (the lookup runs on `emailHash`), TTL 30 days (`WEDDING_INVITATION_RETENTION_DAYS`) |
 | `guests` | `/weddingId` | weddy / guests | a family is the `family` field on a guest |
 | `planningItems` | `/weddingId` | weddy / planning | the budget is not stored, it is calculated |
 | `planningBundles` | `/weddingId` | weddy / planning | one offer for one price; the item holds the `bundleId`, the bundle holds no list |

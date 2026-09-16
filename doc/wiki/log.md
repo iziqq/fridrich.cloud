@@ -627,3 +627,42 @@ browser-only toys.
   `/o-mne#projekty`.
 - Touched pages: `domains/portal.md` (rewritten around the hub and the
   registry), `architecture/frontend.md` (addresses), `overview.md`, index.
+
+## [2026-09-17] ingest | Fingerprints for values that are only compared
+
+Source: [raw/2026-09-17-hashUserData.md](../raw/2026-09-17-hashUserData.md) –
+"I would like user data to be hashed, so that it is not legally attackable. Or
+what do you think?"
+
+The answer (now [architecture/security.md](architecture/security.md)): hashing
+is one-way, so it cannot be used for anything the app shows back, and "not
+hashed" is not a legal flaw in itself – GDPR asks for measures appropriate to
+the risk. What deserves a hash are values that are **only compared**, and those
+were hashed:
+
+- New port `domain/shared/Fingerprint.ts` and `fingerprint` in
+  `infrastructure/crypto.ts` – **HMAC-SHA256 with `PSEUDONYM_PEPPER`**, not a
+  plain hash: four billion IPv4 addresses would be brute-forced in minutes.
+  Required in production, a development value otherwise; it is an Azure
+  Application setting only, no GitHub secret needs it. A missing pepper throws
+  at the fingerprint, not while reading the configuration, so it takes down
+  sign-in, the contact form and invitations – not the whole API.
+- `rateLimits`: the document id is now `action:fingerprint`, so the container
+  holds no readable IP or e-mail; the action stays readable for debugging.
+- `contactMessages`: `sourceIpHash` instead of `sourceIp`.
+- `weddingInvitations`: new `emailHash`, and `listForEmail` became
+  `listForEmailHash` – the lookup after registration no longer needs the
+  address. The address itself stays: the invitation has to be sent and the
+  admin sees who is pending.
+- Privacy policy rows updated accordingly (IP → fingerprint of the IP); the
+  document version stays `'2026-09-17'`, because it changed on the same day it
+  was last bumped.
+- No migration: the owner agreed existing documents can be thrown away. Old
+  rate-limit counters expire within 24 hours; an invitation issued before the
+  change will not be found by hash and expires in 30 days.
+- Tests: fingerprint determinism, normalisation and that it does not contain the
+  input; an invitation is found by fingerprint and not by the plain address
+  (163 API tests pass).
+- New page: `architecture/security.md`. Touched: `architecture/personalData.md`,
+  `architecture/dataCosmos.md`, `operations/deployment.md` (the new setting),
+  index, `raw/README.md`.

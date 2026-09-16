@@ -1,6 +1,7 @@
 import type { ContactMessageInput } from '@fridrich/shared';
 import type { Clock } from '../../domain/shared/Clock.js';
 import type { IdGenerator, RateLimiter } from '../../domain/identity/ports.js';
+import type { Fingerprint } from '../../domain/shared/Fingerprint.js';
 import type { EmailSender } from '../../domain/shared/EmailSender.js';
 import { ContactMessage, type ContactMessageRepository } from '../../domain/contact/ContactMessage.js';
 import { DomainError } from '../../domain/shared/DomainError.js';
@@ -11,6 +12,8 @@ export interface ContactDeps {
   ids: IdGenerator;
   clock: Clock;
   rateLimiter: RateLimiter;
+  /** Otisky údajů, které se jen porovnávají – IP odesílatele. */
+  fingerprint: Fingerprint;
   /** Adresa, na kterou chodí poptávky. */
   inboxAddress: string;
 }
@@ -50,7 +53,8 @@ export async function submitContactMessage(
   const message = ContactMessage.create({
     id: deps.ids.next(),
     message: command.message,
-    sourceIp: command.sourceIp,
+    // Adresa slouží jen k porovnání – ukládá se otisk, ne ona sama.
+    ...(command.sourceIp ? { sourceIpHash: deps.fingerprint.of(command.sourceIp) } : {}),
     clock: deps.clock,
   });
 

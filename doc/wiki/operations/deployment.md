@@ -127,6 +127,7 @@ npx @azure/static-web-apps-cli@2 deploy apps/portal/dist \
 | `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | mailbox |
 | `CONTACT_INBOX` | address for enquiries |
 | `MAINTENANCE_TOKEN` | random secret (`openssl rand -hex 32`) for the retention scheduler; the same value as the GitHub secret |
+| `PSEUDONYM_PEPPER` | random secret (`openssl rand -hex 32`) for fingerprints of values that are only compared (IP, the e-mail of a pending invitation). **Required in production**; changing it invalidates existing fingerprints ([security.md](../architecture/security.md)) |
 
 `COOKIE_DOMAIN` stays empty (single origin).
 

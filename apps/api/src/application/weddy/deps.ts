@@ -1,5 +1,6 @@
 import type { IdGenerator } from '../../domain/identity/ports.js';
 import type { Clock } from '../../domain/shared/Clock.js';
+import type { Fingerprint } from '../../domain/shared/Fingerprint.js';
 import type { EmailSender } from '../../domain/shared/EmailSender.js';
 import type { GuestRepository } from '../../domain/weddy/guests/GuestRepository.js';
 import type { PlanningBundleRepository } from '../../domain/weddy/planning/PlanningBundleRepository.js';
@@ -20,6 +21,8 @@ export interface WeddyDeps {
   /** Jméno a e-mail k už známému účtu – port do domény identity. */
   directory: UserDirectory;
   email: EmailSender;
+  /** Otisky údajů, které se jen porovnávají – e-mail čekající pozvánky. */
+  fingerprint: Fingerprint;
   /** Základ odkazů v e-mailech, např. `https://www.fridrich.cloud`. */
   appUrl: string;
   ids: IdGenerator;

@@ -171,7 +171,9 @@ export async function eraseUserWeddyData(
   }
 
   // Pozvánky na jeho adresu už nemají komu naskočit.
-  for (const invitation of await deps.invitations.listForEmail(user.email)) {
+  for (const invitation of await deps.invitations.listForEmailHash(
+    deps.fingerprint.of(user.email),
+  )) {
     await deps.invitations.delete(invitation.weddingId, invitation.id);
   }
 }
