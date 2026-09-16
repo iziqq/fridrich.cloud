@@ -34,7 +34,7 @@ defineEmits<{ click: [] }>();
 }
 
 .fab:hover {
-  background: var(--rose-700);
+  background: var(--color-accent-strong);
 }
 
 .plus {

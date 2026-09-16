@@ -12,12 +12,12 @@ npm-workspaces monorepo:
 - **Frontend** – `apps/portal`: one Vue 3 app (Composition API, `<script setup lang="ts">`, Vite, Pinia, Vue Router). Products (IziWeddy, IziBudgy) are route subtrees.
 - **Backend** – `apps/api`: one Azure Functions app (Node.js, programming model v4, HTTP triggers only), TypeScript.
 - **Database** – Azure Cosmos DB (NoSQL API).
-- **Shared kernel** – `packages/shared`, `packages/weddy-shared`: Valibot schemas, enums, pure calculations used by both apps.
+- **Shared kernel** – `packages/shared`, `packages/weddy-shared`, `packages/budgy-shared`: Valibot schemas, enums, pure calculations used by both apps.
 - **Types and validation** – [Valibot](https://valibot.dev) everywhere.
 
 Both backend and frontend are organised **by domain**, with the same domain
 names on both sides. Current domains: `identity`, `contact`,
-`weddy/{wedding,guests,planning,budget}`, `budgy` (TODO).
+`weddy/{wedding,guests,planning,budget}`, `budgy/{entries,budget}`.
 
 ---
 
@@ -146,7 +146,7 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 20. `view → store → endpoint file → api/http.ts`. A view may call an endpoint without a store when the result is not shared (e.g. registration, budget).
 21. Pinia store (`<subdomain>.store.ts`) only for state shared across components/screens.
 22. Use shared-kernel calculations (`calculateBudget`, `groupIntoFamilies`) instead of re-implementing them in components.
-23. Product styles only under the product class (`.weddy`) – nothing on `:root`, no bare element selectors. Every product screen has exactly one `main#obsah`.
+23. Product styles only under the product class (`.weddy`, `.budgy`) – nothing on `:root`, no bare element selectors. Every product screen has exactly one `main#obsah`. Components shared by the products live in `apps/portal/src/components/product/` and may use **semantic tokens only**, never a palette shade (`--rose-400`); see `doc/wiki/architecture/frontend.md#product-ui-kit`.
 24. **Everything on the frontend is responsive** – every view and component (portal and products) must work on mobile, tablet and notebook. Styles are mobile-first: base CSS is the mobile layout, wider layouts are added with the **named breakpoints** defined once in `packages/design/src/breakpoints.css` (`@custom-media`, compiled by PostCSS in `apps/portal/postcss.config.js`):
 
     | Device | Width | Media query |

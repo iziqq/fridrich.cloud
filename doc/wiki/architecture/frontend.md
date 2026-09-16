@@ -7,7 +7,7 @@ sources:
   - raw/2026-09-15-responsiveFrontend.md
   - raw/portalSpec.md (navigation, services grid), raw/iziweddySpec.md (ch. 6.3)
   - code: packages/design/src/breakpoints.css, apps/portal/postcss.config.js
-updated: 2026-09-16
+updated: 2026-09-17
 ---
 
 # Frontend – `apps/portal`
@@ -170,6 +170,26 @@ Current use:
 > Tokens on `:root` would override the portal palette on the whole website.
 > Everything goes under `.weddy`.
 
+### Product UI kit
+
+Both products (IziWeddy, IziBudgy) share one set of components in
+`components/product/` – `BottomSheet`, `ConfirmDialog` (+ `confirm.ts`),
+`FormField`, `SelectField`, `ChoiceField`, `EmptyState`, `ErrorBlock`,
+`LoadingBlock`, `FabButton` – and one stylesheet, `styles/product.css`, with
+the elements used by class (`.btn`, `.btn-primary`, `.card`). They hang on the
+class `.product`, which every product wrapper carries next to its own
+(`<div class="weddy product">`).
+
+**A shared component may only reach for semantic tokens** (`--color-accent`,
+`--color-accent-strong`, `--color-accent-wash`, `--color-surface-alt`…), never
+for a palette shade such as `--rose-400`. A product theme defines the tokens;
+that is the whole difference between them. The kit used to live under `weddy/`
+and reached straight into the rose palette, so the first budgy screens came out
+pink.
+
+`StatusBadge` stayed in `weddy/components/` – its statuses (`guest`,
+`planning`) belong to that product.
+
 > ⚠️ **Anything teleported to `body` carries the product class itself.**
 > `BottomSheet.vue` renders through `<Teleport to="body">`, which puts the
 > overlay outside the `.weddy` subtree – neither the tokens nor `.weddy .btn`
@@ -177,7 +197,9 @@ Current use:
 > default. The teleported root is therefore `<div class="weddy overlay">` – and
 > because the class also carries the theme's own **background**, the overlay has
 > to set `background: transparent`, otherwise it covers the page instead of
-> dimming it.
+> dimming it. Which product is on screen is held by `components/product/theme.ts`
+> (`useProductTheme('budgy')` in the shell), so the overlays do not have to
+> guess the class.
 
 Form controls that the operating system would draw are replaced by our own
 components – `SelectField.vue` instead of `<select>`, `ConfirmDialog.vue`
@@ -194,12 +216,12 @@ inputs, textareas and buttons.
 | `/prihlaseni`, `/registrace`, `/overeni-emailu`, `/ucet` | Identity (login, registration, e-mail verification, account incl. deletion) |
 | `/ochrana-osobnich-udaju`, `/obchodni-podminky` | Privacy policy and terms (`LegalView`, always registered) |
 | `/izi-weddy/*` | IziWeddy – routes in [weddy.md](../domains/weddy.md#routes) |
-| `/izi-budgy/*` | IziBudgy *(TODO)* |
+| `/izi-budgy/*` | IziBudgy – the budget by months ([budgyBudget.md](../domains/budgyBudget.md)) |
 | `/api/*` | API (the Vite dev server proxies it to `:7071`) |
 
 Routes and anchors are Czech because they are part of the public website.
 
-> ℹ️ Identity routes and `/izi-weddy/*` are in `personalDataRoutes` and are
+> ℹ️ Identity routes, `/izi-weddy/*` and `/izi-budgy/*` are in `personalDataRoutes` and are
 > registered only when `PERSONAL_DATA_COLLECTION_ENABLED` is on (currently on);
 > with the switch off they return the 404 page ([personalData.md](personalData.md)).
 

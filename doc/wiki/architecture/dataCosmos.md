@@ -4,7 +4,7 @@ type: concept
 sources:
   - code: apps/api/src/config.ts, apps/api/src/infrastructure/cosmos
   - history: doc/architecture.md ch. 7 (commit 8db5e0a)
-updated: 2026-09-16
+updated: 2026-09-17
 ---
 
 # Data in Cosmos DB
@@ -27,7 +27,8 @@ updated: 2026-09-16
 | `weddingInvitations` | `/weddingId` | weddy / access | pending invitation by e-mail, TTL 30 days (`WEDDING_INVITATION_RETENTION_DAYS`) |
 | `guests` | `/weddingId` | weddy / guests | a family is the `family` field on a guest |
 | `planningItems` | `/weddingId` | weddy / planning | the budget is not stored, it is calculated |
-| *(TODO)* | | budgy | |
+| `planningBundles` | `/weddingId` | weddy / planning | one offer for one price; the item holds the `bundleId`, the bundle holds no list |
+| `budgetEntries` | `/userId` | budgy / entries | income and expenses of one account; the month is not a record, it is derived from the range or the date |
 
 Names are held by `CONTAINERS` in `apps/api/src/config.ts`. Containers and the
 database are created on first use (`createIfNotExists`); temporary data is

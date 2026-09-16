@@ -7,7 +7,8 @@
  * CSS se dědí, proto stačí předefinovat je na obalu.
  *
  * Strukturu (rozestupy, pohyb, reset) bere plánovač ze sdíleného balíčku
- * stejně jako portál – jiná je jen paleta a písmo: teplé, světlé, klidné.
+ * stejně jako portál, tlačítka a karty ze `styles/product.css` – jiná je jen
+ * paleta a písmo: teplé, světlé, klidné.
  */
 @import '@fontsource/cormorant-garamond/latin-600.css';
 @import '@fontsource/cormorant-garamond/latin-ext-600.css';
@@ -17,6 +18,7 @@
 @import '@fontsource/inter/latin-ext-500.css';
 @import '@fontsource/inter/latin-600.css';
 @import '@fontsource/inter/latin-ext-600.css';
+@import '../styles/product.css';
 
 /*
  * Tokeny dostane i `body`, dokud je plánovač na obrazovce.
@@ -57,6 +59,11 @@ body:has(.weddy) {
   --color-muted: var(--ink-500);
   --color-accent: var(--rose-600);
   --color-accent-soft: var(--rose-500);
+  /* Odstíny přízvuku, na které sahají sdílené prvky (styles/product.css). */
+  --color-accent-strong: var(--rose-700);
+  --color-accent-muted: var(--rose-400);
+  --color-accent-wash: var(--rose-100);
+  --color-surface-alt: var(--sand-100);
   --color-danger: var(--clay-500);
   --color-success: var(--sage-500);
   --color-on-accent: #ffffff;
@@ -106,86 +113,7 @@ body:has(.weddy) {
   text-transform: uppercase;
 }
 
-/* --- Sdílené prvky --- */
-
-.weddy .card {
-  padding: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.weddy .btn {
-  display: inline-flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--touch-target);
-  padding: 0.7rem 1.25rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    background-color var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease);
-}
-
-.weddy .btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.weddy .btn-primary {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
-
-.weddy .btn-primary:hover:not(:disabled) {
-  background: var(--rose-700);
-  color: var(--color-on-accent);
-}
-
-.weddy .btn-secondary {
-  border-color: var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-
-.weddy .btn-secondary:hover:not(:disabled) {
-  border-color: var(--rose-400);
-  color: var(--color-accent);
-}
-
-.weddy .btn-ghost {
-  color: var(--color-muted);
-}
-
-.weddy .btn-ghost:hover:not(:disabled) {
-  background: var(--sand-100);
-  color: var(--color-text);
-}
-
-.weddy .btn-danger {
-  background: var(--clay-500);
-  color: #ffffff;
-}
-
 /* Obsah stránky uvnitř plánování – nad spodní navigací. */
 .weddy .page {
   padding-block: var(--space-2) calc(var(--bottom-nav) + var(--space-6));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
 }

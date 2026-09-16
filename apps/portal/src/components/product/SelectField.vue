@@ -207,7 +207,7 @@ watch(open, (isOpen) => {
 }
 
 .trigger:hover {
-  border-color: var(--rose-400);
+  border-color: var(--color-accent-muted);
 }
 
 .field.open .trigger {
@@ -271,16 +271,16 @@ watch(open, (isOpen) => {
 
 /* Zvýrazněná položka je jedna – mysl i klávesnice ukazují na totéž. */
 .option.active {
-  background: var(--sand-100);
+  background: var(--color-surface-alt);
 }
 
 .option.selected {
-  color: var(--rose-700);
+  color: var(--color-accent-strong);
   font-weight: 600;
 }
 
 .option.selected.active {
-  background: var(--rose-100);
+  background: var(--color-accent-wash);
 }
 
 .check {

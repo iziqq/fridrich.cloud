@@ -4,7 +4,7 @@ import { reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError } from '@/api/http';
 import { currentLocale, translateMessage } from '@/i18n';
-import FormField from '@/weddy/components/FormField.vue';
+import FormField from '@/components/product/FormField.vue';
 
 const props = withDefaults(
   defineProps<{

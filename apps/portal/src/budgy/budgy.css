@@ -1,0 +1,121 @@
+/*
+ * Téma IziBudgy.
+ *
+ * Rozpočet běží uvnitř portálu stejně jako plánovač, takže se **všechno musí
+ * vejít pod `.budgy`**: tokeny na `:root` by přebily portál na celém webu.
+ * Tlačítka, karty a rozbalovátka jsou společné (`styles/product.css`) a kreslí
+ * se jen z těchhle tokenů – jiná je paleta a písmo.
+ *
+ * Weddy je teplé a slavnostní, tohle má být klidné a věcné: chladná zeleň,
+ * hodně bílé a číslice, které se dají srovnat pod sebe (`tabular-nums`).
+ */
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-ext-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-ext-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-ext-600.css';
+@import '../styles/product.css';
+
+/*
+ * Tokeny dostane i `body`, dokud je rozpočet na obrazovce – přetažení scrollu
+ * na mobilu sahá za obal a odhalilo by tmavý podklad portálu.
+ */
+.budgy,
+body:has(.budgy) {
+  /* --- Paleta --- */
+  --teal-50: #f2faf7;
+  --teal-100: #dff3ec;
+  --teal-200: #bde6d9;
+  --teal-400: #62c0a5;
+  --teal-500: #33a184;
+  --teal-600: #1f836b;
+  --teal-700: #156353;
+
+  --slate-50: #f8fafa;
+  --slate-100: #eef2f2;
+  --slate-200: #dde5e4;
+
+  --ink-900: #17241f;
+  --ink-700: #374843;
+  --ink-500: #6b7d78;
+
+  --clay-500: #c05a4a;
+  --amber-500: #c08a2e;
+
+  /* --- Sémantické názvy, na které se odkazuje sdílený reset --- */
+  --color-bg: var(--slate-50);
+  --color-surface: #ffffff;
+  --color-border: var(--slate-200);
+  --color-text: var(--ink-900);
+  --color-muted: var(--ink-500);
+  --color-accent: var(--teal-600);
+  --color-accent-soft: var(--teal-500);
+  /* Odstíny přízvuku, na které sahají sdílené prvky (styles/product.css). */
+  --color-accent-strong: var(--teal-700);
+  --color-accent-muted: var(--teal-400);
+  --color-accent-wash: var(--teal-100);
+  --color-surface-alt: var(--slate-100);
+  --color-danger: var(--clay-500);
+  --color-success: var(--teal-600);
+  --color-on-accent: #ffffff;
+
+  /* Příjem a výdaj mají svou barvu všude stejnou – v číslech, pruzích i grafu. */
+  --color-income: var(--teal-600);
+  --color-expense: #d2705e;
+
+  --font-display: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: var(--font-body);
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow-sm: 0 1px 2px rgb(23 36 31 / 0.06), 0 1px 3px rgb(23 36 31 / 0.04);
+  --shadow-md: 0 4px 14px rgb(23 36 31 / 0.08);
+  --shadow-lg: 0 -8px 32px rgb(23 36 31 / 0.12);
+
+  color-scheme: light;
+}
+
+.budgy,
+body:has(.budgy) {
+  background: var(--color-bg);
+}
+
+.budgy {
+  min-height: 100dvh;
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.budgy h1,
+.budgy h2,
+.budgy h3 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  /* Portál nadpisy verzálkuje, tady mají zůstat, jak jsou napsané. */
+  text-transform: none;
+}
+
+/* Mono třídu ze sdíleného resetu tu používáme na drobné popisky. */
+.budgy .mono {
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/*
+ * Částky patří pod sebe.
+ *
+ * Proporcionální číslice mají každou jinak širokou, takže by se sloupec
+ * v seznamu položek viditelně třásl.
+ */
+.budgy .amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.budgy .page {
+  padding-block: var(--space-2) var(--space-6);
+}

@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 const props = withDefaults(
   defineProps<{
     label: string;
-    type?: 'text' | 'email' | 'tel' | 'date' | 'url' | 'number';
+    type?: 'text' | 'email' | 'tel' | 'date' | 'month' | 'url' | 'number';
     /** Otevře na mobilu číselnou klávesnici (cena, rok). */
     numeric?: boolean;
     placeholder?: string;
@@ -73,7 +73,7 @@ const describedBy = computed(() => {
 <style scoped>
 input:disabled,
 textarea:disabled {
-  background: var(--sand-100);
+  background: var(--color-surface-alt);
   color: var(--color-muted);
   cursor: not-allowed;
 }

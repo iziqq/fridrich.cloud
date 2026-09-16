@@ -10,7 +10,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "prepare": "npm run build -w packages/shared -w packages/weddy-shared",
+    "prepare": "npm run build -w packages/shared -w packages/weddy-shared -w packages/budgy-shared",
     "dev": "npm run dev -w apps/portal",
     "dev:portal": "npm run dev -w apps/portal",
     "dev:api": "npm run start -w apps/api",

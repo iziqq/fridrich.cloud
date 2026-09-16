@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useProductTheme } from './theme';
 import { useConfirmDialog } from './confirm';
 
 /*
@@ -9,6 +10,7 @@ import { useConfirmDialog } from './confirm';
  */
 const { request, resolve } = useConfirmDialog();
 const { t } = useI18n();
+const theme = useProductTheme();
 
 const cancelButton = ref<HTMLElement | null>(null);
 const panel = ref<HTMLElement | null>(null);
@@ -55,9 +57,9 @@ function onKeydown(event: KeyboardEvent): void {
 </script>
 
 <template>
-  <!-- Teleport míří mimo podstrom `.weddy`, proto si třídu nese s sebou. -->
+  <!-- Teleport míří mimo obal produktu, proto si jeho třídy nese s sebou. -->
   <Teleport to="body">
-    <div v-if="request" class="weddy overlay" @keydown="onKeydown">
+    <div v-if="request" :class="['product', theme, 'overlay']" @keydown="onKeydown">
       <div class="backdrop" @click="resolve(false)"></div>
 
       <div
@@ -91,7 +93,7 @@ function onKeydown(event: KeyboardEvent): void {
 
 <style scoped>
 /*
- * Třída `weddy` nese tokeny i vlastní podklad – ten by tady přes stránku
+ * Třída produktu nese tokeny i jeho vlastní podklad – ten by tady přes stránku
  * ležel jako neprůhledná plocha, takže ho překryv přebíjí zpátky na průhledno.
  */
 .overlay {

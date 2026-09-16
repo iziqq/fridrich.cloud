@@ -1,0 +1,88 @@
+/*
+ * Společné prvky produktů (IziWeddy, IziBudgy).
+ *
+ * Každý produkt si drží vlastní paletu, ale tlačítka, karty a rozbalovátka
+ * vypadají všude stejně – kreslí se jen z tokenů, které paleta předefinuje.
+ * Proto visí na třídě `.product`, kterou má obal každého produktu vedle své
+ * vlastní (`weddy product`). Na `:root` nesmí nic z toho být: přebilo by to
+ * portál na celém webu (doc/wiki/architecture/frontend.md).
+ */
+
+/* --- Sdílené prvky --- */
+
+.product .card {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.product .btn {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target);
+  padding: 0.7rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.product .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.product .btn-primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.product .btn-primary:hover:not(:disabled) {
+  background: var(--color-accent-strong);
+  color: var(--color-on-accent);
+}
+
+.product .btn-secondary {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.product .btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-accent-muted);
+  color: var(--color-accent);
+}
+
+.product .btn-ghost {
+  color: var(--color-muted);
+}
+
+.product .btn-ghost:hover:not(:disabled) {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.product .btn-danger {
+  background: var(--clay-500);
+  color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -41,6 +41,8 @@ const CONTAINER_DEFINITIONS: {
   { id: CONTAINERS.guests, partitionKey: '/weddingId' },
   { id: CONTAINERS.planningItems, partitionKey: '/weddingId' },
   { id: CONTAINERS.planningBundles, partitionKey: '/weddingId' },
+  // Rozpočet patří jednomu účtu – čte se vždy „všechno moje".
+  { id: CONTAINERS.budgetEntries, partitionKey: '/userId' },
 ];
 
 let databasePromise: Promise<Database> | undefined;

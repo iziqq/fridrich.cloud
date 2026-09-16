@@ -1,9 +1,11 @@
 import { getConfig } from '../config.js';
 import { systemClock } from '../domain/shared/Clock.js';
+import type { BudgyDeps } from '../application/budgy/deps.js';
 import type { ContactDeps } from '../application/contact/submitContactMessage.js';
 import type { IdentityDeps } from '../application/identity/deps.js';
 import type { WeddyDeps } from '../application/weddy/deps.js';
 import { claimWeddingInvitations } from '../application/weddy/access.js';
+import { eraseUserBudgyData } from '../application/budgy/entries.js';
 import { eraseUserWeddyData } from '../application/weddy/wedding.js';
 import { tokenGenerator, uuidGenerator } from './crypto.js';
 import { createEmailSender } from './email/senders.js';
@@ -13,6 +15,7 @@ import {
   tokenCosmosRepository,
   userCosmosRepository,
 } from './cosmos/identityRepositories.js';
+import { budgetEntryCosmosRepository } from './cosmos/budgyRepositories.js';
 import {
   contactMessageCosmosRepository,
   cosmosRateLimiter,
@@ -36,6 +39,7 @@ import {
 
 let identity: IdentityDeps | undefined;
 let weddy: WeddyDeps | undefined;
+let budgy: BudgyDeps | undefined;
 let contact: ContactDeps | undefined;
 
 export function identityDeps(): IdentityDeps {
@@ -51,7 +55,10 @@ export function identityDeps(): IdentityDeps {
     rateLimiter: cosmosRateLimiter,
     // Domény se navzájem nevolají – jen tady se identity dozví, že při smazání
     // účtu má smazat i data v produktech. Nový produkt s daty uživatele přidá svůj řádek.
-    userDataErasers: [{ eraseUserData: (user) => eraseUserWeddyData(weddyDeps(), user) }],
+    userDataErasers: [
+      { eraseUserData: (user) => eraseUserWeddyData(weddyDeps(), user) },
+      { eraseUserData: (user) => eraseUserBudgyData(budgyDeps(), user) },
+    ],
     // Pozvánka do plánování čeká u e-mailu; po registraci se promění v přístup.
     userRegistrationListeners: [
       { onUserRegistered: (user) => claimWeddingInvitations(weddyDeps(), user) },
@@ -76,6 +83,16 @@ export function weddyDeps(): WeddyDeps {
   };
 
   return weddy;
+}
+
+export function budgyDeps(): BudgyDeps {
+  budgy ??= {
+    entries: budgetEntryCosmosRepository,
+    ids: uuidGenerator,
+    clock: systemClock,
+  };
+
+  return budgy;
 }
 
 export function contactDeps(): ContactDeps {

@@ -143,14 +143,5 @@ export function calculateBudget(
   return summary;
 }
 
-/**
- * Formátuje částku v CZK (bez desetinných míst).
- * `locale` je jazyk rozhraní (`cs`, `en`) – měna zůstává koruna, mění se jen zápis.
- */
-export function formatCurrency(amount: number, locale = 'cs'): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'CZK',
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+/* Formátování částek je společné oběma produktům – bydlí v `@fridrich/shared`. */
+export { formatCurrency } from '@fridrich/shared';

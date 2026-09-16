@@ -3,8 +3,8 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { translateMessage } from '@/i18n';
-import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
-import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
+import ErrorBlock from '@/components/product/ErrorBlock.vue';
+import LoadingBlock from '@/components/product/LoadingBlock.vue';
 import WeddingForm from './WeddingForm.vue';
 import { useWeddingStore } from './wedding.store';
 

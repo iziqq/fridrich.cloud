@@ -1,6 +1,7 @@
 import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
 import type { WeddingInput } from '@fridrich/weddy-shared';
 import type { IdentityDeps } from '../src/application/identity/deps.js';
+import type { BudgyDeps } from '../src/application/budgy/deps.js';
 import type { WeddyDeps } from '../src/application/weddy/deps.js';
 import type { EmailAddress } from '../src/domain/identity/EmailAddress.js';
 import type { EmailMessage, EmailSender } from '../src/domain/shared/EmailSender.js';
@@ -21,6 +22,8 @@ import type {
 } from '../src/domain/identity/ports.js';
 import { Guest } from '../src/domain/weddy/guests/Guest.js';
 import type { GuestFilter, GuestRepository } from '../src/domain/weddy/guests/GuestRepository.js';
+import { BudgetEntry } from '../src/domain/budgy/entry/BudgetEntry.js';
+import type { BudgetEntryRepository } from '../src/domain/budgy/entry/BudgetEntryRepository.js';
 import { PlanningBundle } from '../src/domain/weddy/planning/PlanningBundle.js';
 import type { PlanningBundleRepository } from '../src/domain/weddy/planning/PlanningBundleRepository.js';
 import { PlanningItem } from '../src/domain/weddy/planning/PlanningItem.js';
@@ -343,6 +346,35 @@ export class InMemoryBundleRepository implements PlanningBundleRepository {
   }
 }
 
+export class InMemoryBudgetEntryRepository implements BudgetEntryRepository {
+  readonly items = new Map<string, ReturnType<BudgetEntry['toDocument']>>();
+
+  async findById(userId: string, entryId: string): Promise<BudgetEntry | undefined> {
+    const state = this.items.get(entryId);
+    return state && state.userId === userId ? BudgetEntry.fromState(state) : undefined;
+  }
+
+  async listForUser(userId: string): Promise<BudgetEntry[]> {
+    return [...this.items.values()]
+      .filter((state) => state.userId === userId)
+      .map((state) => BudgetEntry.fromState(state));
+  }
+
+  async save(entry: BudgetEntry): Promise<void> {
+    this.items.set(entry.id, entry.toDocument());
+  }
+
+  async delete(_userId: string, entryId: string): Promise<void> {
+    this.items.delete(entryId);
+  }
+
+  async deleteAllForUser(userId: string): Promise<void> {
+    for (const [id, state] of this.items) {
+      if (state.userId === userId) this.items.delete(id);
+    }
+  }
+}
+
 export class InMemoryWeddingInvitationRepository implements WeddingInvitationRepository {
   readonly items = new Map<string, ReturnType<WeddingInvitation['toState']>>();
 
@@ -463,3 +495,17 @@ export const validWedding: WeddingInput = {
   groom: { firstName: 'Petr', lastName: 'Novák' },
   bride: { firstName: 'Jana', lastName: 'Nováková' },
 };
+
+export interface BudgyTestContext extends BudgyDeps {
+  entries: InMemoryBudgetEntryRepository;
+  clock: FixedClock;
+}
+
+/** Závislosti domény budgy pro test – hodiny stojí v říjnu 2026. */
+export function budgyTestDeps(): BudgyTestContext {
+  return {
+    entries: new InMemoryBudgetEntryRepository(),
+    ids: new SequentialIds(),
+    clock: new FixedClock(new Date('2026-10-15T09:00:00.000Z')),
+  };
+}

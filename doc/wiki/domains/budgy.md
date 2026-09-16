@@ -1,45 +1,68 @@
 ---
-title: budgy domain – IziBudgy (TODO)
+title: budgy domain – IziBudgy
 type: domain
 sources:
   - raw/izibudgyBrief.md
-updated: 2026-09-15
+  - raw/2026-09-17-budgyStart.md
+  - code: packages/budgy-shared, apps/api/src/domain/budgy, apps/portal/src/budgy
+updated: 2026-09-17
 ---
 
-# `budgy` domain – IziBudgy, household budget
+# `budgy` domain – IziBudgy, the household budget
 
-> **Status: TODO.** Only a rough brief. The specification will be written once
-> the owner answers the questions below; implementation will then follow the
-> same pattern as [weddy](weddy.md).
+> A budget by months: **income**, **recurring expenses** that carry over on
+> their own, and **one-off expenses** with a date. The month is never stored –
+> it is always calculated from the entries, the same way the IziWeddy budget is.
 
 | | |
 |---|---|
 | **Address** | `www.fridrich.cloud/izi-budgy` |
 | **API** | `/api/budgy/*` |
 | **Frontend** | `apps/portal/src/budgy/<subdomain>/` |
-| **Shared kernel** | `packages/budgy-shared` (to be created) |
+| **Shared kernel** | `packages/budgy-shared` |
 | **Identity** | shared account – [identity.md](identity.md) |
 
-## Expected core (unconfirmed)
+## Subdomains
 
-Candidate subdomains: **household** (shared by several users), **accounts**
-(current, savings, cash), **categories**, **transactions** (income/expense),
-**recurring payments**, **monthly budget** (plan vs. actual), **reports**.
+| Subdomain | What it holds | Page |
+|---|---|---|
+| `entries` | The entries themselves – income and expenses, recurring and one-off | [budgyEntries.md](budgyEntries.md) |
+| `budget` | The month on screen: numbers, charts, browsing between months | [budgyBudget.md](budgyBudget.md) |
 
-## Questions before the specification
+`budget` is a derived view, not an aggregate: it has no container of its own,
+it only adds up `entries`. The split follows [domains.md](../architecture/domains.md) –
+the same names are used in the shared kernel, the API and the portal.
 
-| # | Question |
-|---|---|
-| 1 | Manual entry, or bank statement import (CSV / bank API)? |
-| 2 | Is the budget shared by several people, or single-user? |
-| 3 | CZK only, or multiple currencies? |
-| 4 | Loans and instalments, or just income and expenses? |
-| 5 | Savings goals ("60,000 CZK for a holiday")? |
-| 6 | How far back should history and reports go? |
+## Decisions of the first version
 
-## When work starts
+| Question | Answer | Why |
+|---|---|---|
+| Months, or one running budget? | **Months with history** | "How much did we spend last month" is the whole point of a budget; a single list cannot answer it. |
+| Shared with the household? | **One account for now** | Roles and invitations are a product of their own (see [weddyAccess.md](weddyAccess.md)); the model does not have to change to add them later. |
+| Categories | **A fixed list** | Colours in the chart, translations and statistics come for free and there is nothing for the user to manage. |
 
-1. Answers → a new source in `doc/raw/` → ingest into this page and subdomain pages.
-2. `packages/budgy-shared` with schemas according to [valibot.md](../architecture/valibot.md).
-3. Domain, use cases and endpoints according to [endpoints.md](../architecture/endpoints.md).
-4. Containers in the shared `izi-db` database (limit 25 containers) – [dataCosmos.md](../architecture/dataCosmos.md).
+Still open (from the older brief): importing bank statements, several
+currencies, loans and instalments, savings goals.
+
+## Personal data
+
+A household budget is sensitive, so the product sits **inside the
+`PERSONAL_DATA_COLLECTION_ENABLED` switch** on both sides (endpoints in
+`personalDataEndpoints`, routes in `personalDataRoutes`), the privacy policy has
+its own row for IziBudgy, and `eraseUserBudgyData` is registered as a
+`UserDataEraser`, so deleting the account takes the budget with it. Details:
+[personalData.md](../architecture/personalData.md).
+
+## Look
+
+Its own palette under the `.budgy` class (`budgy/budgy.css`): cool green,
+plenty of white, `tabular-nums` for amounts so that columns of figures do not
+wobble. Buttons, cards and dropdowns are shared with IziWeddy
+([frontend.md](../architecture/frontend.md#product-ui-kit)) and are drawn only
+from tokens, which each product redefines.
+
+## Related
+
+- [budgy / entries](budgyEntries.md) · [budgy / budget](budgyBudget.md)
+- [Domain architecture](../architecture/domains.md) · [personal data](../architecture/personalData.md)
+- Source: [raw/2026-09-17-budgyStart.md](../../raw/2026-09-17-budgyStart.md)

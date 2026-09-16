@@ -5,9 +5,9 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError } from '@/api/http';
 import { translateMessage } from '@/i18n';
-import BottomSheet from '@/weddy/components/BottomSheet.vue';
-import ChoiceField from '@/weddy/components/ChoiceField.vue';
-import FormField from '@/weddy/components/FormField.vue';
+import BottomSheet from '@/components/product/BottomSheet.vue';
+import ChoiceField from '@/components/product/ChoiceField.vue';
+import FormField from '@/components/product/FormField.vue';
 import { usePlanningStore } from './planning.store';
 
 /**

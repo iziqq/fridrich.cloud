@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useProductTheme } from './theme';
 
 const props = defineProps<{ title: string }>();
 const open = defineModel<boolean>('open', { required: true });
 
 const { t } = useI18n();
+const theme = useProductTheme();
 
 const panel = ref<HTMLElement | null>(null);
 let lastFocused: HTMLElement | null = null;
@@ -60,12 +62,12 @@ function onKeydown(event: KeyboardEvent): void {
 
 <template>
   <!--
-    Teleport posílá obsah do `body`, tedy mimo podstrom `.weddy`. Bez té třídy
-    by uvnitř neplatily tokeny ani styly tlačítek plánovače a formulář by se
-    kreslil portálovým tmavým tématem (doc/wiki/architecture/frontend.md).
+    Teleport posílá obsah do `body`, tedy mimo obal produktu. Bez jeho tříd by
+    uvnitř neplatily tokeny ani styly tlačítek a formulář by se kreslil
+    portálovým tmavým tématem (doc/wiki/architecture/frontend.md).
   -->
   <Teleport to="body">
-    <div v-if="open" class="weddy overlay" @keydown="onKeydown">
+    <div v-if="open" :class="['product', theme, 'overlay']" @keydown="onKeydown">
       <div class="backdrop" @click="close"></div>
 
       <div
@@ -94,7 +96,7 @@ function onKeydown(event: KeyboardEvent): void {
 
 <style scoped>
 /*
- * Třída `weddy` nese tokeny i vlastní podklad – ten by tady přes stránku
+ * Třída produktu nese tokeny i jeho vlastní podklad – ten by tady přes stránku
  * ležel jako neprůhledná plocha, takže ho překryv přebíjí zpátky na průhledno.
  */
 .overlay {
@@ -166,7 +168,7 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 .close:hover {
-  background: var(--sand-100);
+  background: var(--color-surface-alt);
   color: var(--color-text);
 }
 

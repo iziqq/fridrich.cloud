@@ -6,10 +6,12 @@ import {
   sharedMessages,
   type Locale,
 } from '@fridrich/shared';
+import { budgyMessages } from '@fridrich/budgy-shared';
 import { weddyMessages } from '@fridrich/weddy-shared';
 import { computed } from 'vue';
 import { createI18n } from 'vue-i18n';
 import { appCs, appEn } from './locales/app';
+import { budgyCs, budgyEn } from './locales/budgy';
 import { identityCs, identityEn } from './locales/identity';
 import { portalCs, portalEn } from './locales/portal';
 import { weddyCs, weddyEn } from './locales/weddy';
@@ -18,8 +20,9 @@ import { weddyCs, weddyEn } from './locales/weddy';
  * Překlady rozhraní (vue-i18n, Composition API).
  *
  * Katalog každého jazyka se skládá z hlášek sdíleného jádra (`shared.*`,
- * `weddyShared.*` – validace, chyby API, popisky výčtů) a z textů obrazovek
- * po oblastech (`app.*`, `portal.*`, `identity.*`, `weddy.*`). Anglické
+ * `weddyShared.*`, `budgyShared.*` – validace, chyby API, popisky výčtů) a
+ * z textů obrazovek po oblastech (`app.*`, `portal.*`, `identity.*`,
+ * `weddy.*`, `budgy.*`). Anglické
  * soubory mají typ podle českých, takže chybějící překlad neprojde typecheckem.
  * Pravidla: doc/wiki/architecture/i18n.md.
  */
@@ -27,8 +30,26 @@ import { weddyCs, weddyEn } from './locales/weddy';
 const STORAGE_KEY = 'fc_locale';
 
 const messages = {
-  cs: { ...sharedMessages.cs, ...weddyMessages.cs, app: appCs, portal: portalCs, identity: identityCs, weddy: weddyCs },
-  en: { ...sharedMessages.en, ...weddyMessages.en, app: appEn, portal: portalEn, identity: identityEn, weddy: weddyEn },
+  cs: {
+    ...sharedMessages.cs,
+    ...weddyMessages.cs,
+    ...budgyMessages.cs,
+    app: appCs,
+    portal: portalCs,
+    identity: identityCs,
+    weddy: weddyCs,
+    budgy: budgyCs,
+  },
+  en: {
+    ...sharedMessages.en,
+    ...weddyMessages.en,
+    ...budgyMessages.en,
+    app: appEn,
+    portal: portalEn,
+    identity: identityEn,
+    weddy: weddyEn,
+    budgy: budgyEn,
+  },
 };
 
 function isLocale(value: unknown): value is Locale {

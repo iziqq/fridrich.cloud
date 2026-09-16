@@ -78,8 +78,8 @@ legend {
 
 .option input:checked + span {
   border-color: var(--color-accent);
-  background: var(--rose-100);
-  color: var(--rose-700);
+  background: var(--color-accent-wash);
+  color: var(--color-accent-strong);
   font-weight: 600;
 }
 

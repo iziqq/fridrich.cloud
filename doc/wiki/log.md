@@ -554,3 +554,46 @@ name and the link belong to the offer. Only the section should be there.
   added to the list inside a bundle – the same section now looks the same in
   both places.
 - Touched page: `domains/weddyPlanning.md`.
+
+## [2026-09-17] ingest | IziBudgy – the first version
+
+Source: [raw/2026-09-17-budgyStart.md](../raw/2026-09-17-budgyStart.md) – income
+as several entries, expenses split into recurring and one-off, and a chart.
+
+Decided with the owner: **months with history** (recurring entries carry over,
+one-off ones have a date), **one account** for now (sharing can come later like
+IziWeddy's) and a **fixed list of categories**.
+
+- New workspace `packages/budgy-shared`: `BudgetEntrySchema`,
+  `BudgetEntryInputSchema` (conditional rules as `v.forward(v.check(…))`, so the
+  error lands on the field), `MonthSchema`, `appliesTo`, `summarizeMonth`,
+  `monthlyTrend`. `formatCurrency` moved to `@fridrich/shared` – both products
+  write amounts the same way.
+- API: `BudgetEntry` aggregate, repository, container `budgetEntries`
+  (PK `/userId`), four endpoints, `budgyDeps` and `eraseUserBudgyData` wired as
+  a second `UserDataEraser`.
+- Portal: `/izi-budgy` with its own theme (cool green, `tabular-nums`), the
+  month screen with a summary, a hand-drawn SVG donut *Kam peníze jdou* (Where
+  the money goes), a six-month trend that doubles as month navigation, and the
+  entries in three sections. IziBudgy is now linked from the projects page.
+- **Shared product UI kit**: `BottomSheet`, `ConfirmDialog`, `FormField`,
+  `SelectField`, `ChoiceField`, `EmptyState`, `ErrorBlock`, `LoadingBlock` and
+  `FabButton` moved from `weddy/components/` to `components/product/`, their
+  styles to `styles/product.css` under the class `.product`. They had reached
+  straight into weddy's rose palette, so the first budgy screens came out pink;
+  they now use semantic tokens only (`--color-accent-strong`,
+  `--color-accent-wash`, `--color-surface-alt`). Which product is on screen is
+  held by `components/product/theme.ts` for the teleported overlays.
+- GDPR: policy row *Aplikace IziBudgy*, the product named in the lead and in the
+  terms, `PRIVACY_POLICY_VERSION` → `'2026-09-17'`; routes and endpoints are
+  inside `PERSONAL_DATA_COLLECTION_ENABLED` from the first commit.
+- Tests: 11 new cases (`budgy.test.ts`) – validity from the month of creation,
+  an ended entry keeps history, a one-off counts only in its month, the summary,
+  a stranger's entry, account deletion, the month shift and the trend. 159 API
+  tests pass.
+- Verified in headless Chrome at 360, 390, 768, 1024 and 1280 px (month,
+  charts, form, empty state) on a temporary preview page, then removed.
+- New pages: `domains/budgy.md`, `domains/budgyEntries.md`,
+  `domains/budgyBudget.md`. Touched: `architecture/frontend.md`,
+  `architecture/personalData.md`, `architecture/dataCosmos.md`, `overview.md`,
+  `raw/README.md`, index.

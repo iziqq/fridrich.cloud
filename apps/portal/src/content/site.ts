@@ -118,8 +118,10 @@ export const projects = {
     {
       id: 'izibudgy',
       name: 'IziBudgy',
-      status: 'planned',
+      status: 'development',
       stack: ['Vue 3', 'Azure Functions', 'Cosmos DB'],
+      // Rozpočet je citlivý údaj – odkaz jen se zapnutým sběrem údajů.
+      url: PERSONAL_DATA_COLLECTION_ENABLED ? '/izi-budgy' : undefined,
     },
   ] satisfies Project[],
 };

@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { RouterView } from 'vue-router';
-import ConfirmDialog from './components/ConfirmDialog.vue';
+import ConfirmDialog from '@/components/product/ConfirmDialog.vue';
+import { useProductTheme } from '@/components/product/theme';
 import './weddy.css';
 
 const { t } = useI18n();
+
+/* Překryvy se teleportují mimo tenhle obal – tohle jim řekne, čí je vzhled. */
+useProductTheme('weddy');
 </script>
 
 <!--
@@ -15,7 +19,7 @@ const { t } = useI18n();
   designové tokeny, takže cyberpunkové barvy portálu sem neprosáknou a naopak.
 -->
 <template>
-  <div class="weddy">
+  <div class="weddy product">
     <!-- Obal portálu je pryč, takže si skip link drží plánovač sám. -->
     <a class="skip-link" href="#obsah">{{ t('app.skipToContent') }}</a>
     <RouterView />

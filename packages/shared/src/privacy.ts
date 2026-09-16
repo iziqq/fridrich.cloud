@@ -9,8 +9,8 @@
 /**
  * Sběr osobních údajů přes web.
  *
- * Vypnutý stav skryje kontaktní formulář, registraci, přihlášení a IziWeddy
- * a API ty endpointy vůbec nezaregistruje – skrytý formulář by nestačil,
+ * Vypnutý stav skryje kontaktní formulář, registraci, přihlášení, IziWeddy
+ * i IziBudgy a API ty endpointy vůbec nezaregistruje – skrytý formulář by nestačil,
  * endpoint by šel zavolat přímo. Zapnutý jen se zveřejněnými zásadami
  * ochrany osobních údajů a obchodními podmínkami.
  */
@@ -20,7 +20,7 @@ export const PERSONAL_DATA_COLLECTION_ENABLED: boolean = true;
 export const TERMS_VERSION = '2026-09-15';
 
 /** Verze zásad ochrany osobních údajů. */
-export const PRIVACY_POLICY_VERSION = '2026-09-16';
+export const PRIVACY_POLICY_VERSION = '2026-09-17';
 
 /** Zpráva z kontaktního formuláře se smaže tolik dní po přijetí (TTL v databázi). */
 export const CONTACT_MESSAGE_RETENTION_DAYS = 365;

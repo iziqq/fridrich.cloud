@@ -1,6 +1,7 @@
 import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 import type { RouteRecordRaw } from 'vue-router';
 import HomeView from '@/views/HomeView.vue';
+import { budgyRoutes } from '@/budgy/routes';
 import { weddyRoutes } from '@/weddy/routes';
 
 declare module 'vue-router' {
@@ -16,7 +17,7 @@ declare module 'vue-router' {
 
 /**
  * Obrazovky, které od návštěvníka berou osobní údaje – registrace, přihlášení,
- * účet a celé IziWeddy. Bez zásad ochrany osobních údajů se vůbec nezaregistrují,
+ * účet, celé IziWeddy a IziBudgy (rozpočet domácnosti je citlivý údaj). Bez zásad ochrany osobních údajů se vůbec nezaregistrují,
  * takže přímá adresa skončí na 404 (viz `PERSONAL_DATA_COLLECTION_ENABLED`).
  */
 const personalDataRoutes: RouteRecordRaw[] = [
@@ -45,6 +46,7 @@ const personalDataRoutes: RouteRecordRaw[] = [
   },
   // Produkty jsou části portálu s vlastním vzhledem, ne samostatné aplikace.
   ...weddyRoutes,
+  ...budgyRoutes,
 ];
 
 /** Routy zvlášť od routeru, ať jdou vyzkoušet i bez prohlížeče. */

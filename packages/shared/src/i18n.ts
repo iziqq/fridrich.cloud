@@ -69,3 +69,17 @@ export function messageKeys<T extends MessageTree>(tree: T, prefix: string): Mes
 
   return keys as MessageKeys<T>;
 }
+
+/**
+ * Formátuje částku v CZK (bez desetinných míst).
+ *
+ * `locale` je jazyk rozhraní (`cs`, `en`) – měna zůstává koruna, mění se jen
+ * zápis. Používají ho oba produkty, aby se částky psaly všude stejně.
+ */
+export function formatCurrency(amount: number, locale = 'cs'): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'CZK',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}

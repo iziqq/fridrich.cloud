@@ -22,6 +22,7 @@
     "@azure/identity": "^4.5.0",
     "@fridrich/shared": "*",
     "@fridrich/weddy-shared": "*",
+    "@fridrich/budgy-shared": "*",
     "nodemailer": "^10.0.3",
     "valibot": "^1.5.0"
   },

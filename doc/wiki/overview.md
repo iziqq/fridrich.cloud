@@ -4,7 +4,7 @@ type: overview
 sources:
   - history: doc/README.md (commit 8db5e0a)
   - code: the whole repository
-updated: 2026-09-16
+updated: 2026-09-17
 ---
 
 # fridrich.cloud project overview
@@ -22,7 +22,7 @@ updated: 2026-09-16
 | **Identity** | `/prihlaseni`, `/registrace`, `/ucet` | Passwordless account shared by everything, self-service deletion | ✅ done |
 | **IziWeddy** | `/izi-weddy` | Wedding planner – couple, guests, planning, budget; a plan can be **shared**: invitation by e-mail and roles admin / manager / viewer | ✅ done |
 | **Legal** | `/ochrana-osobnich-udaju`, `/obchodni-podminky` | Privacy policy and terms | ✅ done |
-| **IziBudgy** | `/izi-budgy` | Household budget | 🕓 TODO – specification missing |
+| **IziBudgy** | `/izi-budgy` | Household budget | 🚧 first version – income, recurring and one-off expenses, charts |
 | **API** | `/api` | `identity`, `contact`, `weddy` – 34 endpoints | ✅ done |
 | **Retention scheduler** | GitHub Actions | Daily deletion of inactive accounts | ✅ done – needs `MAINTENANCE_TOKEN` set up |
 
@@ -38,7 +38,7 @@ updated: 2026-09-16
         ▼              ▼               ▼               ▼              ▼
        /            /prihlaseni    /izi-weddy      /izi-budgy       /api
      Portal          identity       IziWeddy        IziBudgy     identity · contact
-                                                                  · weddy · (budgy)
+                                                                  · weddy · budgy
 ```
 
 ## Technology
@@ -60,7 +60,7 @@ Language: documentation in English; product UI, validation messages and e-mails 
 7. ✅ Deployment – GitHub Actions + SWA CLI
 8. ✅ Domain architecture on FE and BE, endpoint per file, Valibot, LLM Wiki in English (2026-09-15)
 9. ✅ Sharing an IziWeddy plan – roles and e-mail invitations (2026-09-16)
-10. ⬜ IziBudgy – write the specification, then implement
+10. 🚧 IziBudgy – the first version is in (entries, month, charts); bank import, several currencies, loans and savings goals are open
 
 ## Where next
 

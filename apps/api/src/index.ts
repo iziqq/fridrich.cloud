@@ -23,6 +23,10 @@ import { deleteGuestEndpoint } from './endpoints/weddy/guests/deleteGuest.endpoi
 import { listGuestsEndpoint } from './endpoints/weddy/guests/listGuests.endpoint.js';
 import { updateFamilyEndpoint } from './endpoints/weddy/guests/updateFamily.endpoint.js';
 import { updateGuestEndpoint } from './endpoints/weddy/guests/updateGuest.endpoint.js';
+import { createBudgetEntryEndpoint } from './endpoints/budgy/entries/createBudgetEntry.endpoint.js';
+import { deleteBudgetEntryEndpoint } from './endpoints/budgy/entries/deleteBudgetEntry.endpoint.js';
+import { listBudgetEntriesEndpoint } from './endpoints/budgy/entries/listBudgetEntries.endpoint.js';
+import { updateBudgetEntryEndpoint } from './endpoints/budgy/entries/updateBudgetEntry.endpoint.js';
 import { changePlanningBundleStatusEndpoint } from './endpoints/weddy/planning/changePlanningBundleStatus.endpoint.js';
 import { changePlanningItemStatusEndpoint } from './endpoints/weddy/planning/changePlanningItemStatus.endpoint.js';
 import { createPlanningBundleEndpoint } from './endpoints/weddy/planning/createPlanningBundle.endpoint.js';
@@ -103,6 +107,12 @@ const personalDataEndpoints = [
 
   // weddy / budget
   getBudgetEndpoint,
+
+  // budgy / entries
+  listBudgetEntriesEndpoint,
+  createBudgetEntryEndpoint,
+  updateBudgetEntryEndpoint,
+  deleteBudgetEntryEndpoint,
 ];
 
 registerEndpoints([

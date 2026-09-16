@@ -52,7 +52,7 @@ const invitationRetention = `${WEDDING_INVITATION_RETENTION_DAYS} dní`;
 export const privacyPolicy: LegalDocument = {
   label: 'Ochrana osobních údajů',
   title: 'Zásady ochrany osobních údajů',
-  lead: `Tyto zásady vysvětlují, jaké osobní údaje zpracovávám, když používáte web ${site.domain}, kontaktní formulář, uživatelský účet nebo aplikaci IziWeddy, proč to dělám, jak dlouho údaje uchovávám a jaká máte práva.`,
+  lead: `Tyto zásady vysvětlují, jaké osobní údaje zpracovávám, když používáte web ${site.domain}, kontaktní formulář, uživatelský účet nebo aplikace IziWeddy a IziBudgy, proč to dělám, jak dlouho údaje uchovávám a jaká máte práva.`,
   version: PRIVACY_POLICY_VERSION,
   sections: [
     {
@@ -100,6 +100,12 @@ export const privacyPolicy: LegalDocument = {
               'název a datum svatby; jméno a příjmení snoubenců; jméno, příjmení, strana, věková skupina, stav pozvání, rodina a poznámka u hostů; položky příprav (název, odkaz, cena, stav)',
               'Poskytování aplikace podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Údaje snoubenců a hostů zadává uživatel a zpracovávám je jen proto, aby mu aplikace fungovala.',
               'Do smazání plánování nebo účtu, včetně automatického smazání neaktivního účtu.',
+            ],
+            [
+              'Aplikace IziBudgy',
+              'položky rozpočtu domácnosti – název, částka, kategorie, datum nebo platnost od–do a poznámka; příjmy i výdaje',
+              'Poskytování aplikace podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Rozpočet vidí jen ten, kdo ho zadal; nesdílí se s nikým dalším.',
+              'Do smazání položky nebo účtu, včetně automatického smazání neaktivního účtu.',
             ],
             [
               'Sdílení plánování v IziWeddy',
@@ -246,7 +252,7 @@ export const privacyPolicy: LegalDocument = {
 export const termsOfService: LegalDocument = {
   label: 'Obchodní podmínky',
   title: 'Obchodní podmínky',
-  lead: `Obchodní podmínky upravují používání webu ${site.domain}, uživatelského účtu a aplikací, které na něm provozuji (nyní IziWeddy). Založením účtu s nimi souhlasíte.`,
+  lead: `Obchodní podmínky upravují používání webu ${site.domain}, uživatelského účtu a aplikací, které na něm provozuji (nyní IziWeddy a IziBudgy). Založením účtu s nimi souhlasíte.`,
   version: TERMS_VERSION,
   sections: [
     {
@@ -272,6 +278,7 @@ export const termsOfService: LegalDocument = {
           items: [
             `Uživatelský účet – jeden účet pro všechny aplikace na ${site.domain}.`,
             'IziWeddy – plánovač svatby: snoubenci, hosté, přípravy a rozpočet.',
+            'IziBudgy – rozpočet domácnosti: příjmy, pravidelné a jednorázové výdaje, přehled po měsících.',
           ],
         },
         {

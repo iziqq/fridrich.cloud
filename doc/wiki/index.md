@@ -10,7 +10,7 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 
 | Page | Summary | Updated |
 |---|---|---|
-| [overview.md](overview.md) | What fridrich.cloud is, parts, status, technology, progress | 2026-09-15 |
+| [overview.md](overview.md) | What fridrich.cloud is, parts, status, technology, progress | 2026-09-17 |
 | [decisions.md](decisions.md) | Register of decisions with reasons, and open questions | 2026-09-15 |
 
 ## Architecture (concepts)
@@ -21,11 +21,11 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [architecture/endpoints.md](architecture/endpoints.md) | One file per endpoint: naming, `defineEndpoint` (BE), `callEndpoint` (FE), checklist for a new endpoint | 2026-09-15 |
 | [architecture/valibot.md](architecture/valibot.md) | Types and validation with Valibot: where schemas live, naming, message keys, field errors, pitfalls | 2026-09-15 |
 | [architecture/backend.md](architecture/backend.md) | `apps/api`: structure, request lifecycle, layer rules, tests, CORS | 2026-09-15 |
-| [architecture/frontend.md](architecture/frontend.md) | `apps/portal`: domain folders, store vs. view, page shell with a bottom-anchored footer, responsive breakpoints, product routing and look (incl. teleported overlays and why the product draws its own form controls), addresses | 2026-09-16 |
+| [architecture/frontend.md](architecture/frontend.md) | `apps/portal`: domain folders, store vs. view, page shell with a bottom-anchored footer, responsive breakpoints, product routing and look (incl. teleported overlays and why the product draws its own form controls), addresses | 2026-09-17 |
 | [architecture/monorepo.md](architecture/monorepo.md) | Split principles, repository structure, shared packages, what goes where, scripts | 2026-09-15 |
 | [architecture/i18n.md](architecture/i18n.md) | Translations: vue-i18n catalogs (cs/en), message keys from schemas and API, language choice, e-mails per locale | 2026-09-15 |
-| [architecture/personalData.md](architecture/personalData.md) | GDPR: what collects personal data, legal documents, account deletion, retention scheduler, the switch | 2026-09-15 |
-| [architecture/dataCosmos.md](architecture/dataCosmos.md) | Cosmos DB: containers, partition keys, TTL, RU/s capacity, repository rules | 2026-09-15 |
+| [architecture/personalData.md](architecture/personalData.md) | GDPR: what collects personal data, legal documents, account deletion, retention scheduler, the switch | 2026-09-17 |
+| [architecture/dataCosmos.md](architecture/dataCosmos.md) | Cosmos DB: containers, partition keys, TTL, RU/s capacity, repository rules | 2026-09-17 |
 
 ## Domains
 
@@ -39,7 +39,9 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [domains/weddyGuests.md](domains/weddyGuests.md) | Guests and families: enums, family rules, list with filter popover, statistics, 8 endpoints | 2026-09-16 |
 | [domains/weddyPlanning.md](domains/weddyPlanning.md) | 12 sections, items, bundles (one price for several sections), 10 endpoints | 2026-09-16 |
 | [domains/weddyBudget.md](domains/weddyBudget.md) | Budget from items and bundles: calculation, why a bundle is outside the section breakdown, `getBudget` endpoint | 2026-09-16 |
-| [domains/budgy.md](domains/budgy.md) | IziBudgy (TODO): rough core and questions before the specification | 2026-09-15 |
+| [domains/budgy.md](domains/budgy.md) | IziBudgy: subdomains, decisions of the first version, personal data, look | 2026-09-17 |
+| [domains/budgyEntries.md](domains/budgyEntries.md) | Income and expenses: fields, 11 categories, why a month is not a record, 4 endpoints | 2026-09-17 |
+| [domains/budgyBudget.md](domains/budgyBudget.md) | The month on screen: summary, donut and six-month trend, where it is calculated | 2026-09-17 |
 | [domains/portal.md](domains/portal.md) | Portal: content, binding rules, Glass design (dark + orange) tokens and components, accessibility | 2026-09-15 |
 
 ## Operations
