@@ -7,6 +7,26 @@ import type { Catalog } from '@fridrich/shared';
 
 export const budgyCs = {
   title: 'Rozpočet',
+  layout: {
+    title: 'IziBudgy',
+    back: '← Aplikace',
+    tabsLabel: 'Obrazovky rozpočtu',
+    tabs: {
+      dashboard: 'Přehled',
+      month: '{month}',
+    },
+  },
+  overview: {
+    title: 'Přehled',
+    since: 'Od {month} · {count}',
+    // Varianty: nula | jedna | dvě až čtyři | pět a víc (viz czechPlural v i18n/index.ts).
+    monthCount: '{n} měsíců | {n} měsíc | {n} měsíce | {n} měsíců',
+    perMonth: '{amount} měsíčně',
+    saved: 'Zůstalo',
+    savedShare: '{share} z příjmů',
+    thisMonth: 'Tento měsíc',
+    openMonth: 'Otevřít měsíc',
+  },
   notFound: {
     title: 'Stránka nenalezena',
     text: 'Tahle adresa v rozpočtu neexistuje.',
@@ -20,6 +40,7 @@ export const budgyCs = {
   summary: {
     income: 'Příjmy',
     expenses: 'Výdaje',
+    investments: 'Investice',
     remaining: 'Zbývá',
     savedShare: 'Zbývá {share} z příjmů.',
     overspent: 'Měsíc je o {amount} v mínusu.',
@@ -30,8 +51,9 @@ export const budgyCs = {
     donutLabel: 'Výdaje měsíce podle kategorií',
     income: 'Příjmy',
     expenses: 'Výdaje',
+    investments: 'Investice',
     noExpenses: 'V tomhle měsíci zatím žádný výdaj není.',
-    monthSummary: '{month}: příjmy {income}, výdaje {expenses}',
+    monthSummary: '{month}: příjmy {income}, výdaje {expenses}, investice {investments}',
   },
   sections: {
     income: 'Příjmy',
@@ -43,6 +65,9 @@ export const budgyCs = {
     oneOff: 'Jednorázové výdaje',
     oneOffEmpty: 'V tomhle měsíci jste zatím nic nezadali.',
     oneOffAdd: 'Útratu',
+    investments: 'Investice',
+    investmentsEmpty: 'Zatím nic odloženého – spoření, ETF, penzijko.',
+    investmentsAdd: 'Investici',
   },
   entry: {
     add: 'Položka',
@@ -62,8 +87,11 @@ export const budgyCs = {
     kind: 'Druh',
     recurrence: 'Opakování',
     name: 'Název',
-    namePlaceholderIncome: 'Výplata',
-    namePlaceholderExpense: 'Hypotéka',
+    namePlaceholder: {
+      income: 'Výplata',
+      expense: 'Hypotéka',
+      investment: 'ETF',
+    },
     amount: 'Částka',
     category: 'Kategorie',
     date: 'Datum',
@@ -77,6 +105,25 @@ export const budgyCs = {
 
 export const budgyEn: Catalog<typeof budgyCs> = {
   title: 'Budget',
+  layout: {
+    title: 'IziBudgy',
+    back: '← Apps',
+    tabsLabel: 'Budget screens',
+    tabs: {
+      dashboard: 'Overview',
+      month: '{month}',
+    },
+  },
+  overview: {
+    title: 'Overview',
+    since: 'Since {month} · {count}',
+    monthCount: '{n} months | {n} month | {n} months',
+    perMonth: '{amount} a month',
+    saved: 'Left over',
+    savedShare: '{share} of the income',
+    thisMonth: 'This month',
+    openMonth: 'Open the month',
+  },
   notFound: {
     title: 'Page not found',
     text: 'This address does not exist in the budget.',
@@ -90,6 +137,7 @@ export const budgyEn: Catalog<typeof budgyCs> = {
   summary: {
     income: 'Income',
     expenses: 'Expenses',
+    investments: 'Investments',
     remaining: 'Remaining',
     savedShare: '{share} of the income is left.',
     overspent: 'The month is {amount} in the red.',
@@ -100,8 +148,9 @@ export const budgyEn: Catalog<typeof budgyCs> = {
     donutLabel: 'Expenses of the month by category',
     income: 'Income',
     expenses: 'Expenses',
+    investments: 'Investments',
     noExpenses: 'There is no expense in this month yet.',
-    monthSummary: '{month}: income {income}, expenses {expenses}',
+    monthSummary: '{month}: income {income}, expenses {expenses}, investments {investments}',
   },
   sections: {
     income: 'Income',
@@ -113,6 +162,9 @@ export const budgyEn: Catalog<typeof budgyCs> = {
     oneOff: 'One-off expenses',
     oneOffEmpty: 'You have not entered anything in this month yet.',
     oneOffAdd: 'Expense',
+    investments: 'Investments',
+    investmentsEmpty: 'Nothing put aside yet – savings, ETFs, a pension plan.',
+    investmentsAdd: 'Investment',
   },
   entry: {
     add: 'Entry',
@@ -132,8 +184,11 @@ export const budgyEn: Catalog<typeof budgyCs> = {
     kind: 'Kind',
     recurrence: 'Recurrence',
     name: 'Name',
-    namePlaceholderIncome: 'Salary',
-    namePlaceholderExpense: 'Mortgage',
+    namePlaceholder: {
+      income: 'Salary',
+      expense: 'Mortgage',
+      investment: 'ETF',
+    },
     amount: 'Amount',
     category: 'Category',
     date: 'Date',

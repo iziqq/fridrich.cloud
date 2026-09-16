@@ -60,9 +60,11 @@ body:has(.budgy) {
   --color-success: var(--teal-600);
   --color-on-accent: #ffffff;
 
-  /* Příjem a výdaj mají svou barvu všude stejnou – v číslech, pruzích i grafu. */
+  /* Příjem, výdaj a investice mají svou barvu všude stejnou – v číslech, pruzích i grafu. */
   --color-income: var(--teal-600);
   --color-expense: #d2705e;
+  /* Investice je odložená, ne utracená – proto vlastní barva, ne odstín výdaje. */
+  --color-investment: #5b74c4;
 
   --font-display: 'Inter', 'Segoe UI', system-ui, sans-serif;
   --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;

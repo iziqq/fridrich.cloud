@@ -3,21 +3,23 @@ title: budgy / entries – income and expenses
 type: domain
 sources:
   - raw/2026-09-17-budgyStart.md
+  - raw/2026-09-17-budgyDashboard.md
   - code: packages/budgy-shared/src/entries.ts, apps/api/src/domain/budgy/entry, apps/portal/src/budgy/budget
 updated: 2026-09-17
 ---
 
 # `budgy / entries` – income and expenses
 
-> One entry is an income or an expense and is either **recurring** (the same
-> every month – mortgage, salary, subscription) or **one-off** (a purchase with
-> a date). Everything the budget shows is derived from these.
+> One entry is an income, an expense or an **investment**, and is either
+> **recurring** (the same every month – mortgage, salary, subscription) or
+> **one-off** (a purchase with a date). Everything the budget shows is derived
+> from these.
 
 ## Fields
 
 | Field | Rule |
 |---|---|
-| `kind` | `income` (Příjem) / `expense` (Výdaj) |
+| `kind` | `income` (Příjem) / `expense` (Výdaj) / `investment` (Investice) |
 | `recurrence` | `monthly` (Pravidelná) / `once` (Jednorázová) |
 | `name` | required, 1–100 |
 | `amount` | 1 – 100,000,000 CZK, whole crowns, **always positive** – the direction is the `kind` |
@@ -26,8 +28,15 @@ updated: 2026-09-17
 | `startsOn`, `endsOn` | a recurring entry: from which month it applies and optionally until which (`YYYY-MM`) |
 | `note` | optional, max. 500 |
 
-Income deliberately has **no category**: the brief asks for income as a list of
-entries, and one more enum would be a field to fill in with nothing to answer.
+Income and investments deliberately have **no category**: the brief asks for
+income as a list of entries, and one more enum would be a field to fill in with
+nothing to answer.
+
+**An investment is a third kind, not an expense category.** The money leaves the
+account, so it lowers what is left over, but it is not spent – it only changes
+form. As a category it would inflate both the donut and the answer to "how much
+does this month cost"; as a separate kind it has its own colour, its own section
+and its own total.
 
 ## Categories (`EXPENSE_CATEGORIES`)
 

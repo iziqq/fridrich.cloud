@@ -4,6 +4,7 @@ import { issuesToDetails } from '@fridrich/shared';
 import {
   BudgetEntryInputSchema,
   monthlyTrend,
+  overallSummary,
   shiftMonth,
   summarizeMonth,
 } from '@fridrich/budgy-shared';
@@ -110,6 +111,47 @@ describe('položky rozpočtu', () => {
     assert.equal(summary.byCategory[0]?.share.toFixed(3), (18500 / 21700).toFixed(3));
   });
 
+  it('investice snižuje zbytek, ale nepočítá se do výdajů', async () => {
+    const deps = await withBudget();
+    await createEntry(
+      deps,
+      { kind: 'investment', recurrence: 'monthly', name: 'ETF', amount: 8000 },
+      USER,
+    );
+
+    const summary = summarizeMonth(await listEntries(deps, USER), '2026-10');
+
+    assert.equal(summary.investments, 8000);
+    assert.equal(summary.expenses, 21700, 'investice není útrata');
+    assert.equal(summary.remaining, 68000 - 21700 - 8000);
+    assert.deepEqual(
+      summary.byCategory.map((row) => row.category),
+      ['housing', 'food'],
+      'v rozpisu kategorií investice není',
+    );
+  });
+
+  it('souhrn za celou dobu sčítá měsíc po měsíci, ne položku po položce', async () => {
+    const deps = await withBudget();
+
+    // Výplata i hypotéka platí od října; za tři měsíce tedy třikrát.
+    const overall = overallSummary(await listEntries(deps, USER), '2026-12');
+
+    assert.equal(overall.firstMonth, '2026-10');
+    assert.equal(overall.months, 3);
+    assert.equal(overall.income, 68000 * 3);
+    assert.equal(overall.expenses, 18500 * 3 + 3200, 'velký nákup jen v říjnu');
+    assert.equal(overall.monthlyIncome, 68000);
+  });
+
+  it('prázdný rozpočet nemá první měsíc ani průměry', () => {
+    const overall = overallSummary([], '2026-10');
+
+    assert.equal(overall.firstMonth, undefined);
+    assert.equal(overall.months, 0);
+    assert.equal(overall.monthlyExpenses, 0);
+  });
+
   it('cizí položku nelze upravit ani smazat', async () => {
     const deps = await withBudget();
     const entry = (await listEntries(deps, USER))[0];
@@ -142,9 +184,13 @@ describe('pravidla položky rozpočtu', () => {
     );
   });
 
-  it('příjem kategorii nepotřebuje', () => {
+  it('příjem ani investice kategorii nepotřebují', () => {
     assert.deepEqual(
       fields({ kind: 'income', recurrence: 'monthly', name: 'Výplata', amount: 68000 }),
+      [],
+    );
+    assert.deepEqual(
+      fields({ kind: 'investment', recurrence: 'monthly', name: 'ETF', amount: 8000 }),
       [],
     );
   });

@@ -4,7 +4,7 @@ import * as v from 'valibot';
 /*
  * Subdoména `entries` – položky rozpočtu domácnosti.
  *
- * Jedna položka je příjem nebo výdaj a je buď **pravidelná** (každý měsíc
+ * Jedna položka je příjem, výdaj nebo investice a je buď **pravidelná** (každý měsíc
  * totéž – hypotéka, výplata, předplatné), nebo **jednorázová** (konkrétní
  * útrata s datem). Měsíc se nikde neukládá jako záznam: pohled na říjen je
  * prostě součet pravidelných položek, které v říjnu platily, a jednorázových
@@ -18,7 +18,7 @@ const NOTE_MAX = 500;
 const AMOUNT_MAX = 100_000_000;
 
 const cs = {
-  kind: { income: 'Příjem', expense: 'Výdaj' },
+  kind: { income: 'Příjem', expense: 'Výdaj', investment: 'Investice' },
   recurrence: { monthly: 'Pravidelná', once: 'Jednorázová' },
   category: {
     housing: 'Bydlení',
@@ -49,7 +49,7 @@ const cs = {
 };
 
 const en: Catalog<typeof cs> = {
-  kind: { income: 'Income', expense: 'Expense' },
+  kind: { income: 'Income', expense: 'Expense', investment: 'Investment' },
   recurrence: { monthly: 'Recurring', once: 'One-off' },
   category: {
     housing: 'Housing',
@@ -85,7 +85,14 @@ export const entriesKeys = messageKeys(cs, 'budgyShared.entries');
 
 /* --- Výčty --- */
 
-export const ENTRY_KINDS = ['income', 'expense'] as const;
+/**
+ * Druh položky.
+ *
+ * Investice je schválně třetí druh, ne kategorie výdaje: peníze sice
+ * z účtu odejdou, ale neutratí se – zůstávají vaše. V rozpisu výdajů by
+ * kazila obrázek o tom, kolik měsíc stojí.
+ */
+export const ENTRY_KINDS = ['income', 'expense', 'investment'] as const;
 export const ENTRY_RECURRENCES = ['monthly', 'once'] as const;
 
 /**

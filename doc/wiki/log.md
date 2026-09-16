@@ -666,3 +666,55 @@ were hashed:
 - New page: `architecture/security.md`. Touched: `architecture/personalData.md`,
   `architecture/dataCosmos.md`, `operations/deployment.md` (the new setting),
   index, `raw/README.md`.
+
+## [2026-09-17] change | Production settings: the pepper added, the maintenance token found missing
+
+- `PSEUDONYM_PEPPER` (64 hex characters) was set in the Azure Application
+  settings of the Static Web App `LiborFridrich` (resource group `lf-page`), so
+  the fingerprints have their secret before the code that needs them is
+  deployed. `az staticwebapp appsettings set` is called with **all existing
+  settings plus the new one**, because the command can replace the whole
+  collection; the key list was compared before and after (13 → 14, nothing lost,
+  no existing value changed).
+- **`MAINTENANCE_TOKEN` was missing on the Azure side entirely**, so the
+  retention scheduler had been getting `401` and no inactive account was ever
+  deleted – a promise the privacy policy makes. A value was generated and set in
+  Azure the same way (14 → 15); the matching GitHub secret has to be added by
+  the owner, because writing a repository secret needs a libsodium sealed box
+  and the stored credential, which the agent does not touch.
+- The workflow itself needs no change: it exits on an empty secret and uses
+  `curl --fail-with-body`, so a wrong or missing token turns the run red.
+- Touched page: `operations/deployment.md` (how to check the settings).
+
+## [2026-09-17] ingest | IziBudgy: overview, investments, top bar
+
+Source: [raw/2026-09-17-budgyDashboard.md](../raw/2026-09-17-budgyDashboard.md)
+– a dashboard with total income and expenses, a *This month* widget leading to
+today's screen, investments next to income and expenses, a top bar and a
+language switch.
+
+- **Investments are a third kind of entry** (`ENTRY_KINDS`), not an expense
+  category: the money leaves the account, so it lowers what is left, but it is
+  not spent. It stays out of the donut and out of `expenses`.
+  `remaining = income − expenses − investments`.
+- **`overallSummary(entries, untilMonth)`** in the shared kernel adds months up
+  one by one – a recurring salary counts once per month it applies to. Summing
+  entries would report one month's worth as the lifetime total. Capped at ten
+  years back so a typo in a year cannot stretch the loop.
+- Routes split: `/izi-budgy` is `DashboardView` (totals, widget, trend),
+  `/izi-budgy/mesic` is the former screen. `BudgyLayout.vue` holds the top bar
+  for both – back to the hub, tabs *Přehled* / the month being viewed, and the
+  **language switch**, which the product lacked entirely because it hides the
+  portal navigation.
+- The empty state now carries the main action **inside the card**; the floating
+  button only appears once there is content.
+- The trend chart got a third bar, the month screen a fourth figure and a fourth
+  section, and entries a colour by kind (an investment without a category used
+  to look like income).
+- Tests: investments stay out of expenses, the all-time summary counts months
+  not entries, an empty budget has no first month (166 API tests pass).
+- Verified in headless Chrome at 390, 768 and 1280 px, plus the rendered DOM for
+  the investments section.
+- Touched pages: `domains/budgyBudget.md` (rewritten around the two screens),
+  `domains/budgyEntries.md`, `domains/budgy.md`, `architecture/frontend.md`,
+  index, `raw/README.md`.

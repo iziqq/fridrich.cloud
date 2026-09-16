@@ -18,7 +18,10 @@ const { t } = useI18n();
 
 /** Měřítko drží všechny měsíce; bez něj by prázdný měsíc vypadal jako plný. */
 const scale = computed(() =>
-  Math.max(...props.months.map((month) => Math.max(month.income, month.expenses)), 1),
+  Math.max(
+    ...props.months.map((month) => Math.max(month.income, month.expenses, month.investments)),
+    1,
+  ),
 );
 
 function height(amount: number): string {
@@ -38,6 +41,7 @@ function summaryLabel(month: MonthSummary): string {
     month: month.month,
     income: formatCurrency(month.income, currentLocale.value),
     expenses: formatCurrency(month.expenses, currentLocale.value),
+    investments: formatCurrency(month.investments, currentLocale.value),
   });
 }
 </script>
@@ -55,6 +59,7 @@ function summaryLabel(month: MonthSummary): string {
         >
           <span class="bar income" :style="{ height: height(month.income) }"></span>
           <span class="bar expense" :style="{ height: height(month.expenses) }"></span>
+          <span class="bar investment" :style="{ height: height(month.investments) }"></span>
         </button>
         <span class="label">{{ shortLabel(month.month) }}</span>
       </li>
@@ -63,6 +68,7 @@ function summaryLabel(month: MonthSummary): string {
     <p class="legend">
       <span class="key"><span class="dot income"></span>{{ t('budgy.chart.income') }}</span>
       <span class="key"><span class="dot expense"></span>{{ t('budgy.chart.expenses') }}</span>
+      <span class="key"><span class="dot investment"></span>{{ t('budgy.chart.investments') }}</span>
     </p>
   </div>
 </template>
@@ -106,7 +112,7 @@ function summaryLabel(month: MonthSummary): string {
 }
 
 .bar {
-  width: 0.55rem;
+  width: 0.4rem;
   min-height: 2px;
   border-radius: 999px 999px 0 0;
   transition: height var(--dur-base) var(--ease);
@@ -120,6 +126,11 @@ function summaryLabel(month: MonthSummary): string {
 .bar.expense,
 .dot.expense {
   background: var(--color-expense);
+}
+
+.bar.investment,
+.dot.investment {
+  background: var(--color-investment);
 }
 
 .label {

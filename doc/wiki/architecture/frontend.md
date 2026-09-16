@@ -217,7 +217,7 @@ inputs, textareas and buttons.
 | `/prihlaseni`, `/registrace`, `/overeni-emailu`, `/ucet` | Identity (login, registration, e-mail verification, account incl. deletion) |
 | `/ochrana-osobnich-udaju`, `/obchodni-podminky` | Privacy policy and terms (`LegalView`, always registered) |
 | `/izi-weddy/*` | IziWeddy – routes in [weddy.md](../domains/weddy.md#routes) |
-| `/izi-budgy/*` | IziBudgy – the budget by months ([budgyBudget.md](../domains/budgyBudget.md)) |
+| `/izi-budgy`, `/izi-budgy/mesic` | IziBudgy – the overview and one month ([budgyBudget.md](../domains/budgyBudget.md)) |
 | `/api/*` | API (the Vite dev server proxies it to `:7071`) |
 
 Routes and anchors are Czech because they are part of the public website.

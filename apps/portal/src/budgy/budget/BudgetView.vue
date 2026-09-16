@@ -68,7 +68,9 @@ const hasEntries = computed(() => store.entries.length > 0);
  * Základ je ten větší z obou, takže pruhy jdou porovnat mezi sebou: když
  * výdaje přerostou příjmy, je vidět přesně o kolik.
  */
-const barScale = computed(() => Math.max(store.summary.income, store.summary.expenses, 1));
+const barScale = computed(() =>
+  Math.max(store.summary.income, store.summary.expenses + store.summary.investments, 1),
+);
 
 function barWidth(amount: number): string {
   return `${(amount / barScale.value) * 100}%`;
@@ -97,6 +99,12 @@ const sectionList = computed(() => [
     entries: store.sections.oneOff,
     kind: 'expense' as EntryKind,
     total: store.summary.oneOffExpenses,
+  },
+  {
+    key: 'investments' as const,
+    entries: store.sections.investments,
+    kind: 'investment' as EntryKind,
+    total: store.summary.investments,
   },
 ]);
 
@@ -131,6 +139,19 @@ async function removeEntry(entry: BudgetEntry): Promise<void> {
   if (editing.value?.id === entry.id) sheetOpen.value = false;
 }
 
+/**
+ * Barva proužku u položky.
+ *
+ * Výdaj nese barvu své kategorie (stejnou jako v grafu), příjem a investice
+ * barvu svého druhu – jinak by investice bez kategorie vypadala jako příjem.
+ */
+function swatchColor(entry: BudgetEntry): string {
+  if (entry.kind === 'investment') return 'var(--color-investment)';
+  if (entry.kind === 'income') return 'var(--color-income)';
+
+  return entry.category ? CATEGORY_COLORS[entry.category] : 'var(--color-expense)';
+}
+
 /** Popisek pod názvem – u výdaje kategorie, u jednorázové položky i den. */
 function entryMeta(entry: BudgetEntry): string {
   const parts: string[] = [];
@@ -144,7 +165,7 @@ function entryMeta(entry: BudgetEntry): string {
 </script>
 
 <template>
-  <main id="obsah" class="container page">
+  <div>
     <header class="head">
       <div class="title">
         <p class="mono">{{ t('budgy.title') }}</p>
@@ -196,6 +217,10 @@ function entryMeta(entry: BudgetEntry): string {
             <p class="amount value expense">{{ money(store.summary.expenses) }}</p>
           </div>
           <div class="figure">
+            <p class="label">{{ t('budgy.summary.investments') }}</p>
+            <p class="amount value investment">{{ money(store.summary.investments) }}</p>
+          </div>
+          <div class="figure">
             <p class="label">{{ t('budgy.summary.remaining') }}</p>
             <p
               class="amount value remaining"
@@ -214,6 +239,11 @@ function entryMeta(entry: BudgetEntry): string {
         >
           <span class="bar income" :style="{ width: barWidth(store.summary.income) }"></span>
           <span class="bar expense" :style="{ width: barWidth(store.summary.expenses) }"></span>
+          <span
+            v-if="store.summary.investments > 0"
+            class="bar investment"
+            :style="{ width: barWidth(store.summary.investments) }"
+          ></span>
         </div>
 
         <p v-if="store.summary.income > 0" class="note">
@@ -230,7 +260,12 @@ function entryMeta(entry: BudgetEntry): string {
         icon="💰"
         :title="t('budgy.empty.title')"
         :description="t('budgy.empty.description')"
-      />
+      >
+        <!-- Hlavní akce patří sem, dokud není co ukázat – ne do rohu obrazovky. -->
+        <button type="button" class="btn btn-primary" @click="openCreate('income')">
+          + {{ t('budgy.entry.add') }}
+        </button>
+      </EmptyState>
 
       <template v-else>
         <div class="charts">
@@ -264,9 +299,7 @@ function entryMeta(entry: BudgetEntry): string {
             <li v-for="entry in section.entries" :key="entry.id" class="entry card">
               <span
                 class="swatch"
-                :style="{
-                  background: entry.category ? CATEGORY_COLORS[entry.category] : 'var(--color-income)',
-                }"
+                :style="{ background: swatchColor(entry) }"
                 aria-hidden="true"
               ></span>
 
@@ -299,10 +332,10 @@ function entryMeta(entry: BudgetEntry): string {
       </template>
     </template>
 
-    <FabButton :label="t('budgy.entry.add')" @click="openCreate('expense')" />
+    <FabButton v-if="hasEntries" :label="t('budgy.entry.add')" @click="openCreate('expense')" />
 
     <EntrySheet v-model:open="sheetOpen" :entry="editing" :default-kind="defaultKind" />
-  </main>
+  </div>
 </template>
 
 <style scoped>
@@ -367,8 +400,8 @@ function entryMeta(entry: BudgetEntry): string {
 
 .figures {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-1);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-1);
 }
 
 .figure .label {
@@ -420,6 +453,14 @@ function entryMeta(entry: BudgetEntry): string {
 
 .bar.expense {
   background: var(--color-expense);
+}
+
+.bar.investment {
+  background: var(--color-investment);
+}
+
+.investment {
+  color: var(--color-investment);
 }
 
 .note {
@@ -571,6 +612,7 @@ function entryMeta(entry: BudgetEntry): string {
   }
 
   .figures {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-2);
   }
 

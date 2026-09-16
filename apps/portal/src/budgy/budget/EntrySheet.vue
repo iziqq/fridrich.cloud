@@ -74,6 +74,7 @@ watch(open, (isOpen) => {
 const kindOptions = computed(() => [
   { value: 'income', label: t(entriesKeys.kind.income) },
   { value: 'expense', label: t(entriesKeys.kind.expense) },
+  { value: 'investment', label: t(entriesKeys.kind.investment) },
 ]);
 
 const recurrenceOptions = computed(() => [
@@ -134,9 +135,7 @@ async function submit(): Promise<void> {
       <FormField
         v-model="form.name"
         :label="t('budgy.form.name')"
-        :placeholder="
-          form.kind === 'income' ? t('budgy.form.namePlaceholderIncome') : t('budgy.form.namePlaceholderExpense')
-        "
+        :placeholder="t(`budgy.form.namePlaceholder.${form.kind}`)"
         required
         :error="errorText('name')"
       />

@@ -1,5 +1,11 @@
 import type { BudgetEntry, Month } from '@fridrich/budgy-shared';
-import { entriesForMonth, monthlyTrend, shiftMonth, summarizeMonth } from '@fridrich/budgy-shared';
+import {
+  entriesForMonth,
+  monthlyTrend,
+  overallSummary,
+  shiftMonth,
+  summarizeMonth,
+} from '@fridrich/budgy-shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import {
@@ -35,6 +41,8 @@ export const useBudgetStore = defineStore('budgy-budget', () => {
 
   const summary = computed(() => summarizeMonth(entries.value, month.value));
   const trend = computed(() => monthlyTrend(entries.value, month.value));
+  /* Souhrn za celou dobu počítá po měsících, ne po položkách – viz `overallSummary`. */
+  const overall = computed(() => overallSummary(entries.value, currentMonth()));
 
   /** Položky měsíce rozdělené tak, jak je ukazuje obrazovka. */
   const sections = computed(() => {
@@ -46,6 +54,7 @@ export const useBudgetStore = defineStore('budgy-budget', () => {
       recurring: visible
         .filter((entry) => entry.kind === 'expense' && entry.recurrence === 'monthly')
         .sort(byAmount),
+      investments: visible.filter((entry) => entry.kind === 'investment').sort(byAmount),
       // Jednorázové jdou podle data – v měsíci se čtou jako deník útrat.
       oneOff: visible
         .filter((entry) => entry.kind === 'expense' && entry.recurrence === 'once')
@@ -102,6 +111,7 @@ export const useBudgetStore = defineStore('budgy-budget', () => {
     error,
     summary,
     trend,
+    overall,
     sections,
     canGoForward,
     goToMonth,

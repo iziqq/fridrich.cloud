@@ -140,6 +140,9 @@ accounts inactive for a year after a 30-day warning ([personalData.md](../archit
 
 - A timer trigger is not available on SWA Free managed functions – hence GitHub Actions.
 - The token must be set **in both places**; missing on Azure → `401`, missing in GitHub → the job fails.
+  Both ways the workflow run goes red (`--fail-with-body`), so the Actions history is where to look
+  when in doubt. Checking the Azure side without revealing values:
+  `az staticwebapp appsettings list --name LiborFridrich --resource-group lf-page --query "keys(properties)"`.
 - GitHub disables scheduled workflows after 60 days without repository activity – re-enable in the Actions tab.
 
 ## `staticwebapp.config.json`

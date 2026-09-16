@@ -28,9 +28,21 @@ export const budgyRoutes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, bare: true },
     children: [
       {
+        // Lišta i `main#obsah` jsou společné, obrazovky se mění uvnitř.
         path: '',
-        name: 'budgy-budget',
-        component: () => import('./budget/BudgetView.vue'),
+        component: () => import('./BudgyLayout.vue'),
+        children: [
+          {
+            path: '',
+            name: 'budgy-dashboard',
+            component: () => import('./budget/DashboardView.vue'),
+          },
+          {
+            path: 'mesic',
+            name: 'budgy-month',
+            component: () => import('./budget/BudgetView.vue'),
+          },
+        ],
       },
       {
         path: ':pathMatch(.*)*',

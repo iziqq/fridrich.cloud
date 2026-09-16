@@ -41,8 +41,8 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [domains/weddyPlanning.md](domains/weddyPlanning.md) | 12 sections, items, bundles (one price for several sections), 10 endpoints | 2026-09-16 |
 | [domains/weddyBudget.md](domains/weddyBudget.md) | Budget from items and bundles: calculation, why a bundle is outside the section breakdown, `getBudget` endpoint | 2026-09-16 |
 | [domains/budgy.md](domains/budgy.md) | IziBudgy: subdomains, decisions of the first version, personal data, look | 2026-09-17 |
-| [domains/budgyEntries.md](domains/budgyEntries.md) | Income and expenses: fields, 11 categories, why a month is not a record, 4 endpoints | 2026-09-17 |
-| [domains/budgyBudget.md](domains/budgyBudget.md) | The month on screen: summary, donut and six-month trend, where it is calculated | 2026-09-17 |
+| [domains/budgyEntries.md](domains/budgyEntries.md) | Income, expenses and investments: fields, 11 categories, why a month is not a record, 4 endpoints | 2026-09-17 |
+| [domains/budgyBudget.md](domains/budgyBudget.md) | Overview and month: all-time totals, *This month* widget, donut and six-month trend, the top bar | 2026-09-17 |
 | [domains/portal.md](domains/portal.md) | The portal: the hub at `/`, the presentation at `/o-mne`, the app registry, navigation, binding content rules, Glass design | 2026-09-17 |
 
 ## Operations

@@ -27,7 +27,7 @@ updated: 2026-09-17
 | Subdomain | What it holds | Page |
 |---|---|---|
 | `entries` | The entries themselves – income and expenses, recurring and one-off | [budgyEntries.md](budgyEntries.md) |
-| `budget` | The month on screen: numbers, charts, browsing between months | [budgyBudget.md](budgyBudget.md) |
+| `budget` | The overview and the month: totals, charts, browsing between months | [budgyBudget.md](budgyBudget.md) |
 
 `budget` is a derived view, not an aggregate: it has no container of its own,
 it only adds up `entries`. The split follows [domains.md](../architecture/domains.md) –
