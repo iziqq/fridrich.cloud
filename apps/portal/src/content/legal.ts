@@ -97,7 +97,7 @@ export const privacyPolicy: LegalDocument = {
             ],
             [
               'Aplikace IziWeddy',
-              'název a datum svatby; jméno, příjmení, rok narození, e-mail, telefon a poznámka u snoubenců; jméno, příjmení, strana, věková skupina, stav pozvání, rodina a poznámka u hostů; položky příprav (název, odkaz, cena, stav)',
+              'název a datum svatby; jméno a příjmení snoubenců; jméno, příjmení, strana, věková skupina, stav pozvání, rodina a poznámka u hostů; položky příprav (název, odkaz, cena, stav)',
               'Poskytování aplikace podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Údaje snoubenců a hostů zadává uživatel a zpracovávám je jen proto, aby mu aplikace fungovala.',
               'Do smazání plánování nebo účtu, včetně automatického smazání neaktivního účtu.',
             ],

@@ -51,26 +51,13 @@ describe('WeddingInputSchema', () => {
     assert.deepEqual(fieldsOf(WeddingInputSchema, input), ['groom.firstName']);
   });
 
-  it('odmítne rok narození v budoucnu', () => {
-    const input = {
+  it('u snoubence zahodí všechno kromě jména a příjmení', () => {
+    const output = v.parse(WeddingInputSchema, {
       ...validWedding,
-      bride: { ...validWedding.bride, birthYear: new Date().getUTCFullYear() + 1 },
-    };
-    assert.deepEqual(fieldsOf(WeddingInputSchema, input), ['bride.birthYear']);
-  });
-
-  it('prázdný nepovinný e-mail převede na undefined a platný normalizuje', () => {
-    const empty = v.parse(WeddingInputSchema, {
-      ...validWedding,
-      groom: { ...validWedding.groom, email: '  ' },
-    });
-    const filled = v.parse(WeddingInputSchema, {
-      ...validWedding,
-      groom: { ...validWedding.groom, email: 'Petr@Example.com' },
+      groom: { ...validWedding.groom, birthYear: 1990, email: 'petr@example.com', phone: '777' },
     });
 
-    assert.equal(empty.groom.email, undefined);
-    assert.equal(filled.groom.email, 'petr@example.com');
+    assert.deepEqual(output.groom, { firstName: 'Petr', lastName: 'Novák' });
   });
 });
 

@@ -32,10 +32,6 @@ function personForm(person: WeddingDetail['groom'] | undefined) {
   return reactive({
     firstName: person?.firstName ?? '',
     lastName: person?.lastName ?? '',
-    birthYear: person?.birthYear ? String(person.birthYear) : '',
-    email: person?.email ?? '',
-    phone: person?.phone ?? '',
-    note: person?.note ?? '',
   });
 }
 
@@ -59,14 +55,7 @@ function fieldError(field: string): string | undefined {
 }
 
 function toPerson(form: ReturnType<typeof personForm>) {
-  return {
-    firstName: form.firstName.trim(),
-    lastName: form.lastName.trim(),
-    birthYear: form.birthYear.trim() === '' ? undefined : Number(form.birthYear),
-    email: form.email.trim() || undefined,
-    phone: form.phone.trim() || undefined,
-    note: form.note.trim() || undefined,
-  };
+  return { firstName: form.firstName.trim(), lastName: form.lastName.trim() };
 }
 
 async function submit(): Promise<void> {
@@ -136,35 +125,6 @@ async function submit(): Promise<void> {
           :error="fieldError(`${side.key}.lastName`)"
         />
       </div>
-
-      <FormField
-        v-model="side.form.birthYear"
-        :label="t('weddy.weddingForm.birthYear')"
-        numeric
-        :disabled="readonly"
-        :error="fieldError(`${side.key}.birthYear`)"
-      />
-      <FormField
-        v-model="side.form.email"
-        :label="t('weddy.weddingForm.email')"
-        type="email"
-        :disabled="readonly"
-        :error="fieldError(`${side.key}.email`)"
-      />
-      <FormField
-        v-model="side.form.phone"
-        :label="t('weddy.weddingForm.phone')"
-        type="tel"
-        :disabled="readonly"
-        :error="fieldError(`${side.key}.phone`)"
-      />
-      <FormField
-        v-model="side.form.note"
-        :label="t('weddy.weddingForm.note')"
-        textarea
-        :disabled="readonly"
-        :error="fieldError(`${side.key}.note`)"
-      />
     </section>
 
     <p v-if="generalError" class="general-error" role="alert">{{ translateMessage(generalError) }}</p>

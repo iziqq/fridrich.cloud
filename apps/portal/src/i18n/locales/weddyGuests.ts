@@ -20,6 +20,8 @@ export const weddyGuestsCs = {
     rejected: 'Odmítlo',
   },
   filters: {
+    button: 'Filtry',
+    buttonActive: 'Filtry – aktivních: {n}',
     search: 'Hledat',
     searchPlaceholder: 'Jméno hosta',
     side: 'Strana',
@@ -49,7 +51,7 @@ export const weddyGuestsCs = {
     new: 'Nový host',
     edit: 'Upravit hosta',
     delete: 'Smazat hosta',
-    confirmDelete: 'Opravdu smazat hosta {name}?',
+    confirmDelete: 'Host {name} zmizí ze seznamu. Tohle nejde vrátit.',
     form: {
       firstName: 'Jméno',
       lastName: 'Příjmení',
@@ -65,7 +67,7 @@ export const weddyGuestsCs = {
     edit: 'Upravit rodinu',
     delete: 'Smazat rodinu',
     confirmDelete:
-      'Opravdu smazat rodinu {name} včetně {n} členů? | Opravdu smazat rodinu {name} včetně {n} člena? | Opravdu smazat rodinu {name} včetně {n} členů? | Opravdu smazat rodinu {name} včetně {n} členů?',
+      'Rodina {name} zmizí ze seznamu i se svými {n} členy. Tohle nejde vrátit. | Rodina {name} zmizí ze seznamu i se svým {n} členem. Tohle nejde vrátit. | Rodina {name} zmizí ze seznamu i se svými {n} členy. Tohle nejde vrátit. | Rodina {name} zmizí ze seznamu i se svými {n} členy. Tohle nejde vrátit.',
     memberCount: '{n} členů | {n} člen | {n} členové | {n} členů',
     childCount: '{n} dětí | {n} dítě | {n} děti | {n} dětí',
     form: {
@@ -96,6 +98,8 @@ export const weddyGuestsEn: Catalog<typeof weddyGuestsCs> = {
     rejected: 'Declined',
   },
   filters: {
+    button: 'Filters',
+    buttonActive: 'Filters – active: {n}',
     search: 'Search',
     searchPlaceholder: 'Guest name',
     side: 'Side',
@@ -125,7 +129,7 @@ export const weddyGuestsEn: Catalog<typeof weddyGuestsCs> = {
     new: 'New guest',
     edit: 'Edit guest',
     delete: 'Delete guest',
-    confirmDelete: 'Really delete guest {name}?',
+    confirmDelete: 'Guest {name} disappears from the list. This cannot be undone.',
     form: {
       firstName: 'First name',
       lastName: 'Last name',
@@ -141,7 +145,7 @@ export const weddyGuestsEn: Catalog<typeof weddyGuestsCs> = {
     edit: 'Edit family',
     delete: 'Delete family',
     confirmDelete:
-      'Really delete family {name} including {n} members? | Really delete family {name} including {n} member? | Really delete family {name} including {n} members?',
+      'Family {name} disappears from the list together with its {n} members. This cannot be undone. | Family {name} disappears from the list together with its {n} member. This cannot be undone. | Family {name} disappears from the list together with its {n} members. This cannot be undone.',
     memberCount: '{n} members | {n} member | {n} members',
     childCount: '{n} children | {n} child | {n} children',
     form: {

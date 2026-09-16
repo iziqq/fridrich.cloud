@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { PLANNING_CATEGORIES, formatCurrency, type WeddingSummary } from '@fridrich/weddy-shared';
+import {
+  PLANNING_CATEGORIES,
+  canManageWeddingSettings,
+  formatCurrency,
+  type WeddingSummary,
+} from '@fridrich/weddy-shared';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
@@ -24,12 +29,22 @@ const decidedShare = computed(
   () => `${Math.round((props.summary.decidedSectionCount / sectionTotal) * 100)}%`,
 );
 
-const links = computed(() => [
-  { key: 'couple', icon: '💑', to: weddyPath(`/weddings/${props.summary.id}/couple`) },
-  { key: 'guests', icon: '👥', to: weddyPath(`/weddings/${props.summary.id}/guests`) },
-  { key: 'planning', icon: '📋', to: weddyPath(`/weddings/${props.summary.id}/planning`) },
-  { key: 'budget', icon: '💰', to: weddyPath(`/weddings/${props.summary.id}/budget`) },
-]);
+/* Stejné rozcestí jako záložky v detailu – Nastavení jen pro admina. */
+const links = computed(() => {
+  const base = [
+    { key: 'couple', icon: '💑', to: weddyPath(`/weddings/${props.summary.id}/couple`) },
+    { key: 'guests', icon: '👥', to: weddyPath(`/weddings/${props.summary.id}/guests`) },
+    { key: 'planning', icon: '📋', to: weddyPath(`/weddings/${props.summary.id}/planning`) },
+    { key: 'budget', icon: '💰', to: weddyPath(`/weddings/${props.summary.id}/budget`) },
+  ];
+
+  if (!canManageWeddingSettings(props.summary.role)) return base;
+
+  return [
+    ...base,
+    { key: 'settings', icon: '⚙️', to: weddyPath(`/weddings/${props.summary.id}/settings`) },
+  ];
+});
 </script>
 
 <template>
@@ -218,6 +233,11 @@ dd {
   font-size: 1.5rem;
 }
 
+/* Lichý počet odkazů (admin jich má pět) – poslední zabere celý řádek. */
+.link:last-child:nth-child(odd) {
+  grid-column: span 2;
+}
+
 @media (--tablet) {
   .intro {
     padding: var(--space-6) var(--space-4);
@@ -228,7 +248,13 @@ dd {
   }
 
   .links {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    /* Čtyři odkazy, nebo pět s Nastavením – šířku dopočítá auto-columns. */
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .link:last-child:nth-child(odd) {
+    grid-column: auto;
   }
 }
 </style>

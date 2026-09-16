@@ -170,6 +170,21 @@ Current use:
 > Tokens on `:root` would override the portal palette on the whole website.
 > Everything goes under `.weddy`.
 
+> ⚠️ **Anything teleported to `body` carries the product class itself.**
+> `BottomSheet.vue` renders through `<Teleport to="body">`, which puts the
+> overlay outside the `.weddy` subtree – neither the tokens nor `.weddy .btn`
+> would reach it, and the buttons inside sheets fell back to the browser's grey
+> default. The teleported root is therefore `<div class="weddy overlay">` – and
+> because the class also carries the theme's own **background**, the overlay has
+> to set `background: transparent`, otherwise it covers the page instead of
+> dimming it.
+
+Form controls that the operating system would draw are replaced by our own
+components – `SelectField.vue` instead of `<select>`, `ConfirmDialog.vue`
+instead of `window.confirm` (see [weddy.md](../domains/weddy.md#shared-components)).
+The theme therefore styles only what the browser renders acceptably: text
+inputs, textareas and buttons.
+
 ## Addresses
 
 | Path | Content |

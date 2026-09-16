@@ -13,6 +13,8 @@ import { currentLocale, translateMessage } from '@/i18n';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import FormField from '@/weddy/components/FormField.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
+import SelectField from '@/weddy/components/SelectField.vue';
+import { askConfirm } from '@/weddy/components/confirm';
 import { weddyPath } from '@/weddy/routes';
 import { cancelWeddingInvitation } from '@/weddy/access/endpoints/cancelWeddingInvitation.endpoint';
 import { changeWeddingMemberRole } from '@/weddy/access/endpoints/changeWeddingMemberRole.endpoint';
@@ -163,12 +165,26 @@ async function changeRole(memberId: string, role: InvitableRole): Promise<void> 
 }
 
 async function removeMember(memberId: string, name: string): Promise<void> {
-  if (!window.confirm(t('weddy.settings.access.removeConfirm', { name }))) return;
+  const confirmed = await askConfirm({
+    title: t('weddy.settings.access.remove'),
+    message: t('weddy.settings.access.removeConfirm', { name }),
+    confirmLabel: t('weddy.settings.access.remove'),
+    danger: true,
+  });
+  if (!confirmed) return;
+
   await runAccessChange(() => removeWeddingMember(weddingId.value, memberId));
 }
 
 async function cancelInvitation(invitationId: string, email: string): Promise<void> {
-  if (!window.confirm(t('weddy.settings.access.cancelConfirm', { email }))) return;
+  const confirmed = await askConfirm({
+    title: t('weddy.settings.access.cancel'),
+    message: t('weddy.settings.access.cancelConfirm', { email }),
+    confirmLabel: t('weddy.settings.access.cancel'),
+    danger: true,
+  });
+  if (!confirmed) return;
+
   await runAccessChange(() => cancelWeddingInvitation(weddingId.value, invitationId));
 }
 
@@ -179,7 +195,13 @@ const deleteError = ref('');
 
 async function removePlan(): Promise<void> {
   const title = weddings.current?.title ?? '';
-  if (!window.confirm(t('weddy.settings.danger.confirm', { title }))) return;
+  const confirmed = await askConfirm({
+    title: t('weddy.settings.danger.title'),
+    message: t('weddy.settings.danger.confirm', { title }),
+    confirmLabel: t('weddy.settings.danger.submit'),
+    danger: true,
+  });
+  if (!confirmed) return;
 
   deleting.value = true;
   deleteError.value = '';
@@ -252,19 +274,14 @@ function formatDate(iso: string): string {
             <p v-if="member.role === 'admin'" class="role-fixed">{{ roleLabel('admin') }}</p>
 
             <div v-else class="person-actions">
-              <label class="role">
-                <span class="visually-hidden">{{ t('weddy.settings.access.roleLabel') }}</span>
-                <select
-                  :value="member.role"
-                  @change="
-                    changeRole(member.userId, ($event.target as HTMLSelectElement).value as InvitableRole)
-                  "
-                >
-                  <option v-for="option in roleOptions" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
+              <SelectField
+                class="role"
+                :model-value="member.role"
+                :label="t('weddy.settings.access.roleLabel')"
+                hide-label
+                :options="roleOptions"
+                @update:model-value="changeRole(member.userId, $event)"
+              />
 
               <button
                 type="button"
@@ -311,14 +328,12 @@ function formatDate(iso: string): string {
             :error="inviteErrors['email'] ? translateMessage(inviteErrors['email']) : undefined"
           />
 
-          <label class="role">
-            <span>{{ t('weddy.settings.access.roleLabel') }}</span>
-            <select v-model="invite.role">
-              <option v-for="option in roleOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
+          <SelectField
+            v-model="invite.role"
+            class="role"
+            :label="t('weddy.settings.access.roleLabel')"
+            :options="roleOptions"
+          />
 
           <button type="submit" class="btn btn-secondary" :disabled="inviting">
             {{ inviting ? t('weddy.settings.access.inviting') : t('weddy.settings.access.invite') }}
@@ -427,19 +442,13 @@ function formatDate(iso: string): string {
   font-weight: 600;
 }
 
+/*
+ * Volba role je vlastní rozbalovátko (SelectField), ne `<select>` – tady mu
+ * jen dáváme šířku. V řádku člověka musí zůstat místo na jméno, ve formuláři
+ * pozvánky stojí vedle e-mailu.
+ */
 .role {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  font-size: 0.875rem;
-}
-
-select {
-  min-height: var(--touch-target);
-  padding: 0.4rem 0.6rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  min-width: 9rem;
 }
 
 .icon-button {

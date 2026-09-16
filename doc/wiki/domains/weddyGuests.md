@@ -4,7 +4,7 @@ type: domain
 sources:
   - raw/iziweddySpec.md (ch. 4.2, 5.3, 7.2, 8)
   - code: packages/weddy-shared/src/guests.ts, apps/api/src/domain/weddy/guests, apps/portal/src/weddy/guests
-updated: 2026-09-15
+updated: 2026-09-16
 ---
 
 # `weddy / guests` – guests and families
@@ -53,16 +53,29 @@ Input: name, side for the whole family, list of members (first name, age group).
 
 ## List on screen
 
-- Filters: side, age group, status; search by name and family name
-  (diacritics-insensitive). Filtering happens on the client.
+- A **toolbar** above the list: the *Filtry* (Filters) button on the left, the
+  search field on the right. The button opens a **popover** with every filter –
+  side, age group, status, sorting and *Zrušit filtry* (Clear filters) – and
+  carries a badge with the number of active filters (sorting does not count).
+  The popover closes on Esc, on a click outside and returns focus to the button.
+  The four choices inside it are `SelectField.vue`, not `<select>`.
+  Four dropdowns in a row used to push the list below the fold on a phone.
+- **Search** matches the name and the family name, ignoring diacritics
+  (`novakovi` finds *Novákovi* with all its members). Filtering happens on the
+  client – the list of one wedding is small and the answer is instant.
 - Sort by last name (default) or first name; it is not a filter, "Zrušit filtry"
   (Clear filters) keeps it. Ties are broken by the other name, compared with Czech
   collation (`Čermák` after `Cach`).
 - Names are shown in sort order (`Novák Petr`).
 - The side is a **section** (Groom / Bride), not a tag. Within a section families
-  come first as blocks, individuals below.
+  come first as blocks, individuals below. The two sections sit **side by side
+  from tablet up** and stack on a phone, so a wide screen shows both lists at once.
 - Families are **collapsed** with a summary (`4 členové · 2 děti` – 4 members · 2 children);
   all expand while searching or filtering.
+- Two actions in the bottom right: *+ Host* (Add guest) as the filled primary
+  pill, *+ Rodina* (Add family) as the same pill outlined in the accent colour –
+  one shape, two weights, so the less usual action does not compete with the
+  common one.
 - Quick status change by clicking the badge (optimistic, reverted on error).
 - Cards on narrow screens, denser rows on wider ones.
 

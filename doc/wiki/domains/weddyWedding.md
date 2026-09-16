@@ -24,8 +24,8 @@ list with a single card is a signpost to nowhere:
 | Plans | What is shown | Component |
 |---|---|---|
 | 0 | Welcome screen: ring mark, heading, one sentence about the planner, a prominent *Založit plánování* (Create a wedding plan) button and four tiles with the sections – the same four the wedding detail has as tabs, so navigation is familiar afterwards. | `DashboardWelcome.vue` |
-| 1 | Large summary of that wedding: title, couple, date with the countdown pill, three stat tiles (guests accepted / invited, budget total, sections decided with a progress bar) and four quick links to the tabs. Below it a quiet *Přidat další plánování* (Add another plan) link. | `WeddingOverview.vue` |
-| 2+ | Grid of cards – title, countdown, couple, date, guests and budget; one column on mobile, two from tablet. A primary *Přidat plánování* button below. | `DashboardView.vue` |
+| 1 | Large summary of that wedding: title, couple, date with the countdown pill, three stat tiles (guests accepted / invited, budget total, sections decided with a progress bar) and quick links to the tabs – five of them for an admin, including *Nastavení* (Settings). Below it a quiet *Přidat další plánování* (Add another plan) link. | `WeddingOverview.vue` |
+| 2+ | Grid of cards – title, countdown, couple, date, guests and budget; one column on mobile, two from tablet. A card of a plan the user administers ends with a *Nastavení* (Settings) link. A primary *Přidat plánování* button below. | `DashboardView.vue` |
 
 The page heading (`h1`) belongs to the welcome screen or the summary; the header
 shows the plain list title only for two plans and more, so a screen never has
@@ -46,7 +46,10 @@ prop `with-settings`). For a viewer the form is filled in but disabled.
 | Delete the plan | Deletes the plan with guests, items and invitations, after a confirmation |
 
 The tab is hidden for a manager and a viewer; opening the address directly sends
-them back to the Couple screen, and the API refuses them anyway.
+them back to the Couple screen, and the API refuses them anyway. The settings are
+also reachable straight from the dashboard (quick link in the summary, link on the
+card), so an admin does not have to walk through the plan to change a date or
+invite somebody.
 
 ## Rules
 
@@ -56,10 +59,12 @@ them back to the Couple screen, and the API refuses them anyway.
 | `weddingDate` | optional, `YYYY-MM-DD`, the day must exist | `optionalIsoDate` |
 | `groom`, `bride` | required objects | `PersonInputSchema` |
 | `firstName`, `lastName` | required, 1–100 characters | |
-| `birthYear` | optional, integer 1900 – current year | |
-| `email` | optional, valid e-mail, lowercase | |
-| `phone` | optional, max. 40 characters | |
-| `note` | optional, max. 2000 characters | |
+
+A partner is **only a first name and a last name**. The birth year, e-mail,
+phone and note were dropped on 2026-09-16: the planner never used them, they
+made the form long and they were personal data stored for nothing. Documents
+written before that still carry the fields; `Wedding.fromState` reads only the
+two names, so the next save removes them.
 
 Domain:
 

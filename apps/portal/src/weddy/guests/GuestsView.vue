@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import type { AgeGroup, Family, Guest, GuestStatus } from '@fridrich/weddy-shared';
 import { GUEST_STATUSES, guestsKeys } from '@fridrich/weddy-shared';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { ApiError } from '@/api/http';
 import { translateMessage } from '@/i18n';
 import BottomSheet from '@/weddy/components/BottomSheet.vue';
 import ChoiceField from '@/weddy/components/ChoiceField.vue';
+import SelectField from '@/weddy/components/SelectField.vue';
 import EmptyState from '@/weddy/components/EmptyState.vue';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import FabButton from '@/weddy/components/FabButton.vue';
 import FormField from '@/weddy/components/FormField.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
+import { askConfirm } from '@/weddy/components/confirm';
 import type { CreateGuestRequest } from './endpoints/createGuest.endpoint';
 import { useWeddingStore } from '@/weddy/wedding/wedding.store';
 import { GUEST_SORT_LABEL_KEYS, useGuestsStore } from './guests.store';
@@ -25,6 +27,45 @@ const weddings = useWeddingStore();
 const { t } = useI18n();
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
+
+/* --- Filtrování --- */
+
+/**
+ * Filtry se schovávají do popoveru pod tlačítkem, vedle něj zůstane jen
+ * hledání. Na obrazovce tak drží místo seznam hostů, ne čtyři rozbalovátka.
+ */
+const filtersOpen = ref(false);
+const filterPanel = ref<HTMLElement | null>(null);
+const filterButton = ref<HTMLElement | null>(null);
+
+/** Řazení je volba zobrazení, ne filtr – do počtu aktivních filtrů se nepočítá. */
+const activeFilters = computed(() => {
+  const { side, ageGroup, status } = store.filters;
+  return [side, ageGroup, status].filter((value) => value !== 'all').length;
+});
+
+function toggleFilters(): void {
+  filtersOpen.value = !filtersOpen.value;
+}
+
+function closeFilters(): void {
+  if (!filtersOpen.value) return;
+  filtersOpen.value = false;
+  filterButton.value?.focus();
+}
+
+/* Klik mimo panel i Esc zavírají – popover nesmí zůstat viset přes seznam. */
+function onDocumentPointerDown(event: PointerEvent): void {
+  if (!filtersOpen.value) return;
+
+  const target = event.target as Node;
+  if (filterPanel.value?.contains(target) || filterButton.value?.contains(target)) return;
+
+  filtersOpen.value = false;
+}
+
+onMounted(() => document.addEventListener('pointerdown', onDocumentPointerDown));
+onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointerDown));
 
 onMounted(() => store.load(weddingId.value));
 watch(weddingId, (id) => store.load(id));
@@ -114,7 +155,13 @@ async function submit(): Promise<void> {
 
 async function removeGuest(guest: Guest): Promise<void> {
   const name = `${guest.firstName} ${guest.lastName}`.trim();
-  if (!window.confirm(t('weddy.guests.guest.confirmDelete', { name }))) return;
+  const confirmed = await askConfirm({
+    title: t('weddy.guests.guest.delete'),
+    message: t('weddy.guests.guest.confirmDelete', { name }),
+    confirmLabel: t('weddy.guests.guest.delete'),
+    danger: true,
+  });
+  if (!confirmed) return;
 
   await store.remove(weddingId.value, guest.id);
   if (editing.value?.id === guest.id) sheetOpen.value = false;
@@ -143,6 +190,30 @@ const sideOptions = computed(() => [
 const ageOptions = computed(() => [
   { value: 'adult', label: t(guestsKeys.ageGroup.adult) },
   { value: 'child', label: t(guestsKeys.ageGroup.child) },
+]);
+
+/*
+ * Volby filtrů mají navíc „vše" a vlastní rozbalovátko je chce jako pole,
+ * ne jako <option> v šabloně.
+ */
+const sideFilterOptions = computed(() => [
+  { value: 'all', label: t('weddy.guests.filters.allPeople') },
+  ...sideOptions.value,
+]);
+
+const ageFilterOptions = computed(() => [
+  { value: 'all', label: t('weddy.guests.filters.allPeople') },
+  ...ageOptions.value,
+]);
+
+const statusFilterOptions = computed(() => [
+  { value: 'all', label: t('weddy.guests.filters.allStatuses') },
+  ...statusOptions.value,
+]);
+
+const sortOptions = computed(() => [
+  { value: 'lastName', label: t(GUEST_SORT_LABEL_KEYS.lastName) },
+  { value: 'firstName', label: t(GUEST_SORT_LABEL_KEYS.firstName) },
 ]);
 
 function statusTitle(guest: Guest): string {
@@ -273,8 +344,13 @@ async function submitFamily(): Promise<void> {
 
 async function removeFamily(family: Family): Promise<void> {
   const count = family.members.length;
-  const question = t('weddy.guests.family.confirmDelete', { name: family.name, n: count }, count);
-  if (!window.confirm(question)) return;
+  const confirmed = await askConfirm({
+    title: t('weddy.guests.family.delete'),
+    message: t('weddy.guests.family.confirmDelete', { name: family.name, n: count }, count),
+    confirmLabel: t('weddy.guests.family.delete'),
+    danger: true,
+  });
+  if (!confirmed) return;
 
   await store.removeFamily(weddingId.value, family.id);
   if (editingFamily.value?.id === family.id) familySheetOpen.value = false;
@@ -322,62 +398,81 @@ async function removeFamily(family: Family): Promise<void> {
         </div>
       </dl>
 
-      <div class="filters">
-        <FormField
-          v-model="store.filters.search"
-          :label="t('weddy.guests.filters.search')"
-          :placeholder="t('weddy.guests.filters.searchPlaceholder')"
-        />
+      <div class="toolbar">
+        <div class="filter" @keydown.esc="closeFilters">
+          <button
+            ref="filterButton"
+            type="button"
+            class="btn btn-secondary filter-button"
+            :aria-expanded="filtersOpen"
+            aria-controls="guest-filters"
+            :aria-label="
+              activeFilters > 0
+                ? t('weddy.guests.filters.buttonActive', { n: activeFilters })
+                : undefined
+            "
+            @click="toggleFilters"
+          >
+            <span aria-hidden="true">☰</span>
+            {{ t('weddy.guests.filters.button') }}
+            <span v-if="activeFilters > 0" class="badge" aria-hidden="true">{{ activeFilters }}</span>
+          </button>
 
-        <div class="selects">
-          <label>
-            <span>{{ t('weddy.guests.filters.side') }}</span>
-            <select v-model="store.filters.side">
-              <option value="all">{{ t('weddy.guests.filters.allPeople') }}</option>
-              <option v-for="option in sideOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
+          <div
+            v-if="filtersOpen"
+            id="guest-filters"
+            ref="filterPanel"
+            class="popover card"
+            role="dialog"
+            :aria-label="t('weddy.guests.filters.button')"
+          >
+            <div class="selects">
+              <SelectField
+                v-model="store.filters.side"
+                :label="t('weddy.guests.filters.side')"
+                :options="sideFilterOptions"
+              />
 
-          <label>
-            <span>{{ t('weddy.guests.filters.ageGroup') }}</span>
-            <select v-model="store.filters.ageGroup">
-              <option value="all">{{ t('weddy.guests.filters.allPeople') }}</option>
-              <option v-for="option in ageOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
+              <SelectField
+                v-model="store.filters.ageGroup"
+                :label="t('weddy.guests.filters.ageGroup')"
+                :options="ageFilterOptions"
+              />
 
-          <label>
-            <span>{{ t('weddy.guests.filters.status') }}</span>
-            <select v-model="store.filters.status">
-              <option value="all">{{ t('weddy.guests.filters.allStatuses') }}</option>
-              <option v-for="option in statusOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
+              <SelectField
+                v-model="store.filters.status"
+                :label="t('weddy.guests.filters.status')"
+                :options="statusFilterOptions"
+              />
 
-          <!-- Řazení není filtr, proto ho „Zrušit filtry" nechává být. -->
-          <label>
-            <span>{{ t('weddy.guests.filters.sort') }}</span>
-            <select v-model="store.sort">
-              <option value="lastName">{{ t(GUEST_SORT_LABEL_KEYS.lastName) }}</option>
-              <option value="firstName">{{ t(GUEST_SORT_LABEL_KEYS.firstName) }}</option>
-            </select>
-          </label>
+              <!-- Řazení není filtr, proto ho „Zrušit filtry" nechává být. -->
+              <SelectField
+                v-model="store.sort"
+                :label="t('weddy.guests.filters.sort')"
+                :options="sortOptions"
+              />
+            </div>
+
+            <button
+              v-if="store.hasActiveFilters"
+              type="button"
+              class="btn btn-ghost clear"
+              @click="store.resetFilters()"
+            >
+              {{ t('weddy.guests.filters.clear') }}
+            </button>
+          </div>
         </div>
 
-        <button
-          v-if="store.hasActiveFilters"
-          type="button"
-          class="btn btn-ghost clear"
-          @click="store.resetFilters()"
-        >
-          {{ t('weddy.guests.filters.clear') }}
-        </button>
+        <!-- Hledá i podle názvu rodiny, takže „Novákovi" najde celou rodinu. -->
+        <label class="search">
+          <span class="visually-hidden">{{ t('weddy.guests.filters.search') }}</span>
+          <input
+            v-model="store.filters.search"
+            type="search"
+            :placeholder="t('weddy.guests.filters.searchPlaceholder')"
+          />
+        </label>
       </div>
 
       <EmptyState
@@ -399,59 +494,82 @@ async function removeFamily(family: Family): Promise<void> {
         jako jeden blok a pod nimi jednotlivci (doc/wiki/domains/weddyGuests.md).
       -->
       <template v-else>
-        <section v-for="group in store.sections" :key="group.side" class="side">
-          <h2 class="side-head">
-            <span>{{ t(guestsKeys.side[group.side]) }}</span>
-            <span class="count mono">{{ group.count }}</span>
-          </h2>
+        <div class="sides">
+          <section v-for="group in store.sections" :key="group.side" class="side">
+            <h2 class="side-head">
+              <span>{{ t(guestsKeys.side[group.side]) }}</span>
+              <span class="count mono">{{ group.count }}</span>
+            </h2>
 
-          <p v-if="group.count === 0" class="side-empty">{{ t('weddy.guests.list.sideEmpty') }}</p>
+            <p v-if="group.count === 0" class="side-empty">{{ t('weddy.guests.list.sideEmpty') }}</p>
 
-          <article v-for="family in group.families" :key="family.id" class="family">
-            <header class="family-head">
-              <!--
-                Sbalovací tlačítko nesmí obalit i akce – tlačítko v tlačítku
-                je neplatné HTML a klávesnice se v něm ztratí.
-              -->
-              <button
-                type="button"
-                class="family-toggle"
-                :aria-expanded="isFamilyOpen(family.id)"
-                :aria-controls="`family-${family.id}`"
-                @click="toggleFamily(family.id)"
-              >
-                <span class="chevron" :class="{ open: isFamilyOpen(family.id) }" aria-hidden="true">
-                  ▸
-                </span>
-                <span class="family-text">
-                  <span class="family-name">{{ family.name }}</span>
-                  <span class="meta">{{ familySummary(family) }}</span>
-                </span>
-              </button>
-              <div class="controls">
+            <article v-for="family in group.families" :key="family.id" class="family">
+              <header class="family-head">
+                <!--
+                  Sbalovací tlačítko nesmí obalit i akce – tlačítko v tlačítku
+                  je neplatné HTML a klávesnice se v něm ztratí.
+                -->
                 <button
-                  v-if="weddings.canEdit"
                   type="button"
-                  class="icon-button"
-                  @click="openEditFamily(family)"
+                  class="family-toggle"
+                  :aria-expanded="isFamilyOpen(family.id)"
+                  :aria-controls="`family-${family.id}`"
+                  @click="toggleFamily(family.id)"
                 >
-                  <span class="visually-hidden">{{ t('weddy.guests.family.edit') }}</span>
-                  <span aria-hidden="true">✏️</span>
+                  <span class="chevron" :class="{ open: isFamilyOpen(family.id) }" aria-hidden="true">
+                    ▸
+                  </span>
+                  <span class="family-text">
+                    <span class="family-name">{{ family.name }}</span>
+                    <span class="meta">{{ familySummary(family) }}</span>
+                  </span>
                 </button>
-                <button
-                  v-if="weddings.canEdit"
-                  type="button"
-                  class="icon-button"
-                  @click="removeFamily(family)"
-                >
-                  <span class="visually-hidden">{{ t('weddy.guests.family.delete') }}</span>
-                  <span aria-hidden="true">🗑️</span>
-                </button>
-              </div>
-            </header>
+                <div class="controls">
+                  <button
+                    v-if="weddings.canEdit"
+                    type="button"
+                    class="icon-button"
+                    @click="openEditFamily(family)"
+                  >
+                    <span class="visually-hidden">{{ t('weddy.guests.family.edit') }}</span>
+                    <span aria-hidden="true">✏️</span>
+                  </button>
+                  <button
+                    v-if="weddings.canEdit"
+                    type="button"
+                    class="icon-button"
+                    @click="removeFamily(family)"
+                  >
+                    <span class="visually-hidden">{{ t('weddy.guests.family.delete') }}</span>
+                    <span aria-hidden="true">🗑️</span>
+                  </button>
+                </div>
+              </header>
 
-            <ul v-show="isFamilyOpen(family.id)" :id="`family-${family.id}`" class="members">
-              <li v-for="guest in family.members" :key="guest.id" class="member">
+              <ul v-show="isFamilyOpen(family.id)" :id="`family-${family.id}`" class="members">
+                <li v-for="guest in family.members" :key="guest.id" class="member">
+                  <div class="who">
+                    <p class="name">{{ store.displayName(guest) }}</p>
+                    <p class="meta">
+                      {{ t(guestsKeys.ageGroup[guest.ageGroup]) }}
+                      <template v-if="guest.note"> · {{ guest.note }}</template>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    class="status-button"
+                    :title="statusTitle(guest)"
+                    :disabled="!weddings.canEdit"
+                    @click="cycleStatus(guest)"
+                  >
+                    <StatusBadge kind="guest" :status="guest.status" />
+                  </button>
+                </li>
+              </ul>
+            </article>
+
+            <ul v-if="group.solo.length > 0" class="guests">
+              <li v-for="guest in group.solo" :key="guest.id" class="guest card">
                 <div class="who">
                   <p class="name">{{ store.displayName(guest) }}</p>
                   <p class="meta">
@@ -459,68 +577,47 @@ async function removeFamily(family: Family): Promise<void> {
                     <template v-if="guest.note"> · {{ guest.note }}</template>
                   </p>
                 </div>
-                <button
-                  type="button"
-                  class="status-button"
-                  :title="statusTitle(guest)"
-                  :disabled="!weddings.canEdit"
-                  @click="cycleStatus(guest)"
-                >
-                  <StatusBadge kind="guest" :status="guest.status" />
-                </button>
+
+                <div class="controls">
+                  <button
+                    type="button"
+                    class="status-button"
+                    :title="statusTitle(guest)"
+                    :disabled="!weddings.canEdit"
+                    @click="cycleStatus(guest)"
+                  >
+                    <StatusBadge kind="guest" :status="guest.status" />
+                  </button>
+
+                  <button
+                    v-if="weddings.canEdit"
+                    type="button"
+                    class="icon-button"
+                    @click="openEdit(guest)"
+                  >
+                    <span class="visually-hidden">{{ t('weddy.guests.guest.edit') }}</span>
+                    <span aria-hidden="true">✏️</span>
+                  </button>
+
+                  <button
+                    v-if="weddings.canEdit"
+                    type="button"
+                    class="icon-button"
+                    @click="removeGuest(guest)"
+                  >
+                    <span class="visually-hidden">{{ t('weddy.guests.guest.delete') }}</span>
+                    <span aria-hidden="true">🗑️</span>
+                  </button>
+                </div>
               </li>
             </ul>
-          </article>
-
-          <ul v-if="group.solo.length > 0" class="guests">
-            <li v-for="guest in group.solo" :key="guest.id" class="guest card">
-              <div class="who">
-                <p class="name">{{ store.displayName(guest) }}</p>
-                <p class="meta">
-                  {{ t(guestsKeys.ageGroup[guest.ageGroup]) }}
-                  <template v-if="guest.note"> · {{ guest.note }}</template>
-                </p>
-              </div>
-
-              <div class="controls">
-                <button
-                  type="button"
-                  class="status-button"
-                  :title="statusTitle(guest)"
-                  :disabled="!weddings.canEdit"
-                  @click="cycleStatus(guest)"
-                >
-                  <StatusBadge kind="guest" :status="guest.status" />
-                </button>
-
-                <button
-                  v-if="weddings.canEdit"
-                  type="button"
-                  class="icon-button"
-                  @click="openEdit(guest)"
-                >
-                  <span class="visually-hidden">{{ t('weddy.guests.guest.edit') }}</span>
-                  <span aria-hidden="true">✏️</span>
-                </button>
-
-                <button
-                  v-if="weddings.canEdit"
-                  type="button"
-                  class="icon-button"
-                  @click="removeGuest(guest)"
-                >
-                  <span class="visually-hidden">{{ t('weddy.guests.guest.delete') }}</span>
-                  <span aria-hidden="true">🗑️</span>
-                </button>
-              </div>
-            </li>
-          </ul>
-        </section>
+          </section>
+        </div>
       </template>
     </template>
 
     <div v-if="weddings.canEdit" class="actions-fab">
-      <button type="button" class="btn btn-secondary" @click="openCreateFamily">
+      <button type="button" class="btn add-family" @click="openCreateFamily">
         {{ t('weddy.guests.family.add') }}
       </button>
       <FabButton :label="t('weddy.guests.guest.add')" @click="openCreate" />
@@ -703,36 +800,66 @@ async function removeFamily(family: Family): Promise<void> {
   font-weight: 600;
 }
 
-.filters {
+/* Vlevo filtr, vpravo hledání – na mobilu hledání pod tlačítkem. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
   margin-top: var(--space-3);
+}
+
+.filter {
+  position: relative;
+}
+
+.filter-button {
+  gap: 0.4rem;
+}
+
+.badge {
+  display: grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding-inline: 0.3rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 0.75rem;
+}
+
+/*
+ * Panel visí pod tlačítkem, ne přes celou obrazovku – na mobilu se ale musí
+ * vejít do okna, proto ta horní mez šířky.
+ */
+.popover {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 30;
+  width: max(16rem, min(22rem, calc(100vw - 2 * var(--gutter))));
+  box-shadow: var(--shadow-md);
+}
+
+.search {
+  flex: 1 1 12rem;
+}
+
+.search input {
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
 }
 
 .selects {
   display: grid;
-  /* Sloupců je tolik, kolik se jich vejde – na mobilu dva, na tabletu čtyři. */
+  /* Dva sloupce se do popoveru vejdou i na mobilu. */
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   gap: 0.5rem;
-  margin-top: var(--space-1);
-}
-
-.selects label {
-  display: block;
-}
-
-.selects span {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-select {
-  width: 100%;
-  min-height: var(--touch-target);
-  padding: 0.5rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
 }
 
 .clear {
@@ -740,8 +867,12 @@ select {
   font-size: 0.875rem;
 }
 
-.side {
+/* Ženich a nevěsta vedle sebe od tabletu; na mobilu pod sebou. */
+.sides {
+  display: grid;
+  gap: var(--space-3);
   margin-top: var(--space-3);
+  align-items: start;
 }
 
 .side-head {
@@ -863,6 +994,20 @@ select {
   cursor: not-allowed;
 }
 
+/* Druhá akce vedle FABu: stejný tvar i barva, jen obtažená místo vyplněné. */
+.add-family {
+  border-color: var(--color-accent);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+}
+
+.add-family:hover {
+  background: var(--rose-50);
+  color: var(--rose-700);
+}
+
 .actions-fab {
   position: fixed;
   right: var(--gutter);
@@ -952,6 +1097,10 @@ select {
 @media (--tablet) {
   .row {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sides {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

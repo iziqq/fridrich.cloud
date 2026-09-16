@@ -1,9 +1,7 @@
 import {
   emailText,
   messageKeys,
-  optionalEmailText,
   optionalIsoDate,
-  optionalText,
   requiredText,
   type Catalog,
 } from '@fridrich/shared';
@@ -19,19 +17,13 @@ import * as v from 'valibot';
 
 const NAME_MAX = 100;
 const TITLE_MAX = 200;
-const PHONE_MAX = 40;
-const NOTE_MAX = 2000;
-const MIN_BIRTH_YEAR = 1900;
 
 const cs = {
   firstNameRequired: 'Vyplňte jméno',
   firstNameTooLong: `Jméno může mít nejvýše ${NAME_MAX} znaků`,
   lastNameRequired: 'Vyplňte příjmení',
   lastNameTooLong: `Příjmení může mít nejvýše ${NAME_MAX} znaků`,
-  birthYearInvalid: `Rok narození musí být mezi ${MIN_BIRTH_YEAR} a letošním rokem`,
   emailInvalid: 'Zadejte platný e-mail',
-  phoneTooLong: 'Telefon je příliš dlouhý',
-  noteTooLong: 'Poznámka je příliš dlouhá',
   personRequired: 'Vyplňte údaje snoubence',
   titleRequired: 'Vyplňte název svatby',
   titleTooLong: `Název může mít nejvýše ${TITLE_MAX} znaků`,
@@ -61,10 +53,7 @@ const en: Catalog<typeof cs> = {
   firstNameTooLong: `The first name can have at most ${NAME_MAX} characters`,
   lastNameRequired: 'Please enter the last name',
   lastNameTooLong: `The last name can have at most ${NAME_MAX} characters`,
-  birthYearInvalid: `The year of birth must be between ${MIN_BIRTH_YEAR} and this year`,
   emailInvalid: 'Please enter a valid e-mail',
-  phoneTooLong: 'The phone number is too long',
-  noteTooLong: 'The note is too long',
   personRequired: 'Please fill in the details of the partner',
   titleRequired: 'Please enter the name of the wedding',
   titleTooLong: `The name can have at most ${TITLE_MAX} characters`,
@@ -157,32 +146,23 @@ export type ChangeWeddingRoleInput = v.InferOutput<typeof ChangeWeddingRoleInput
 
 /* --- Snoubenec --- */
 
+/**
+ * Snoubenec – jen jméno a příjmení.
+ *
+ * Rok narození, e-mail, telefon a poznámka tu byly od začátku, ale plánování
+ * je k ničemu nepotřebuje; formulář se o ně zkrátil a o osobní údaj míň
+ * (doc/wiki/architecture/personalData.md).
+ */
 export const PersonSchema = v.object({
   firstName: v.string(),
   lastName: v.string(),
-  birthYear: v.optional(v.number()),
-  email: v.optional(v.string()),
-  phone: v.optional(v.string()),
-  note: v.optional(v.string()),
 });
 export type Person = v.InferOutput<typeof PersonSchema>;
 
-/** Údaje snoubence z formuláře. Rok narození nesmí být v budoucnu. */
 export const PersonInputSchema = v.object(
   {
     firstName: requiredText(weddingKeys.firstNameRequired, NAME_MAX, weddingKeys.firstNameTooLong),
     lastName: requiredText(weddingKeys.lastNameRequired, NAME_MAX, weddingKeys.lastNameTooLong),
-    birthYear: v.optional(
-      v.pipe(
-        v.number(weddingKeys.birthYearInvalid),
-        v.integer(weddingKeys.birthYearInvalid),
-        v.minValue(MIN_BIRTH_YEAR, weddingKeys.birthYearInvalid),
-        v.check((year) => year <= new Date().getUTCFullYear(), weddingKeys.birthYearInvalid),
-      ),
-    ),
-    email: optionalEmailText(weddingKeys.emailInvalid),
-    phone: optionalText(PHONE_MAX, weddingKeys.phoneTooLong),
-    note: optionalText(NOTE_MAX, weddingKeys.noteTooLong),
   },
   weddingKeys.personRequired,
 );

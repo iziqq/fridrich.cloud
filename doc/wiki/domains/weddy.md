@@ -81,8 +81,23 @@ controls.
 - Primary action as a **floating action button (FAB)** bottom right.
 - Forms as a **bottom sheet** (`BottomSheet.vue`) or full screen.
 - Status always shown by **colour and text** (`StatusBadge.vue`, `kind="guest" | "planning"` – both have `accepted` with different labels).
+- **No browser chrome inside the product.** Choices are `ChoiceField.vue` (two to
+  four options, all visible) or `SelectField.vue` (a longer list); a question
+  before an irreversible action is `askConfirm()` from `components/confirm.ts`,
+  drawn by `ConfirmDialog.vue` – see the table below.
 - Numeric fields use `inputmode="numeric"`.
 - Product styles only under the `.weddy` class – see [frontend.md](../architecture/frontend.md#routing-and-product-look).
+
+### Shared components
+
+| Component | What it replaces | Why |
+|---|---|---|
+| `SelectField.vue` | `<select>` | The option list of a native select is drawn by the operating system – padding, colours and radius never reach it, so a grey system roller opened in the middle of the wedding theme. It is a `button` + `ul[role=listbox]`; the price is that arrows, Home/End, Enter and Esc are handled in the component. |
+| `ChoiceField.vue` | `<select>` with few options | Two to four options are better seen at once than hidden in a menu. |
+| `ConfirmDialog.vue` + `askConfirm()` | `window.confirm` | The browser dialog looks different in every browser, carries the browser's name instead of ours and blocks the page on a phone. `askConfirm({ title, message, confirmLabel, danger })` returns a promise, so a call site still reads as one `if`. The dialog hangs once in `WeddyShell.vue`; focus starts on *Zrušit* (Cancel), because the question is about something irreversible. |
+
+Both teleported overlays (`BottomSheet`, `ConfirmDialog`) carry the `weddy`
+class themselves – see [frontend.md](../architecture/frontend.md#routing-and-product-look).
 
 ## Open questions and extensions
 

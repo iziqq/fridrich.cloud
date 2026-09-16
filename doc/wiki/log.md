@@ -391,3 +391,104 @@ footer sat in the middle of the window instead of at the bottom.
 - Touched pages: `architecture/frontend.md` (new section *Page shell and short
   pages*), `index.md`.
 
+## [2026-09-16] change | Settings reachable from the weddy dashboard
+
+Owner's request: the dashboard should offer the plan settings too.
+
+- `WeddingOverview.vue` (single plan): the quick links now include *Nastavení*
+  for an admin – five links, the odd last one spans both columns on mobile and
+  the row uses `grid-auto-columns` from tablet up.
+- `DashboardView.vue` (two plans and more): the card is now the list item and
+  carries a *Nastavení* link under the stats, shown only for plans the user
+  administers. A link inside a link is not valid HTML, hence the restructure.
+- Both reuse `weddy.layout.tabs.settings`, so no new translation keys.
+- Verified in headless Chrome at 360 and 1024 px (one plan as admin and as
+  viewer, two plans with mixed roles) on a temporary preview page, then removed.
+- Touched page: `domains/weddyWedding.md`.
+
+## [2026-09-16] change | Couple trimmed to first and last name
+
+Owner's request: the app should not collect what it does not use.
+
+- Removed from `PersonSchema` / `PersonInputSchema`, the Couple form and the
+  stored document: `birthYear`, `email`, `phone`, `note`. Message keys
+  `birthYearInvalid`, `phoneTooLong`, `noteTooLong` and the translations
+  `weddy.weddingForm.{birthYear,email,phone,note}` went with them
+  (`emailInvalid` stays – invitations use it).
+- `Wedding.fromState` now reads only the two names, so a document written
+  earlier loses the old fields the next time the wedding is saved. No migration
+  script; nothing else reads them.
+- Privacy policy row for IziWeddy shortened to "jméno a příjmení snoubenců";
+  `PRIVACY_POLICY_VERSION` stays `2026-09-16` (today's version has not been
+  deployed yet, so it is still the same unpublished revision).
+- Tests 143 → 142: the birth-year and e-mail cases were replaced by one that
+  asserts everything except the two names is dropped.
+- Touched pages: `domains/weddyWedding.md`, `architecture/personalData.md`,
+  `decisions.md`.
+
+## [2026-09-16] change | Guests: filter popover, search on the right, sides side by side
+
+Owner's request for a less crowded guests screen.
+
+- `GuestsView.vue`: the four filter dropdowns moved into a popover under a
+  *Filtry* button (left of the toolbar); the search field sits on the right.
+  The button shows the number of active filters; the popover closes on Esc, on a
+  click outside (`pointerdown` listener while open) and gives focus back.
+- Groom and bride sections are a grid – two columns from `--tablet`, stacked on
+  a phone (`.sides`).
+- Search already matched family names; the behaviour is now documented and was
+  verified (`novakovi` finds *Novákovi* and expands the family).
+- New keys `weddy.guests.filters.button` and `buttonActive` (cs + en).
+- Verified in headless Chrome at 360 px (list, open popover) and 1024 px (two
+  columns, search by family) on a temporary preview page, then removed.
+- Touched page: `domains/weddyGuests.md`.
+
+
+## [2026-09-16] change | Weddy: buttons in sheets, the two guest actions, shared select style
+
+Owner's request after the guests rework: *+ Rodina* had a different radius and
+colour than *+ Host*, the buttons in the modal were unstyled and the dropdowns
+looked cramped.
+
+- `BottomSheet.vue`: the teleported root is `<div class="weddy overlay">`.
+  `<Teleport to="body">` puts the overlay outside the `.weddy` subtree, so
+  neither the tokens nor `.weddy .btn` reached it and the buttons inside sheets
+  rendered as the browser's grey default.
+- `GuestsView.vue`: *+ Rodina* is the same pill as *+ Host*, outlined in the
+  accent colour instead of filled; *Uložit* (Save) and *Uložit rodinu* (Save
+  family) are primary, *+ Další člen* (Add another member) secondary.
+- `weddy.css`: one `.weddy select` / `.weddy option` rule for the whole product
+  (touch height, room for the arrow, custom chevron as an inline SVG, hover and
+  disabled state). The duplicated scoped blocks were deleted from `GuestsView.vue`
+  and `SettingsView.vue`, which had already drifted apart.
+- Verified in headless Chrome at 360, 768 and 1024 px (guest sheet, family sheet,
+  open filter popover) on a temporary preview page, then removed.
+- Touched pages: `architecture/frontend.md`, `domains/weddyGuests.md`.
+
+## [2026-09-16] change | Weddy draws its own dropdowns and confirmation dialogs
+
+Owner: the native `<select>` list looks like a default system roller, and a
+delete should use our own modal.
+
+- New `SelectField.vue` – a `button` + `ul[role=listbox]` with the theme's
+  padding, hover, tick on the selected option and full keyboard handling
+  (arrows, Home/End, Enter, Esc, click outside). Esc stops propagation so it
+  does not close the filter popover underneath.
+- New `ConfirmDialog.vue` + `askConfirm()` (`components/confirm.ts`), mounted
+  once in `WeddyShell.vue`. Replaces `window.confirm` in all six places:
+  guest, family, planning item, plan deletion, removing access, cancelling an
+  invitation. Focus starts on *Zrušit* (Cancel), the confirming button is
+  `btn-danger` and says what happens (*Smazat hosta* – Delete guest).
+- The confirmation texts (cs + en) were reworded from "Really delete…?" to the
+  consequence, because the question is now the dialog's title.
+- `weddy.css`: the `.weddy select` / `option` rules added earlier the same day
+  were removed – no `<select>` is left in the product.
+- Both overlays (`ConfirmDialog`, `BottomSheet`) set `background: transparent`
+  and dim the page with `rgb(43 36 48 / 0.22)`: the `weddy` class they need for
+  the tokens also brings the theme's background, so the page behind them was
+  covered instead of dimmed.
+- Verified in headless Chrome at 360 and 1024 px (open dropdown in the filter
+  popover, confirmation dialog, settings screen) on a temporary preview page,
+  then removed.
+- Touched pages: `domains/weddy.md`, `domains/weddyGuests.md`,
+  `architecture/frontend.md`.

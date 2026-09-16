@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatCurrency } from '@fridrich/weddy-shared';
+import { canManageWeddingSettings, formatCurrency } from '@fridrich/weddy-shared';
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
@@ -74,8 +74,8 @@ const showTitle = computed(() => weddings.summaries.length > 1);
 
       <template v-else>
         <ul class="list">
-          <li v-for="wedding in weddings.summaries" :key="wedding.id">
-            <RouterLink :to="weddyPath(`/weddings/${wedding.id}/couple`)" class="card wedding">
+          <li v-for="wedding in weddings.summaries" :key="wedding.id" class="card item">
+            <RouterLink :to="weddyPath(`/weddings/${wedding.id}/couple`)" class="wedding">
               <div class="title-row">
                 <h2>{{ wedding.title }}</h2>
                 <span v-if="countdown(wedding.daysUntilWedding)" class="countdown">
@@ -98,6 +98,16 @@ const showTitle = computed(() => weddings.summaries.length > 1);
                   <dd>{{ formatCurrency(wedding.budgetTotal, currentLocale) }}</dd>
                 </div>
               </dl>
+            </RouterLink>
+
+            <!-- Nastavení plánování i odsud, ať kvůli němu nemusí admin dovnitř. -->
+            <RouterLink
+              v-if="canManageWeddingSettings(wedding.role)"
+              :to="weddyPath(`/weddings/${wedding.id}/settings`)"
+              class="settings"
+            >
+              <span aria-hidden="true">⚙️</span>
+              {{ t('weddy.layout.tabs.settings') }}
             </RouterLink>
           </li>
         </ul>
@@ -148,18 +158,45 @@ const showTitle = computed(() => weddings.summaries.length > 1);
   gap: var(--space-2);
 }
 
-.wedding {
-  display: block;
-  color: inherit;
-  text-decoration: none;
+/* Karta je položka seznamu, aby v ní mohl vedle odkazu na svatbu stát i odkaz do nastavení. */
+.item {
+  display: grid;
+  align-content: start;
   transition:
     border-color var(--dur-fast) var(--ease),
     transform var(--dur-fast) var(--ease);
 }
 
-.wedding:hover {
+.item:hover {
   border-color: var(--rose-400);
   transform: translateY(-1px);
+}
+
+.wedding {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.settings {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  align-self: start;
+  justify-self: start;
+  min-height: var(--touch-target);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  width: 100%;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.settings:hover {
+  color: var(--color-accent);
 }
 
 .title-row {

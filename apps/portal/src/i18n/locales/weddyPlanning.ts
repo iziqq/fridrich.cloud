@@ -30,7 +30,7 @@ export const weddyPlanningCs = {
     newItem: 'Nová položka',
     editItem: 'Upravit položku',
     deleteItem: 'Smazat položku',
-    confirmDelete: 'Opravdu smazat položku „{name}"?',
+    confirmDelete: 'Položka „{name}" zmizí z plánování. Tohle nejde vrátit.',
     form: {
       name: 'Název',
       url: 'Odkaz na dodavatele',
@@ -69,7 +69,7 @@ export const weddyPlanningEn: Catalog<typeof weddyPlanningCs> = {
     newItem: 'New item',
     editItem: 'Edit item',
     deleteItem: 'Delete item',
-    confirmDelete: 'Really delete the item "{name}"?',
+    confirmDelete: 'The item "{name}" disappears from the planning. This cannot be undone.',
     form: {
       name: 'Name',
       url: 'Vendor link',

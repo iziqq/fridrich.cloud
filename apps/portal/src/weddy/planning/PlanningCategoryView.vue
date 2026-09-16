@@ -14,6 +14,7 @@ import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import FabButton from '@/weddy/components/FabButton.vue';
 import FormField from '@/weddy/components/FormField.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
+import { askConfirm } from '@/weddy/components/confirm';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
 import { weddyPath } from '@/weddy/routes';
 import type { CreatePlanningItemRequest } from './endpoints/createPlanningItem.endpoint';
@@ -117,7 +118,13 @@ async function submit(): Promise<void> {
 }
 
 async function removeItem(item: PlanningItem): Promise<void> {
-  if (!window.confirm(t('weddy.planning.category.confirmDelete', { name: item.name }))) return;
+  const confirmed = await askConfirm({
+    title: t('weddy.planning.category.deleteItem'),
+    message: t('weddy.planning.category.confirmDelete', { name: item.name }),
+    confirmLabel: t('weddy.planning.category.deleteItem'),
+    danger: true,
+  });
+  if (!confirmed) return;
 
   await store.remove(weddingId.value, item.id);
   if (editing.value?.id === item.id) sheetOpen.value = false;

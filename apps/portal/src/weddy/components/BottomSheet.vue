@@ -59,8 +59,13 @@ function onKeydown(event: KeyboardEvent): void {
 </script>
 
 <template>
+  <!--
+    Teleport posílá obsah do `body`, tedy mimo podstrom `.weddy`. Bez té třídy
+    by uvnitř neplatily tokeny ani styly tlačítek plánovače a formulář by se
+    kreslil portálovým tmavým tématem (doc/wiki/architecture/frontend.md).
+  -->
   <Teleport to="body">
-    <div v-if="open" class="overlay" @keydown="onKeydown">
+    <div v-if="open" class="weddy overlay" @keydown="onKeydown">
       <div class="backdrop" @click="close"></div>
 
       <div
@@ -88,19 +93,25 @@ function onKeydown(event: KeyboardEvent): void {
 </template>
 
 <style scoped>
+/*
+ * Třída `weddy` nese tokeny i vlastní podklad – ten by tady přes stránku
+ * ležel jako neprůhledná plocha, takže ho překryv přebíjí zpátky na průhledno.
+ */
 .overlay {
   position: fixed;
   inset: 0;
+  min-height: 0;
   z-index: 60;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  background: transparent;
 }
 
 .backdrop {
   position: absolute;
   inset: 0;
-  background: rgb(43 36 48 / 0.45);
+  background: rgb(43 36 48 / 0.22);
   animation: fade var(--dur-base) var(--ease);
 }
 

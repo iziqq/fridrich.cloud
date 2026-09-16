@@ -89,12 +89,22 @@ export class Wedding {
       state.id,
       state.title,
       state.weddingDate,
-      { ...state.groom },
-      { ...state.bride },
+      Wedding.personFrom(state.groom),
+      Wedding.personFrom(state.bride),
       Wedding.membersFrom(state),
       state.createdAt,
       state.updatedAt,
     );
+  }
+
+  /**
+   * Snoubenec ze záznamu.
+   *
+   * Bere jen jméno a příjmení – dokumenty z doby, kdy formulář sbíral i rok
+   * narození, e-mail, telefon a poznámku, o ně při nejbližším uložení přijdou.
+   */
+  private static personFrom(person: Person): Person {
+    return { firstName: person.firstName, lastName: person.lastName };
   }
 
   private static membersFrom(state: StoredWeddingState): WeddingMemberState[] {
