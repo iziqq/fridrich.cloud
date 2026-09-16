@@ -22,6 +22,7 @@ async function onSaved(wedding: Wedding): Promise<void> {
     <p class="lead">{{ t('weddy.weddingNew.lead') }}</p>
 
     <WeddingForm
+      with-settings
       :submit-label="t('weddy.weddingNew.submit')"
       :save="(input) => weddings.create(input)"
       @saved="onSaved"

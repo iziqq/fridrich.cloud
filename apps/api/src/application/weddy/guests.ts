@@ -49,7 +49,7 @@ async function loadGuest(
   guestId: string,
   userId: string,
 ): Promise<Guest> {
-  const wedding = await loadWeddingFor(deps, weddingId, userId);
+  const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
 
   const guest = await deps.guests.findById(wedding.id, guestId);
   if (!guest) throw DomainError.notFound(guestsKeys.guestNotFound);
@@ -63,7 +63,7 @@ export async function createGuest(
   input: GuestInput,
   userId: string,
 ): Promise<GuestData> {
-  const wedding = await loadWeddingFor(deps, weddingId, userId);
+  const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
 
   const guest = Guest.create({
     id: deps.ids.next(),
@@ -136,7 +136,7 @@ export async function createFamily(
   input: FamilyInput,
   userId: string,
 ): Promise<Family> {
-  const wedding = await loadWeddingFor(deps, weddingId, userId);
+  const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
 
   const { family, members } = composeFamily({
     familyId: deps.ids.next(),
@@ -161,7 +161,7 @@ export async function updateFamily(
   input: FamilyInput,
   userId: string,
 ): Promise<Family> {
-  const wedding = await loadWeddingFor(deps, weddingId, userId);
+  const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
   const current = await loadFamilyMembers(deps, wedding.id, familyId);
 
   const { family, members, removed } = rewriteFamily({
@@ -190,7 +190,7 @@ export async function deleteFamily(
   familyId: string,
   userId: string,
 ): Promise<void> {
-  const wedding = await loadWeddingFor(deps, weddingId, userId);
+  const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
   const members = await loadFamilyMembers(deps, wedding.id, familyId);
 
   for (const member of members) {

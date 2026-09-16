@@ -1,4 +1,4 @@
-import { WeddingSchema } from '@fridrich/weddy-shared';
+import { WeddingDetailSchema } from '@fridrich/weddy-shared';
 import * as v from 'valibot';
 import { getWedding } from '../../../application/weddy/wedding.js';
 import { defineEndpoint } from '../../../http/endpoint.js';
@@ -9,7 +9,7 @@ import { weddyDeps } from '../../../infrastructure/container.js';
 export const GetWeddingParams = v.object({ weddingId: v.string() });
 export type GetWeddingParams = v.InferOutput<typeof GetWeddingParams>;
 
-export const GetWeddingResponse = WeddingSchema;
+export const GetWeddingResponse = WeddingDetailSchema;
 export type GetWeddingResponse = v.InferOutput<typeof GetWeddingResponse>;
 
 export const getWeddingEndpoint = defineEndpoint({

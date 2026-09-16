@@ -10,6 +10,7 @@
 import {
   CONTACT_MESSAGE_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
+  WEDDING_INVITATION_RETENTION_DAYS,
   INACTIVE_ACCOUNT_WARNING_DAYS,
   PRIVACY_POLICY_VERSION,
   TERMS_VERSION,
@@ -46,6 +47,7 @@ const operator = `${site.name}, ${site.legalForm}, IČO ${site.ico}, se sídlem 
 
 /** 365 dní se v právním textu čte lépe jako „1 rok“. */
 const contactRetention = CONTACT_MESSAGE_RETENTION_DAYS === 365 ? '1 rok' : `${CONTACT_MESSAGE_RETENTION_DAYS} dní`;
+const invitationRetention = `${WEDDING_INVITATION_RETENTION_DAYS} dní`;
 
 export const privacyPolicy: LegalDocument = {
   label: 'Ochrana osobních údajů',
@@ -98,6 +100,12 @@ export const privacyPolicy: LegalDocument = {
               'název a datum svatby; jméno, příjmení, rok narození, e-mail, telefon a poznámka u snoubenců; jméno, příjmení, strana, věková skupina, stav pozvání, rodina a poznámka u hostů; položky příprav (název, odkaz, cena, stav)',
               'Poskytování aplikace podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Údaje snoubenců a hostů zadává uživatel a zpracovávám je jen proto, aby mu aplikace fungovala.',
               'Do smazání plánování nebo účtu, včetně automatického smazání neaktivního účtu.',
+            ],
+            [
+              'Sdílení plánování v IziWeddy',
+              'e-mail pozvaného člověka a zvolená role; u lidí s účtem seznam uživatelů, kteří k plánování mají přístup, a jejich role',
+              'Sdílení plánování s dalšími lidmi na žádost uživatele – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR); u pozvaného, který účet nemá, oprávněný zájem na doručení pozvánky (písm. f).',
+              `Nepřijatá pozvánka ${invitationRetention} od odeslání, poté se automaticky smaže. Po registraci se změní na přístup k plánování a trvá do odebrání přístupu, smazání plánování nebo účtu.`,
             ],
             [
               'E-maily ze systému',
@@ -211,6 +219,10 @@ export const privacyPolicy: LegalDocument = {
         {
           kind: 'paragraph',
           text: 'V aplikaci IziWeddy zadáváte údaje o dalších lidech – snoubencích a hostech. Zadávejte jen údaje, které pro plánování potřebujete. Nepoužívám je k žádnému jinému účelu, nikoho z nich nekontaktuji a hosté od webu nedostávají žádné e-maily. Smažete-li plánování nebo účet, smažou se i tyto údaje.',
+        },
+        {
+          kind: 'paragraph',
+          text: `Pozvete-li někoho ke sdílení plánování, pošlu na zadanou adresu jedinou zprávu s pozvánkou. Zvete proto jen lidi, kteří o to stojí. Pokud pozvaný účet nemá, uchovám jeho e-mail nejvýše ${invitationRetention}, než pozvánka propadne; pozvánku můžete kdykoli zrušit v nastavení plánování. Kdo přístup dostane, vidí celé plánování včetně údajů hostů.`,
         },
       ],
     },

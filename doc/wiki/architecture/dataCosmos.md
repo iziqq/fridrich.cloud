@@ -4,7 +4,7 @@ type: concept
 sources:
   - code: apps/api/src/config.ts, apps/api/src/infrastructure/cosmos
   - history: doc/architecture.md ch. 7 (commit 8db5e0a)
-updated: 2026-09-15
+updated: 2026-09-16
 ---
 
 # Data in Cosmos DB
@@ -23,7 +23,8 @@ updated: 2026-09-15
 | `sessions` | `/userId` | identity | TTL 60 days |
 | `rateLimits` | `/id` | shared | TTL 24 hours |
 | `contactMessages` | `/id` | contact | TTL 365 days (privacy policy) |
-| `weddings` | `/id` | weddy / wedding | including the couple and `ownerIds` |
+| `weddings` | `/id` | weddy / wedding | the couple and `members` (`userId`, `role`, `addedAt`) plus the derived `memberIds` |
+| `weddingInvitations` | `/weddingId` | weddy / access | pending invitation by e-mail, TTL 30 days (`WEDDING_INVITATION_RETENTION_DAYS`) |
 | `guests` | `/weddingId` | weddy / guests | a family is the `family` field on a guest |
 | `planningItems` | `/weddingId` | weddy / planning | the budget is not stored, it is calculated |
 | *(TODO)* | | budgy | |
@@ -35,8 +36,22 @@ Because `createIfNotExists` never changes an existing container, `initDatabase`
 **reconciles `defaultTtl`** when it differs from the definition (`container.replace`) –
 otherwise a TTL added later (contact messages) would never apply in production.
 
-The partition key follows the dominant query – for guests and items it is
-always "everything for one wedding", hence `/weddingId`.
+The partition key follows the dominant query – for guests, items and
+invitations it is always "everything for one wedding", hence `/weddingId`.
+Looking an invitation up by e-mail (`listForEmail`) is therefore a
+cross-partition query, but it runs rarely: when an invitation is issued (to
+refuse a duplicate), when someone registers and when an account is deleted. The
+frequent read is the access screen of one plan, and that one stays inside a
+single partition.
+
+**`memberIds` on a wedding is a derived field**, kept in sync by the aggregate
+from `members`. It exists purely so that `listForMember` can ask
+`ARRAY_CONTAINS(c.memberIds, @ownerId)` – a plain array of ids is served by the
+default index, while the same test over the array of member objects would need a
+partial-object match. Documents created before roles have only `ownerIds`; the
+query matches both and `Wedding.fromState` converts them (first owner →
+`admin`, the rest → `manager`), so a document is rewritten in the new shape on
+its next save – no migration script.
 
 ## Capacity (RU/s)
 
@@ -44,7 +59,7 @@ The account is **not serverless**; it has provisioned capacity capped at
 **400 RU/s for the whole account**:
 
 1. **Capacity is held by the database, not by containers.** A container with its
-   own capacity needs at least 400 RU/s – nine containers would need 3600 and
+   own capacity needs at least 400 RU/s – ten containers would need 4000 and
    creation would fail. Controlled by `COSMOS_THROUGHPUT` (empty on a serverless account).
 2. **A new database does not fit under the cap** – products therefore share `izi-db`.
 

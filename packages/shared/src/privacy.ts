@@ -20,13 +20,16 @@ export const PERSONAL_DATA_COLLECTION_ENABLED: boolean = true;
 export const TERMS_VERSION = '2026-09-15';
 
 /** Verze zásad ochrany osobních údajů. */
-export const PRIVACY_POLICY_VERSION = '2026-09-15';
+export const PRIVACY_POLICY_VERSION = '2026-09-16';
 
 /** Zpráva z kontaktního formuláře se smaže tolik dní po přijetí (TTL v databázi). */
 export const CONTACT_MESSAGE_RETENTION_DAYS = 365;
 
 /** Účet bez přihlášení po tolik dní se smaže i s daty v aplikacích. */
 export const INACTIVE_ACCOUNT_RETENTION_DAYS = 365;
+
+/** Nepřijatá pozvánka do plánování se smaže po tolika dnech (TTL v databázi). */
+export const WEDDING_INVITATION_RETENTION_DAYS = 30;
 
 /** Tolik dní před smazáním neaktivního účtu přijde upozornění e-mailem. */
 export const INACTIVE_ACCOUNT_WARNING_DAYS = 30;

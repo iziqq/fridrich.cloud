@@ -4,8 +4,8 @@ type: concept
 sources:
   - raw/2026-09-15-gdprNoDataCollection.md
   - raw/2026-09-15-legalDocumentsAndRetention.md
-  - code: packages/shared/src/privacy.ts, apps/portal/src/content/legal.ts, apps/api/src/application/identity/account.ts, .github/workflows/data-retention.yml
-updated: 2026-09-15
+  - code: packages/shared/src/privacy.ts, apps/portal/src/content/legal.ts, apps/api/src/application/identity/account.ts, apps/api/src/application/weddy/access.ts, .github/workflows/data-retention.yml
+updated: 2026-09-16
 ---
 
 # Personal data (GDPR)
@@ -26,6 +26,7 @@ updated: 2026-09-15
 | Login and session | e-mail, IP, hashes of links/codes/sessions, `lastSeenAt` | `loginCodes`, `sessions`, `tokens`, `users` | code 1 h, link 30 days, session record 60 days, counters ≤ 24 h | `LoginView.vue`, `requestLoginCode`, `verifyLoginCode` |
 | Account | name, e-mail, verification, last activity, UI language (`locale`) | `users` | until deletion; **inactive 365 days → deleted** (warning 30 days before) | `AccountView.vue`, `getCurrentUser` |
 | IziWeddy | couple: name, birth year, e-mail, phone, note; guests (**third parties**): name, side, age group, status, family, note; items: name, URL, price, status | `weddings`, `guests`, `planningItems` | until the wedding or the account is deleted | `apps/portal/src/weddy`, `/api/weddy/*` |
+| IziWeddy sharing | e-mail and role of an invited person (**a third party who may have no account**); for members the list of user ids and their roles | `weddingInvitations`, `members` on the wedding | unaccepted invitation **30 days** (container TTL), then automatic deletion; membership until access is removed or the plan/account is deleted | `application/weddy/access.ts`, `/api/weddy/weddings/{weddingId}/access` |
 | System e-mails | recipient address, content | Gmail sent mail | manual, within a year | `application/identity/emails.ts` |
 | Session cookie | `fc_session` – random token | browser | 30 days or logout | `http/cookies.ts` |
 | Language choice | `localStorage.fc_locale` – `cs`/`en`, never sent to the server | browser | until site data is cleared | `i18n/index.ts` |
@@ -46,12 +47,17 @@ Not collected: analytics, tracking, third-party embeds, fonts from a CDN – so 
   not a VAT payer (from ARES; held in `site` in `content/site.ts`). Name and IČO are also in the footer; the address only in the legal documents.
 - **Processors named:** Microsoft Ireland Operations Ltd. (Azure hosting + Cosmos DB),
   Google Ireland Ltd. (Gmail); transfers outside the EEA via the EU-U.S. Data Privacy Framework / SCCs.
-- **Legal bases:** contract (Art. 6(1)(b)) for the account, IziWeddy and replying to an enquiry;
-  legitimate interest (Art. 6(1)(f)) for IP rate limits and the record of terms acceptance.
+- **Legal bases:** contract (Art. 6(1)(b)) for the account, IziWeddy, sharing a plan and replying to an enquiry;
+  legitimate interest (Art. 6(1)(f)) for IP rate limits, the record of terms acceptance and
+  delivering an invitation to someone who has no account (the contract is with the inviting user, not with them).
   Consent is not used – hence no consent checkbox on the contact form, only an information notice.
 - **Retention values come from the shared kernel** (`CONTACT_MESSAGE_RETENTION_DAYS`,
-  `INACTIVE_ACCOUNT_RETENTION_DAYS`, `INACTIVE_ACCOUNT_WARNING_DAYS`), which the API uses too –
+  `INACTIVE_ACCOUNT_RETENTION_DAYS`, `INACTIVE_ACCOUNT_WARNING_DAYS`,
+  `WEDDING_INVITATION_RETENTION_DAYS`), which the API uses too –
   the documents cannot promise a period the code does not enforce.
+- **Last change:** sharing an IziWeddy plan added the policy row *Sdílení plánování v IziWeddy*
+  (Sharing a plan in IziWeddy) and a paragraph on invitations in section 8;
+  `PRIVACY_POLICY_VERSION` bumped to `'2026-09-16'`.
 
 > ⚠️ The documents are a template written by the agent from the actual code and
 > data flows, **not legal advice**. A lawyer's review is recommended before relying on them.
@@ -64,6 +70,27 @@ Not collected: analytics, tracking, third-party embeds, fonts from a CDN – so 
   `termsVersion` + `termsAcceptedAt`. Neither is sent to the browser (`User.toPublic`).
 - Changing the terms: bump `TERMS_VERSION`, e-mail users at least 14 days ahead (promised in the terms).
 
+## Invitation to a shared plan (third-party data)
+
+An IziWeddy admin invites people to a plan **by e-mail address**. The address may
+belong to someone who has no account here and never asked for anything – so it is
+the most sensitive record in the system and it is treated as short-lived:
+
+| Rule | Why |
+|---|---|
+| An invitation to an address that already has an account is **never stored** – the person becomes a member right away and only gets an informational e-mail | nothing to keep: the address is already in `users` |
+| Otherwise one `weddingInvitations` document holds `email` (lowercase), `role`, `invitedAt`, `expiresAt` – no name, no message | the minimum needed to turn the invitation into access later |
+| The address gets **one** e-mail per plan – a repeated invitation to the same plan is refused (`alreadyInvited`) and nothing sends reminders | an uninvolved person must not be mailed repeatedly |
+| **Container TTL = `WEDDING_INVITATION_RETENTION_DAYS` (30 days)** | Cosmos DB deletes an unaccepted invitation by itself; no job can forget to run |
+| Cancelling the invitation (`cancelWeddingInvitation`) deletes the document immediately | the admin can withdraw the address before it expires |
+| Registering with that address turns every pending invitation into membership and deletes it (`claimWeddingInvitations`, called through `UserRegistrationListener`) | the e-mail stops being a loose record and becomes a relationship the person consented to by registering |
+| Deleting the plan deletes its invitations with the guests and items | no orphan addresses |
+| Deleting an account deletes invitations addressed to **its** e-mail | see below |
+
+Members themselves are stored only as `userId` + `role` on the wedding; names and
+addresses shown on the access screen are read live through weddy's `UserDirectory`
+port, so weddy never copies identity data into its own container.
+
 ## Account deletion (right to erasure)
 
 ```mermaid
@@ -75,8 +102,8 @@ sequenceDiagram
     U->>U: "Smazat účet" → confirm step
     U->>API: auth.closeAccount()
     API->>A: user.id
-    A->>W: via UserDataEraser port
-    W->>W: sole-owner weddings: delete guests, items, wedding<br/>shared weddings: removeOwner
+    A->>W: via UserDataEraser port ({ id, email })
+    W->>W: sole-member plans: delete guests, items, invitations, plan<br/>shared plans: leave (admin → longest-serving manager, else viewer)<br/>invitations sent to that e-mail: delete
     A->>A: delete sessions, login codes, tokens, then the user
     A-->>U: 204 + cleared cookie, confirmation e-mail
 ```
@@ -86,6 +113,17 @@ sequenceDiagram
 it in its application layer; only `infrastructure/container.ts` wires them
 (`userDataErasers: [...]`). A new product storing user data adds one line there.
 
+**Why the eraser gets the e-mail too:** `eraseUserData` now takes
+`{ id, email }` instead of a bare id. Some product data is keyed by address, not
+by user id – an IziWeddy invitation exists precisely because there was no account
+yet – and without the address those records would survive the deletion of the
+very account they name.
+
+**Why the admin role is passed on:** a plan with no admin could never be changed
+or deleted again, so its remaining data would be impossible to erase by any
+normal route. A plan whose *only* member leaves is deleted instead
+(`isOnlyMember` → `deleteWithContent`).
+
 **Why the user is deleted last:** Cosmos DB has no cross-container transactions.
 If deletion fails halfway, the account still exists and deletion can be repeated;
 the reverse order would leave product data with an owner that no longer exists.
@@ -94,6 +132,7 @@ the reverse order would leave product data with an owner that no longer exists.
 
 | Data | Mechanism | Why |
 |---|---|---|
+| Unaccepted invitations | Container `defaultTtl` = 30 days (`weddingInvitations`) | The address of a person who never asked for anything must not linger. TTL cannot fail the way a job can, and the invitation has no value once it expires. |
 | Contact messages | Container `defaultTtl` = 365 days | Cosmos deletes by itself, no job to fail. `initDatabase` reconciles TTL on an existing container (`createIfNotExists` never changes it), and Cosmos then also removes older documents. |
 | Inactive accounts | `.github/workflows/data-retention.yml` daily 03:17 UTC → `POST /api/maintenance/account-retention` | Deleting an account cascades into products (erasers), which TTL cannot do. SWA Free managed functions support HTTP triggers only, so the timer lives in GitHub Actions. |
 
@@ -132,7 +171,10 @@ Rules:
 - **Every new feature that takes personal data** must be behind the switch – routes in
   `personalDataRoutes`, endpoints in `personalDataEndpoints`, links and buttons with `v-if` –
   **and** must be added to the privacy policy (table in section 2) with a bumped version.
-- A product that stores user data must implement a `UserDataEraser` and register it in `container.ts`.
+- A product that stores user data must implement a `UserDataEraser` and register it in `container.ts`;
+  if it also stores data keyed by e-mail, it deletes that by the `email` from the eraser input.
+- **Data about someone without an account** (an invited address) gets a retention period in the
+  shared kernel and a container TTL, never a cleanup job – and the policy must say how long it is kept.
 - No analytics, tracking pixels, third-party embeds or non-essential cookies without updating
   the policy (and adding a consent mechanism).
 

@@ -15,10 +15,13 @@ import FormField from '@/weddy/components/FormField.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
 import type { CreateGuestRequest } from './endpoints/createGuest.endpoint';
+import { useWeddingStore } from '@/weddy/wedding/wedding.store';
 import { GUEST_SORT_LABEL_KEYS, useGuestsStore } from './guests.store';
 
 const route = useRoute();
 const store = useGuestsStore();
+/* Viewer si seznam prohlédne, ale ovládání nevidí – rozhoduje role ze svatby. */
+const weddings = useWeddingStore();
 const { t } = useI18n();
 
 const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
@@ -426,11 +429,21 @@ async function removeFamily(family: Family): Promise<void> {
                 </span>
               </button>
               <div class="controls">
-                <button type="button" class="icon-button" @click="openEditFamily(family)">
+                <button
+                  v-if="weddings.canEdit"
+                  type="button"
+                  class="icon-button"
+                  @click="openEditFamily(family)"
+                >
                   <span class="visually-hidden">{{ t('weddy.guests.family.edit') }}</span>
                   <span aria-hidden="true">✏️</span>
                 </button>
-                <button type="button" class="icon-button" @click="removeFamily(family)">
+                <button
+                  v-if="weddings.canEdit"
+                  type="button"
+                  class="icon-button"
+                  @click="removeFamily(family)"
+                >
                   <span class="visually-hidden">{{ t('weddy.guests.family.delete') }}</span>
                   <span aria-hidden="true">🗑️</span>
                 </button>
@@ -450,6 +463,7 @@ async function removeFamily(family: Family): Promise<void> {
                   type="button"
                   class="status-button"
                   :title="statusTitle(guest)"
+                  :disabled="!weddings.canEdit"
                   @click="cycleStatus(guest)"
                 >
                   <StatusBadge kind="guest" :status="guest.status" />
@@ -473,17 +487,28 @@ async function removeFamily(family: Family): Promise<void> {
                   type="button"
                   class="status-button"
                   :title="statusTitle(guest)"
+                  :disabled="!weddings.canEdit"
                   @click="cycleStatus(guest)"
                 >
                   <StatusBadge kind="guest" :status="guest.status" />
                 </button>
 
-                <button type="button" class="icon-button" @click="openEdit(guest)">
+                <button
+                  v-if="weddings.canEdit"
+                  type="button"
+                  class="icon-button"
+                  @click="openEdit(guest)"
+                >
                   <span class="visually-hidden">{{ t('weddy.guests.guest.edit') }}</span>
                   <span aria-hidden="true">✏️</span>
                 </button>
 
-                <button type="button" class="icon-button" @click="removeGuest(guest)">
+                <button
+                  v-if="weddings.canEdit"
+                  type="button"
+                  class="icon-button"
+                  @click="removeGuest(guest)"
+                >
                   <span class="visually-hidden">{{ t('weddy.guests.guest.delete') }}</span>
                   <span aria-hidden="true">🗑️</span>
                 </button>
@@ -494,7 +519,7 @@ async function removeFamily(family: Family): Promise<void> {
       </template>
     </template>
 
-    <div class="actions-fab">
+    <div v-if="weddings.canEdit" class="actions-fab">
       <button type="button" class="btn btn-secondary" @click="openCreateFamily">
         {{ t('weddy.guests.family.add') }}
       </button>
@@ -882,6 +907,10 @@ select {
   display: flex;
   gap: 0.25rem;
   align-items: center;
+}
+
+.status-button:disabled {
+  cursor: default;
 }
 
 .status-button,

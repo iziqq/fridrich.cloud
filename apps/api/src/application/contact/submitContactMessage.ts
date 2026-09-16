@@ -1,7 +1,7 @@
 import type { ContactMessageInput } from '@fridrich/shared';
 import type { Clock } from '../../domain/shared/Clock.js';
 import type { IdGenerator, RateLimiter } from '../../domain/identity/ports.js';
-import type { EmailSender } from '../../domain/identity/EmailSender.js';
+import type { EmailSender } from '../../domain/shared/EmailSender.js';
 import { ContactMessage, type ContactMessageRepository } from '../../domain/contact/ContactMessage.js';
 import { DomainError } from '../../domain/shared/DomainError.js';
 

@@ -11,6 +11,7 @@ sources:
   - raw/2026-09-15-translations.md
   - raw/2026-09-15-glassDesign.md
   - raw/2026-09-16-weddyDashboard.md
+  - raw/2026-09-16-weddySettingsAndRoles.md
   - raw/iziweddySpec.md (ch. 12), raw/portalSpec.md (ch. 11)
   - history: doc/architecture.md (Open questions, Answered)
 updated: 2026-09-16
@@ -26,6 +27,11 @@ updated: 2026-09-16
 
 | Date | Decision | Why | Detail |
 |---|---|---|---|
+| 2026-09-16 | **Wedding plans have roles** – `admin` (creator), `manager` (content), `viewer` (read only); the aggregate keeps `members` and decides every access through `loadWeddingFor(…, 'read' \| 'edit' \| 'settings')` | Owner's request. Permissions belong to the plan, so one check in the aggregate covers every subdomain; an endpoint cannot forget it. Old documents with `ownerIds` are still read and rewritten on the next save. | [raw/2026-09-16-weddySettingsAndRoles.md](../raw/2026-09-16-weddySettingsAndRoles.md), [weddyAccess.md](domains/weddyAccess.md) |
+| 2026-09-16 | **Invitations by e-mail with a pending invitation** – an existing account gets access immediately, an unknown e-mail gets an invitation that turns into access on registration and expires after 30 days | Owner's choice. The alternative (only existing accounts) would force "register first, then I will invite you"; a share link would let anyone forward it. The cost is storing a third party's e-mail, which the privacy policy now covers and the container TTL cleans up. | [weddyAccess.md](domains/weddyAccess.md#inviting), [personalData.md](architecture/personalData.md) |
+| 2026-09-16 | **Settings is the fifth tab in the bottom navigation**, visible to the admin only; the title and date moved there from the Couple screen | Owner's choice. The bottom bar uses `grid-auto-columns`, so four or five tabs both fit at 360 px. Title and date are plan-level settings, so a manager no longer changes them. | [weddyWedding.md](domains/weddyWedding.md#features) |
+| 2026-09-16 | **One admin per plan, and it cannot be handed over**; when the admin deletes their account, the longest-serving manager (otherwise viewer) takes the role | The brief says the admin is the creator. A plan without an admin could never be deleted or shared again, so somebody has to inherit it. Handing the role over on purpose is open question 15. | [weddyAccess.md](domains/weddyAccess.md#roles) |
+| 2026-09-16 | **Cross-domain effects through ports**: identity calls `UserRegistrationListener` (claim invitations) and `UserDataEraser` now with `{ id, email }`; weddy reads accounts through `UserDirectory` | Domains still do not import each other; `container.ts` stays the only place where they meet. The eraser needs the e-mail to delete invitations addressed to the deleted account. | [domains.md](architecture/domains.md#dependency-rules) |
 | 2026-09-16 | **IziWeddy dashboard has three shapes** – welcome screen with section tiles for no plan, a large summary with stats and quick links for one plan, the grid of cards from two up; `WeddingSummary` gained `decidedSectionCount` | Owner's choice. A list of a single card forces a pointless click, and an empty dashed box says nothing about what the planner can do. The progress tile needed one more number, computed like the budget instead of stored. | [raw/2026-09-16-weddyDashboard.md](../raw/2026-09-16-weddyDashboard.md), [weddyWedding.md](domains/weddyWedding.md#features) |
 | 2026-09-15 | **Portal design "Glass" (dark + orange) replaces cyberpunk** – frosted glass surfaces, orange glows, Inter, rounded shapes and pills; components `AppButton`/`SectionHeading` replace `CyberButton`/`GlitchHeading`; e-mails use the same palette | Owner found cyberpunk too generic. Tokens stay semantic (`--color-*`), so IziWeddy's theme is untouched; glass has solid fallbacks for reduced transparency and browsers without `backdrop-filter`. Supersedes the design system of `portalSpec.md`. | [raw/2026-09-15-glassDesign.md](../raw/2026-09-15-glassDesign.md), [portal.md](domains/portal.md#design-glass) |
 | 2026-09-15 | **Workflow strips whitespace from the deployment token and uses StaticSitesClient `latest`** | A trailing newline in the secret broke the `Authorization` header; only the newer client reports the real exception instead of "unknown exception" | [deployment.md](operations/deployment.md#deployment-failure-an-unknown-exception-has-occurred) |
@@ -78,6 +84,8 @@ updated: 2026-09-16
 | 9 | portal | Blog / articles? | Not for now |
 | 10 | portal | Portrait photo in the footer (IČO and address added 2026-09-15) | To be supplied by the owner |
 | 11 | budgy | Questions before the specification | [budgy.md](domains/budgy.md#questions-before-the-specification) |
+| 15 | weddy | Should the admin be able to hand the plan over to someone else, or have a second admin? | Not now – one admin, inheritance only on account deletion |
+| 16 | weddy | Should a manager or viewer be able to leave a plan themselves? | Today only the admin can remove them |
 | 17 | platform | **Deployment fails** with `An unknown exception has occurred` since 2026-09-11 | *Cause found 2026-09-15:* trailing newline in the deployment token secret; workflow strips it – confirm with a green run and re-save the secret ([deployment.md](operations/deployment.md#deployment-failure-an-unknown-exception-has-occurred)) |
 | 15 | platform | Legal review of the privacy policy and terms | Recommended before wider launch |
 | 16 | platform | Gmail copies of contact messages and system e-mails are deleted manually | Consider a Gmail filter/auto-delete or a no-reply sender (ACS) that keeps no sent copies |

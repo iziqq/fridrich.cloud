@@ -1,24 +1,34 @@
 <script setup lang="ts">
-import type { Wedding, WeddingInput } from '@fridrich/weddy-shared';
+import type { WeddingDetail, WeddingInput } from '@fridrich/weddy-shared';
 import { reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError } from '@/api/http';
 import { currentLocale, translateMessage } from '@/i18n';
 import FormField from '@/weddy/components/FormField.vue';
 
-const props = defineProps<{
-  wedding?: Wedding | null;
-  submitLabel: string;
-  /** Vytvoření i úprava sdílí formulář, liší se jen tímhle voláním. */
-  save: (input: WeddingInput) => Promise<Wedding>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    wedding?: WeddingDetail | null;
+    submitLabel: string;
+    /**
+     * Zakládání sbírá i název a datum; na obrazovce Snoubenci patří do
+     * Nastavení, takže se nezobrazují.
+     */
+    withSettings?: boolean;
+    /** Role viewer – formulář se ukáže vyplněný, ale zamčený. */
+    readonly?: boolean;
+    /** Vytvoření i úprava sdílí formulář, liší se jen tímhle voláním. */
+    save: (input: WeddingInput) => Promise<WeddingDetail>;
+  }>(),
+  { withSettings: false, readonly: false },
+);
 
-const emit = defineEmits<{ saved: [Wedding] }>();
+const emit = defineEmits<{ saved: [WeddingDetail] }>();
 
 const { t } = useI18n();
 
 /** Formulář pracuje s řetězci; převod na čísla řeší až odesílání. */
-function personForm(person: Wedding['groom'] | undefined) {
+function personForm(person: WeddingDetail['groom'] | undefined) {
   return reactive({
     firstName: person?.firstName ?? '',
     lastName: person?.lastName ?? '',
@@ -89,13 +99,20 @@ async function submit(): Promise<void> {
 
 <template>
   <form class="form" novalidate @submit.prevent="submit">
-    <section class="card block">
+    <section v-if="withSettings" class="card block">
       <h2>{{ t('weddy.weddingForm.wedding') }}</h2>
-      <FormField v-model="title" :label="t('weddy.weddingForm.title')" required :error="fieldError('title')" />
+      <FormField
+        v-model="title"
+        :label="t('weddy.weddingForm.title')"
+        required
+        :disabled="readonly"
+        :error="fieldError('title')"
+      />
       <FormField
         v-model="weddingDate"
         :label="t('weddy.weddingForm.date')"
         type="date"
+        :disabled="readonly"
         :error="fieldError('weddingDate')"
       />
     </section>
@@ -108,12 +125,14 @@ async function submit(): Promise<void> {
           v-model="side.form.firstName"
           :label="t('weddy.weddingForm.firstName')"
           required
+          :disabled="readonly"
           :error="fieldError(`${side.key}.firstName`)"
         />
         <FormField
           v-model="side.form.lastName"
           :label="t('weddy.weddingForm.lastName')"
           required
+          :disabled="readonly"
           :error="fieldError(`${side.key}.lastName`)"
         />
       </div>
@@ -122,31 +141,35 @@ async function submit(): Promise<void> {
         v-model="side.form.birthYear"
         :label="t('weddy.weddingForm.birthYear')"
         numeric
+        :disabled="readonly"
         :error="fieldError(`${side.key}.birthYear`)"
       />
       <FormField
         v-model="side.form.email"
         :label="t('weddy.weddingForm.email')"
         type="email"
+        :disabled="readonly"
         :error="fieldError(`${side.key}.email`)"
       />
       <FormField
         v-model="side.form.phone"
         :label="t('weddy.weddingForm.phone')"
         type="tel"
+        :disabled="readonly"
         :error="fieldError(`${side.key}.phone`)"
       />
       <FormField
         v-model="side.form.note"
         :label="t('weddy.weddingForm.note')"
         textarea
+        :disabled="readonly"
         :error="fieldError(`${side.key}.note`)"
       />
     </section>
 
     <p v-if="generalError" class="general-error" role="alert">{{ translateMessage(generalError) }}</p>
 
-    <div class="actions">
+    <div v-if="!readonly" class="actions">
       <button type="submit" class="btn btn-primary" :disabled="busy">
         {{ busy ? t('weddy.weddingForm.saving') : submitLabel }}
       </button>

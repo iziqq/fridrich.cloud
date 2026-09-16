@@ -97,7 +97,7 @@ export async function applyAccountRetention(
  */
 async function eraseAccount(deps: IdentityDeps, user: User): Promise<void> {
   for (const eraser of deps.userDataErasers) {
-    await eraser.eraseUserData(user.id);
+    await eraser.eraseUserData({ id: user.id, email: user.email.value });
   }
 
   await Promise.all([

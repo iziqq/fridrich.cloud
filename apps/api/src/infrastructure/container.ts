@@ -3,6 +3,7 @@ import { systemClock } from '../domain/shared/Clock.js';
 import type { ContactDeps } from '../application/contact/submitContactMessage.js';
 import type { IdentityDeps } from '../application/identity/deps.js';
 import type { WeddyDeps } from '../application/weddy/deps.js';
+import { claimWeddingInvitations } from '../application/weddy/access.js';
 import { eraseUserWeddyData } from '../application/weddy/wedding.js';
 import { tokenGenerator, uuidGenerator } from './crypto.js';
 import { createEmailSender } from './email/senders.js';
@@ -17,9 +18,11 @@ import {
   cosmosRateLimiter,
 } from './cosmos/supportRepositories.js';
 import {
+  cosmosUserDirectory,
   guestCosmosRepository,
   planningItemCosmosRepository,
   weddingCosmosRepository,
+  weddingInvitationCosmosRepository,
 } from './cosmos/weddyRepositories.js';
 
 /**
@@ -47,7 +50,11 @@ export function identityDeps(): IdentityDeps {
     rateLimiter: cosmosRateLimiter,
     // Domény se navzájem nevolají – jen tady se identity dozví, že při smazání
     // účtu má smazat i data v produktech. Nový produkt s daty uživatele přidá svůj řádek.
-    userDataErasers: [{ eraseUserData: (userId) => eraseUserWeddyData(weddyDeps(), userId) }],
+    userDataErasers: [{ eraseUserData: (user) => eraseUserWeddyData(weddyDeps(), user) }],
+    // Pozvánka do plánování čeká u e-mailu; po registraci se promění v přístup.
+    userRegistrationListeners: [
+      { onUserRegistered: (user) => claimWeddingInvitations(weddyDeps(), user) },
+    ],
   };
 
   return identity;
@@ -58,6 +65,10 @@ export function weddyDeps(): WeddyDeps {
     weddings: weddingCosmosRepository,
     guests: guestCosmosRepository,
     items: planningItemCosmosRepository,
+    invitations: weddingInvitationCosmosRepository,
+    directory: cosmosUserDirectory,
+    email: createEmailSender(),
+    appUrl: getConfig().appUrl,
     ids: uuidGenerator,
     clock: systemClock,
   };

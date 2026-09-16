@@ -324,3 +324,70 @@ Source: [raw/2026-09-16-weddyDashboard.md](../raw/2026-09-16-weddyDashboard.md)
 - Touched pages: `domains/weddyWedding.md`, `decisions.md`, `index.md`;
   raw source listed in `doc/raw/README.md`.
 
+## [2026-09-16] ingest | IziWeddy plan settings, roles and invitations
+
+Source: [raw/2026-09-16-weddySettingsAndRoles.md](../raw/2026-09-16-weddySettingsAndRoles.md)
+
+- New subdomain `weddy/access`: roles `admin` (creator), `manager`, `viewer`.
+  `Wedding` keeps `members` + derived `memberIds`; `loadWeddingFor` takes the
+  access level (`read` / `edit` / `settings`) and the aggregate decides
+  (`assertCanRead/Edit/ManageSettings`). Documents with the old `ownerIds` are
+  still read and rewritten on the next save.
+- Invitations by e-mail: existing account is added right away, an unknown
+  address gets a `WeddingInvitation` (new container `weddingInvitations`,
+  PK `/weddingId`, TTL 30 days) that becomes membership on registration
+  (`claimWeddingInvitations` via the new identity port `UserRegistrationListener`).
+  `UserDataEraser` now receives `{ id, email }`; weddy reads accounts through
+  the new `UserDirectory` port. `EmailSender` moved to `domain/shared/`, the
+  e-mail layout to `application/shared/emailLayout.ts`.
+- Endpoints 28 → 34: `updateWedding` split into `updateCouple` and
+  `updateWeddingSettings`, plus five access endpoints. `getWedding`,
+  `createWedding` and both updates answer with `WeddingDetail` (wedding + the
+  caller's role); `WeddingSummary` carries the role too.
+- Frontend: new `SettingsView.vue` (wedding, access, deletion) as the fifth tab
+  for the admin, the Couple screen lost the title and date, a viewer sees a
+  *read only* badge, disabled fields and no action controls. Fixed: the bottom
+  bar used `repeat(var(--tab-count), …)`, which is invalid CSS – with five tabs
+  it broke into two rows; it now uses `grid-auto-columns`.
+- GDPR: privacy policy gained the row *Sdílení plánování v IziWeddy* and a
+  paragraph about invitations; `PRIVACY_POLICY_VERSION` bumped to 2026-09-16.
+- Tests 128 → 143 (new `apps/api/test/weddyAccess.test.ts`). Verified in
+  headless Chrome at 360 and 1024 px in Czech and English on a temporary preview
+  page with a stubbed API, then removed.
+- New page `domains/weddyAccess.md`; touched `domains/weddyWedding.md`,
+  `domains/weddy.md`, `architecture/domains.md`, `architecture/dataCosmos.md`,
+  `architecture/personalData.md`, `domains/identity.md`, `overview.md`,
+  `decisions.md` (5 decisions, open questions 15 and 16), `index.md`, `CLAUDE.md`.
+
+## [2026-09-16] lint | Member vocabulary in the wedding aggregate
+
+- Renamed after the roles landed, so the names match what the code does:
+  `WeddingRepository.listForOwner` → `listForMember`, `Wedding.isOwnedOnlyBy` →
+  `isOnlyMember`, `Wedding.removeOwner` → `leave`, `Wedding.create({ ownerId })`
+  → `{ creatorId }`. The stored legacy field `ownerIds` keeps its name – it is
+  data written by older versions.
+- Wiki pages using the old names updated (`weddyAccess.md`, `weddyWedding.md`,
+  `architecture/personalData.md`, `architecture/dataCosmos.md`). Older log
+  entries keep the names that were true when they were written.
+
+## [2026-09-16] change | Footer anchored to the bottom, short pages centred
+
+Reported by the owner: on `/projekty/iziweddy` and `/projekty/izibudgy` the
+footer sat in the middle of the window instead of at the bottom.
+
+- Cause: `#app { height: 100dvh }` made the content area exactly one window tall,
+  so the footer started right below it and the page scrolled even when the
+  content was short. `SiteFooter` added another `--section-gap` on top of that.
+- `#app` is now a flex column with `min-height: 100dvh`, `main` grows, and
+  `#app > main > .page` fills the leftover space and centres its content with
+  `padding-block: 6rem var(--space-8)`. `SiteFooter` lost its fixed top margin –
+  the gap after a long page comes from the last section's own padding, which
+  halves the pre-footer gap on the home page (~310 px → ~155 px).
+- Applies to every short portal screen, because they all use `.page` as the root:
+  project detail, sign-in, registration, e-mail verification, account, 404.
+- Verified in headless Chrome: both project pages at 1280×900 and 360×740 fit the
+  window with the whole footer visible, sign-in is centred, and the home page
+  keeps its section spacing (checked with a temporarily shortened hero, reverted).
+- Touched pages: `architecture/frontend.md` (new section *Page shell and short
+  pages*), `index.md`.
+

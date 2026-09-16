@@ -5,7 +5,7 @@ sources:
   - raw/iziweddySpec.md (ch. 1, 4, 5, 6, 12)
   - raw/2026-09-15-domainArchitecture.md
   - code: apps/api/src/*/weddy, apps/portal/src/weddy, packages/weddy-shared
-updated: 2026-09-15
+updated: 2026-09-16
 ---
 
 # `weddy` domain – IziWeddy, the wedding planner
@@ -34,6 +34,7 @@ updated: 2026-09-15
 | `guests` | Guests, families, filters, sorting, statistics | [weddyGuests.md](weddyGuests.md) |
 | `planning` | 11 preparation sections and their items | [weddyPlanning.md](weddyPlanning.md) |
 | `budget` | Budget from all items | [weddyBudget.md](weddyBudget.md) |
+| `access` | Who sees the plan and what they may do – roles and invitations | [weddyAccess.md](weddyAccess.md) |
 
 ```mermaid
 erDiagram
@@ -44,9 +45,11 @@ erDiagram
     GUEST }o--o| FAMILY : "family (no record of its own)"
 ```
 
-**Access:** every wedding has `ownerIds`. All use cases of all subdomains start
-with `loadWeddingFor(deps, weddingId, userId)` – a missing wedding is `404`,
-someone else's `403`. Endpoints do not write this check.
+**Access:** every wedding has members with roles (`admin`, `manager`, `viewer`).
+All use cases of all subdomains start with
+`loadWeddingFor(deps, weddingId, userId, access)` – a missing wedding is `404`,
+one the user cannot reach `403`. Endpoints do not write this check
+([weddyAccess.md](weddyAccess.md)).
 
 ## Routes
 
@@ -62,10 +65,13 @@ Relative to `/izi-weddy`; links are built with `weddyPath()`.
 | `/weddings/:weddingId/planning` | Section overview | planning |
 | `/weddings/:weddingId/planning/:category` | Section detail | planning |
 | `/weddings/:weddingId/budget` | Budget | budget |
+| `/weddings/:weddingId/settings` | Settings – wedding, access, deletion (admin only) | wedding + access |
 
 The wedding detail (`WeddingLayout`) has a top bar with the title and a **bottom
-navigation** with four tabs: 💑 Snoubenci (Couple) · 👥 Hosté (Guests) ·
-📋 Plánování (Planning) · 💰 Rozpočet (Budget).
+navigation**: 💑 Snoubenci (Couple) · 👥 Hosté (Guests) · 📋 Plánování (Planning) ·
+💰 Rozpočet (Budget), and for the admin a fifth ⚙️ Nastavení (Settings). A viewer
+sees a *Jen ke čtení* (Read only) badge next to the title and no editing
+controls.
 
 ## UI principles (mobile-first)
 

@@ -1,4 +1,4 @@
-import { WeddingInputSchema, WeddingSchema } from '@fridrich/weddy-shared';
+import { WeddingDetailSchema, WeddingInputSchema } from '@fridrich/weddy-shared';
 import * as v from 'valibot';
 import { callEndpoint } from '@/api/http';
 
@@ -7,7 +7,7 @@ import { callEndpoint } from '@/api/http';
 export const CreateWeddingRequest = WeddingInputSchema;
 export type CreateWeddingRequest = v.InferInput<typeof CreateWeddingRequest>;
 
-export const CreateWeddingResponse = WeddingSchema;
+export const CreateWeddingResponse = WeddingDetailSchema;
 export type CreateWeddingResponse = v.InferOutput<typeof CreateWeddingResponse>;
 
 export function createWedding(request: CreateWeddingRequest): Promise<CreateWeddingResponse> {

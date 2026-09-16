@@ -31,7 +31,7 @@ async function loadItem(
   itemId: string,
   userId: string,
 ): Promise<PlanningItem> {
-  const wedding = await loadWeddingFor(deps, weddingId, userId);
+  const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
 
   const item = await deps.items.findById(wedding.id, itemId);
   if (!item) throw DomainError.notFound(planningKeys.itemNotFound);
@@ -45,7 +45,7 @@ export async function createItem(
   input: PlanningItemInput,
   userId: string,
 ): Promise<ItemData> {
-  const wedding = await loadWeddingFor(deps, weddingId, userId);
+  const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
 
   const item = PlanningItem.create({
     id: deps.ids.next(),

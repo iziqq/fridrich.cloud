@@ -4,7 +4,7 @@ type: concept
 sources:
   - raw/2026-09-15-domainArchitecture.md
   - code: apps/api/src, apps/portal/src, packages/*-shared
-updated: 2026-09-15
+updated: 2026-09-16
 ---
 
 # Domain architecture
@@ -34,6 +34,7 @@ look, see [domains/portal.md](../domains/portal.md).
 | `guests` | Guests and **families** (groups of guests), statistics | Guests | [weddyGuests.md](../domains/weddyGuests.md) |
 | `planning` | Preparation sections and vendor items | Planning, Section detail | [weddyPlanning.md](../domains/weddyPlanning.md) |
 | `budget` | Budget calculated from the items | Budget | [weddyBudget.md](../domains/weddyBudget.md) |
+| `access` | Roles (admin / manager / viewer) and invitations by e-mail | Settings → Access | [weddyAccess.md](../domains/weddyAccess.md) |
 
 > **Why the couple is not a separate `couple` subdomain:** the groom and bride
 > have no identity or lifecycle of their own – they are value objects inside the
@@ -66,7 +67,7 @@ Domains without subdomains (`identity`, `contact`) have one level less:
 |---|---|---|
 | Wire data shape, field rules (required, length, format, range) | Valibot schema in the shared kernel | `GuestInputSchema`, `PlanningItemInputSchema` |
 | Pure calculations the frontend needs too | Shared kernel | `calculateBudget`, `calculateGuestStats`, `groupIntoFamilies` |
-| Invariants and behaviour over state | Domain object / domain function | `Wedding.assertAccessibleBy`, `Guest.joinFamily`, `rewriteFamily`, `LoginCode.verify` |
+| Invariants and behaviour over state | Domain object / domain function | `Wedding.assertCanEdit`, `Guest.joinFamily`, `rewriteFamily`, `LoginCode.verify` |
 | Default values, security rules | Domain | new guest is `draft` + `adult`; uniform login error |
 | Orchestration (load, check access, call domain, save) | Use case in `application/` | `updateFamily` |
 | HTTP: method, path, input parsing, status code, cookie | Endpoint file | `createGuest.endpoint.ts` |
@@ -81,12 +82,16 @@ in `apps/`, the database or the UI.
 
 1. **Domains do not call each other.** The only thing they share is the user
    identity (`userId`) passed by the endpoint wrapper. If a domain grows, it can
-   be cut out without touching the others. A cross-domain effect goes through a
+   be cut out without touching the others. What one domain needs from another
+   goes through a **port wired in `infrastructure/container.ts`**: identity calls
+   `UserDataEraser` and `UserRegistrationListener` (account deleted, account
+   created), weddy reads names and e-mails through `UserDirectory`. A cross-domain effect goes through a
    port owned by the triggering domain and wired in `infrastructure/container.ts` –
    account deletion calls `UserDataEraser`, implemented by `weddy`
    (`eraseUserWeddyData`) ([personalData.md](personalData.md#account-deletion-right-to-erasure)).
 2. **`weddy` subdomains may depend on `wedding`** (the root) – every use case
-   calls `loadWeddingFor()`, which checks access. There are no direct
+   calls `loadWeddingFor()`, which checks access at the level it needs
+   (`read` / `edit` / `settings`); the aggregate decides, never the endpoint. There are no direct
    dependencies between `guests`, `planning` and `budget`; `budget` reads
    planning items through the repository port, the frontend loads it via its
    own endpoint.

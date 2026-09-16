@@ -42,7 +42,18 @@ export interface TokenRepository {
  * a propojí je až `infrastructure/container.ts`.
  */
 export interface UserDataEraser {
-  eraseUserData(userId: string): Promise<void>;
+  eraseUserData(user: { id: string; email: string }): Promise<void>;
+}
+
+/**
+ * Oznámení, že vznikl nový účet.
+ *
+ * Produkty na něj mohou navázat, co si u e-mailu schovaly, než účet vznikl –
+ * IziWeddy takhle promění čekající pozvánku v přístup k plánování. Identity
+ * o produktech neví, implementace se propojí v `infrastructure/container.ts`.
+ */
+export interface UserRegistrationListener {
+  onUserRegistered(user: { id: string; email: string }): Promise<void>;
 }
 
 export interface LoginCodeRepository {

@@ -19,6 +19,7 @@ export const CONTAINERS = {
   rateLimits: 'rateLimits',
   contactMessages: 'contactMessages',
   weddings: 'weddings',
+  weddingInvitations: 'weddingInvitations',
   guests: 'guests',
   planningItems: 'planningItems',
 } as const;

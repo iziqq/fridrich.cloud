@@ -8,6 +8,10 @@ import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import WeddingForm from './WeddingForm.vue';
 import { useWeddingStore } from './wedding.store';
 
+/*
+ * Snoubenci – jen ženich a nevěsta. Název a datum patří do Nastavení, kam
+ * vidí jen admin (doc/wiki/domains/weddyWedding.md).
+ */
 const { t } = useI18n();
 const route = useRoute();
 const weddings = useWeddingStore();
@@ -25,7 +29,10 @@ const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
       :key="weddings.current.id"
       :wedding="weddings.current"
       :submit-label="t('weddy.couple.submit')"
-      :save="(input) => weddings.update(weddingId, input)"
+      :readonly="!weddings.canEdit"
+      :save="
+        (input) => weddings.saveCouple(weddingId, { groom: input.groom, bride: input.bride })
+      "
     />
   </div>
 </template>

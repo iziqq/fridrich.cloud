@@ -1,7 +1,7 @@
 import { Agent } from 'node:https';
 import { CosmosClient, type Container, type Database } from '@azure/cosmos';
 import { DefaultAzureCredential } from '@azure/identity';
-import { CONTACT_MESSAGE_RETENTION_DAYS } from '@fridrich/shared';
+import { CONTACT_MESSAGE_RETENTION_DAYS, WEDDING_INVITATION_RETENTION_DAYS } from '@fridrich/shared';
 import { CONTAINERS, getCosmosConfig, type ContainerName } from '../../config.js';
 
 /**
@@ -31,6 +31,13 @@ const CONTAINER_DEFINITIONS: {
     ttlSeconds: CONTACT_MESSAGE_RETENTION_DAYS * 24 * 60 * 60,
   },
   { id: CONTAINERS.weddings, partitionKey: '/id' },
+  // Nepřijatá pozvánka nese e-mail cizího člověka – lhůta ze zásad ochrany
+  // osobních údajů, uklidí ji Cosmos DB sám.
+  {
+    id: CONTAINERS.weddingInvitations,
+    partitionKey: '/weddingId',
+    ttlSeconds: WEDDING_INVITATION_RETENTION_DAYS * 24 * 60 * 60,
+  },
   { id: CONTAINERS.guests, partitionKey: '/weddingId' },
   { id: CONTAINERS.planningItems, partitionKey: '/weddingId' },
 ];

@@ -5,7 +5,7 @@ sources:
   - code: apps/api/src/{domain,application,endpoints}/identity, apps/portal/src/identity
   - history: doc/architecture.md ch. 5 (commit 8db5e0a)
   - raw/2026-09-15-legalDocumentsAndRetention.md
-updated: 2026-09-15
+updated: 2026-09-16
 ---
 
 # `identity` domain
@@ -49,8 +49,22 @@ activated without clicking the link.
 | `OneTimeToken` | Activation link – 24 h expiry, single use (`consume`). |
 | `LoginCode` | Login challenge – valid 10 min, max. 5 attempts, the only way in is `verify()`. |
 | `Session` | Sign-in for 30 days, extended on activity at most once a day (`touch`). |
-| `ports.ts` | `UserRepository` (incl. `listForRetention`, `delete`), `TokenRepository`, `LoginCodeRepository`, `SessionRepository`, `TokenGenerator`, `IdGenerator`, `RateLimiter`, **`UserDataEraser`** (products delete their data about a user; wired in `container.ts`) |
-| `EmailSender` | Port for sending e-mails |
+| `ports.ts` | `UserRepository` (incl. `listForRetention`, `delete`), `TokenRepository`, `LoginCodeRepository`, `SessionRepository`, `TokenGenerator`, `IdGenerator`, `RateLimiter`, **`UserDataEraser`** and **`UserRegistrationListener`** (cross-domain ports, wired in `container.ts` – see below) |
+| `EmailSender` | Port for sending e-mails (shared, `domain/shared/EmailSender.ts`) |
+
+### Cross-domain ports
+
+Identity must not call products and products must not call identity
+(CLAUDE.md rule 3), so both directions go through ports that only
+`infrastructure/container.ts` connects:
+
+| Port | Owner | When it runs | What it is for |
+|---|---|---|---|
+| `UserDataEraser.eraseUserData({ id, email })` | identity | `deleteAccount` and retention deletion | Products delete their data about the user. The **e-mail is part of the input**, because a product may hold records keyed by address rather than by user id – those would otherwise outlive the account. |
+| `UserRegistrationListener.onUserRegistered({ id, email })` | identity | `registerUser`, after the user is saved and before the activation e-mail | Products attach what they were holding for that address before the account existed – wired to IziWeddy's `claimWeddingInvitations`. It runs after the save because the listener needs the final `id`; identity itself has no interest in what happens there. |
+| `UserDirectory.findByEmail` / `findByIds` | weddy | on demand | The other direction: a product needs a name and e-mail for an account it already knows by id. Implemented over the user repository as `cosmosUserDirectory`, so products read identity data instead of copying it into their own containers. |
+
+Details of what IziWeddy does with them: [weddy access](weddyAccess.md).
 
 **Language:** `User.locale` (cs/en) is set at registration and updated by `startSession` /
 `resolveSession` from the request's `Accept-Language`; every e-mail exists in both

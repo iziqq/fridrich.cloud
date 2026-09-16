@@ -59,6 +59,12 @@ export async function registerUser(
   });
 
   await deps.users.save(user);
+
+  // Co na tuhle adresu čekalo (pozvánka do plánování), teď dostane majitele.
+  for (const listener of deps.userRegistrationListeners) {
+    await listener.onUserRegistered({ id: user.id, email: email.value });
+  }
+
   await sendVerification(deps, user.id, email.value, command.appUrl, command.locale);
 
   return user.toPublic();

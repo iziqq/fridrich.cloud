@@ -17,10 +17,13 @@ import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
 import { weddyPath } from '@/weddy/routes';
 import type { CreatePlanningItemRequest } from './endpoints/createPlanningItem.endpoint';
+import { useWeddingStore } from '@/weddy/wedding/wedding.store';
 import { usePlanningStore } from './planning.store';
 
 const route = useRoute();
 const store = usePlanningStore();
+/* Viewer si sekci prohlédne, ale nic v ní nezmění. */
+const weddings = useWeddingStore();
 const { t } = useI18n();
 
 /** Částka se zapisuje podle jazyka rozhraní, měna zůstává koruna. */
@@ -186,6 +189,7 @@ const statusOptions = computed(() => [
             <button
               type="button"
               class="status-button"
+              :disabled="!weddings.canEdit"
               :title="
                 item.status === 'accepted'
                   ? t('weddy.planning.category.backToDraft')
@@ -196,12 +200,22 @@ const statusOptions = computed(() => [
               <StatusBadge kind="planning" :status="item.status" />
             </button>
 
-            <button type="button" class="icon-button" @click="openEdit(item)">
+            <button
+              v-if="weddings.canEdit"
+              type="button"
+              class="icon-button"
+              @click="openEdit(item)"
+            >
               <span class="visually-hidden">{{ t('weddy.planning.category.editItem') }}</span>
               <span aria-hidden="true">✏️</span>
             </button>
 
-            <button type="button" class="icon-button" @click="removeItem(item)">
+            <button
+              v-if="weddings.canEdit"
+              type="button"
+              class="icon-button"
+              @click="removeItem(item)"
+            >
               <span class="visually-hidden">{{ t('weddy.planning.category.deleteItem') }}</span>
               <span aria-hidden="true">🗑️</span>
             </button>
@@ -209,7 +223,11 @@ const statusOptions = computed(() => [
         </li>
       </ul>
 
-      <FabButton :label="t('weddy.planning.category.addItem')" @click="openCreate" />
+      <FabButton
+        v-if="weddings.canEdit"
+        :label="t('weddy.planning.category.addItem')"
+        @click="openCreate"
+      />
 
       <BottomSheet
         v-model:open="sheetOpen"
@@ -317,6 +335,10 @@ h2 {
   display: flex;
   gap: 0.25rem;
   align-items: center;
+}
+
+.status-button:disabled {
+  cursor: default;
 }
 
 .status-button,

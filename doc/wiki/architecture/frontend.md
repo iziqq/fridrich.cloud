@@ -7,7 +7,7 @@ sources:
   - raw/2026-09-15-responsiveFrontend.md
   - raw/portalSpec.md (navigation, services grid), raw/iziweddySpec.md (ch. 6.3)
   - code: packages/design/src/breakpoints.css, apps/portal/postcss.config.js
-updated: 2026-09-15
+updated: 2026-09-16
 ---
 
 # Frontend – `apps/portal`
@@ -66,6 +66,22 @@ apps/portal/src/
 9. **No hard-coded texts** – `t('area.key')` from the area catalog, API/validation keys via
    `translateMessage`; the language switcher (`LocaleSwitcher.vue`) is in the portal navigation and
    the IziWeddy headers ([i18n.md](i18n.md)).
+
+## Page shell and short pages
+
+`#app` is a **flex column with `min-height: 100dvh`** and `main` grows inside it
+(`apps/portal/src/style.css`), so the footer always ends up at the bottom of the
+window, never in the middle of a half-empty screen.
+
+| Rule | Why |
+|---|---|
+| `#app { display: flex; flex-direction: column; min-height: 100dvh }` | A fixed `height: 100dvh` made the content area exactly one window tall, so on a short page the footer was pushed below the fold and the page scrolled for no reason. |
+| `#app > main { display: flex; flex: 1; flex-direction: column }` | `main` takes the leftover height; the column lets the page inside it grow (a percentage height on a child of a flex item does not resolve). |
+| `#app > main > .page { flex: 1; justify-content: center; padding-block: 6rem var(--space-8) }` | `.page` is the root of every short portal screen (project detail, sign-in, account, 404). It fills the leftover space and centres its content, so the empty space is split around it instead of piling up above the footer. `6rem` is enough to clear the floating navigation pill. |
+| `SiteFooter` has **no fixed top margin** | The separation from a long page comes from the last section's own `padding-block: var(--section-gap)`; an extra gap only made short pages overflow the window. |
+
+A product (`meta.bare`) renders its own shell (`.weddy` with `min-height: 100dvh`),
+so none of this applies to it.
 
 ## Responsive layout and breakpoints
 

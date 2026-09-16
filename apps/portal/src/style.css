@@ -3,3 +3,44 @@
  * Glass, tmavá + oranžová) je celý v @fridrich/design, tady se jen načte.
  */
 @import '@fridrich/design';
+
+/*
+ * Obal aplikace jako sloupec: obsah roste, patička zůstává pod ním.
+ *
+ * Pevná `height: 100dvh` dělala z obsahu vždy celou výšku okna, takže na
+ * krátkých stránkách (detail projektu) patička spadla až pod přehyb a
+ * stránka se zbytečně scrollovala. Produkty (`meta.bare`) uvnitř kreslí
+ * vlastní obal s `min-height: 100dvh`, kterému sloupec nevadí.
+ */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* Sloupec i uvnitř, aby krátká stránka mohla vyrůst do zbytku okna. */
+#app > main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/*
+ * Krátké stránky (detail projektu, přihlášení, účet, 404) vyplní zbytek okna
+ * a obsah v něm stojí na středu. Bez toho zůstal obsah nalepený nahoře, mezi
+ * ním a patičkou zela prázdná plocha a patička vypadala posunutá. Pravidlo je
+ * globální schválně – `.page` je kořen každé takové obrazovky a scoped styly
+ * v komponentách řeší jen odsazení a vzhled.
+ */
+#app > main > .page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  /*
+   * Plovoucí lišta překrývá horních zhruba 6 rem – víc odsazení už netřeba,
+   * obsah stojí na středu. Stránky si dřív držely 10 rem nahoře a celou
+   * `--section-gap` dole, což je u krátké stránky jen výška navíc.
+   */
+  padding-block: 6rem var(--space-8);
+}

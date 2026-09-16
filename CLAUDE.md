@@ -111,8 +111,8 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 ### Domains
 
 1. **Organise by domain, not by technical layer.** A (sub)domain has the same name in `packages/*-shared`, `apps/api` and `apps/portal`.
-2. **Business logic always lives in the domain** – domain objects and domain functions in `apps/api/src/domain`, pure shared rules and calculations in `packages/*-shared`. Never in endpoint files, Vue components or stores.
-3. **Domains do not call each other.** They share only the user identity (`userId`). Subdomains of `weddy` may depend on the root `wedding` (access check via `loadWeddingFor`). A cross-domain effect goes through a port of the triggering domain wired in `infrastructure/container.ts` – e.g. account deletion calls `UserDataEraser`, implemented by each product.
+2. **Business logic always lives in the domain** – domain objects and domain functions in `apps/api/src/domain`, pure shared rules and calculations in `packages/*-shared`. Never in endpoint files, Vue components or stores. Access checks belong there too: an IziWeddy plan is guarded by the aggregate (`Wedding.assertCanRead/assertCanEdit/assertCanManageSettings` through `loadWeddingFor`), and the frontend only hides what the API would refuse.
+3. **Domains do not call each other.** They share only the user identity (`userId`). Subdomains of `weddy` may depend on the root `wedding` (access check via `loadWeddingFor`). A cross-domain effect goes through a port of the triggering domain wired in `infrastructure/container.ts` – account deletion calls `UserDataEraser`, registration calls `UserRegistrationListener`, and weddy reads accounts through its own `UserDirectory` port.
 4. **Composition over inheritance** – no abstract base classes between domain objects.
 
 ### Endpoints – one file per endpoint

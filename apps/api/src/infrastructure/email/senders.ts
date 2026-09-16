@@ -1,7 +1,7 @@
 import { EmailClient } from '@azure/communication-email';
 import { createTransport, type Transporter } from 'nodemailer';
 import { getConfig } from '../../config.js';
-import type { EmailMessage, EmailSender } from '../../domain/identity/EmailSender.js';
+import type { EmailMessage, EmailSender } from '../../domain/shared/EmailSender.js';
 
 /**
  * Vývojový odesílatel – e-mail vypíše do logu.

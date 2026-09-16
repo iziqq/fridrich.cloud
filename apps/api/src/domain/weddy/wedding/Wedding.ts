@@ -1,26 +1,55 @@
 import {
+  canEditWedding,
+  canManageWeddingSettings,
   weddingKeys,
+  type CoupleInput,
+  type InvitableRole,
   type Person,
   type Wedding as WeddingData,
   type WeddingInput,
+  type WeddingRole,
+  type WeddingSettingsInput,
 } from '@fridrich/weddy-shared';
 import type { Clock } from '../../shared/Clock.js';
 import { DomainError } from '../../shared/DomainError.js';
 
+/** Přístup jednoho uživatele k plánování. */
+export interface WeddingMemberState {
+  userId: string;
+  role: WeddingRole;
+  addedAt: string;
+}
+
 export interface WeddingState extends WeddingData {
-  /** ID uživatelů, kteří k plánování mají přístup. */
-  ownerIds: string[];
+  members: WeddingMemberState[];
+  /**
+   * Odvozené z `members` – podle něj se v Cosmos DB hledají plánování
+   * uživatele. Dotaz na pole objektů by potřeboval poddotaz, tohle stačí
+   * `ARRAY_CONTAINS`.
+   */
+  memberIds: string[];
+}
+
+/**
+ * Dokument tak, jak může přijít z databáze.
+ *
+ * Záznamy založené před rolemi mají jen `ownerIds` – `fromState` je převede
+ * (první vlastník je admin, další manažeři) a při nejbližším uložení se
+ * dokument přepíše do nového tvaru.
+ */
+export interface StoredWeddingState extends WeddingData {
+  members?: WeddingMemberState[];
+  memberIds?: string[];
+  ownerIds?: string[];
 }
 
 /**
  * Agregát plánování svatby – kořen celé domény IziWeddy.
  *
- * Drží název, datum, oba snoubence a seznam vlastníků. Oprávnění jsou
- * vlastnost svatby, ne něco, co by měl řešit HTTP handler – kontrolu přístupu
- * proto volají všechny use-casy všech subdomén přes `assertAccessibleBy()`.
- *
- * Vstup je už rozparsovaný schématem `WeddingInputSchema` (tvar a pravidla
- * polí); agregát nese chování nad ním.
+ * Drží název, datum, oba snoubence a **seznam členů s rolemi**. Oprávnění
+ * jsou vlastnost svatby, ne něco, co by měl řešit HTTP handler – kontrolu
+ * proto volají use-casy všech subdomén přes `assertCanRead/Edit/ManageSettings`.
+ * Role popisuje doc/wiki/domains/weddyWedding.md.
  */
 export class Wedding {
   private constructor(
@@ -29,12 +58,17 @@ export class Wedding {
     private weddingDateValue: string | undefined,
     private groomValue: Person,
     private brideValue: Person,
-    private owners: string[],
+    private memberList: WeddingMemberState[],
     readonly createdAt: string,
     private updatedAtValue: string,
   ) {}
 
-  static create(input: { id: string; wedding: WeddingInput; ownerId: string; clock: Clock }): Wedding {
+  static create(input: {
+    id: string;
+    wedding: WeddingInput;
+    creatorId: string;
+    clock: Clock;
+  }): Wedding {
     const now = input.clock.now().toISOString();
 
     return new Wedding(
@@ -43,23 +77,36 @@ export class Wedding {
       input.wedding.weddingDate,
       { ...input.wedding.groom },
       { ...input.wedding.bride },
-      [input.ownerId],
+      // Zakladatel je admin – jediná role, která se nedá přidělit ani odebrat.
+      [{ userId: input.creatorId, role: 'admin', addedAt: now }],
       now,
       now,
     );
   }
 
-  static fromState(state: WeddingState): Wedding {
+  static fromState(state: StoredWeddingState): Wedding {
     return new Wedding(
       state.id,
       state.title,
       state.weddingDate,
       { ...state.groom },
       { ...state.bride },
-      [...state.ownerIds],
+      Wedding.membersFrom(state),
       state.createdAt,
       state.updatedAt,
     );
+  }
+
+  private static membersFrom(state: StoredWeddingState): WeddingMemberState[] {
+    if (state.members && state.members.length > 0) {
+      return state.members.map((member) => ({ ...member }));
+    }
+
+    return (state.ownerIds ?? []).map((userId, index) => ({
+      userId,
+      role: index === 0 ? 'admin' : 'manager',
+      addedAt: state.createdAt,
+    }));
   }
 
   get title(): string {
@@ -70,58 +117,123 @@ export class Wedding {
     return this.weddingDateValue;
   }
 
-  get ownerIds(): readonly string[] {
-    return this.owners;
+  get members(): readonly WeddingMemberState[] {
+    return this.memberList;
+  }
+
+  get memberIds(): readonly string[] {
+    return this.memberList.map((member) => member.userId);
   }
 
   get updatedAt(): string {
     return this.updatedAtValue;
   }
 
-  isAccessibleBy(userId: string): boolean {
-    return this.owners.includes(userId);
+  /** Role uživatele; `undefined` znamená, že k plánování nemá přístup. */
+  roleOf(userId: string): WeddingRole | undefined {
+    return this.memberList.find((member) => member.userId === userId)?.role;
   }
 
-  /** Vyhodí `forbidden`, pokud uživatel k plánování nemá přístup. */
-  assertAccessibleBy(userId: string): void {
-    if (!this.isAccessibleBy(userId)) {
-      throw DomainError.forbidden(weddingKeys.forbidden);
+  /** Vyhodí `forbidden`, pokud uživatel k plánování vůbec nemá přístup. */
+  assertCanRead(userId: string): WeddingRole {
+    const role = this.roleOf(userId);
+    if (!role) throw DomainError.forbidden(weddingKeys.forbidden);
+
+    return role;
+  }
+
+  /** Změna obsahu – snoubenci, hosté, položky plánování. Viewer neprojde. */
+  assertCanEdit(userId: string): void {
+    if (!canEditWedding(this.assertCanRead(userId))) {
+      throw DomainError.forbidden(weddingKeys.editForbidden);
     }
   }
 
-  /** Úprava názvu, data a snoubenců – na obrazovce Snoubenci je to jeden formulář. */
-  update(wedding: WeddingInput, clock: Clock): void {
-    this.titleValue = wedding.title;
-    this.weddingDateValue = wedding.weddingDate;
-    this.groomValue = { ...wedding.groom };
-    this.brideValue = { ...wedding.bride };
+  /** Nastavení, přístupy a smazání plánování – jen admin. */
+  assertCanManageSettings(userId: string): void {
+    if (!canManageWeddingSettings(this.assertCanRead(userId))) {
+      throw DomainError.forbidden(weddingKeys.settingsForbidden);
+    }
+  }
+
+  /** Snoubenci z obrazovky Snoubenci. */
+  updateCouple(couple: CoupleInput, clock: Clock): void {
+    this.groomValue = { ...couple.groom };
+    this.brideValue = { ...couple.bride };
     this.touch(clock);
   }
 
-  shareWith(userId: string, clock: Clock): void {
-    if (this.owners.includes(userId)) return;
-    this.owners.push(userId);
+  /** Název a datum z Nastavení. */
+  updateSettings(settings: WeddingSettingsInput, clock: Clock): void {
+    this.titleValue = settings.title;
+    this.weddingDateValue = settings.weddingDate;
     this.touch(clock);
+  }
+
+  addMember(userId: string, role: InvitableRole, clock: Clock): void {
+    if (this.roleOf(userId)) throw DomainError.conflict(weddingKeys.alreadyMember);
+
+    this.memberList.push({ userId, role, addedAt: clock.now().toISOString() });
+    this.touch(clock);
+  }
+
+  changeMemberRole(userId: string, role: InvitableRole, clock: Clock): void {
+    const member = this.requireMember(userId);
+    if (member.role === 'admin') throw DomainError.conflict(weddingKeys.adminRoleFixed);
+    if (member.role === role) return;
+
+    member.role = role;
+    this.touch(clock);
+  }
+
+  /** Odebere člena. Admina odebrat nejde – plánování by zůstalo bez správce. */
+  removeMember(userId: string, clock: Clock): void {
+    const member = this.requireMember(userId);
+    if (member.role === 'admin') throw DomainError.conflict(weddingKeys.adminRoleFixed);
+
+    this.memberList = this.memberList.filter((candidate) => candidate.userId !== userId);
+    this.touch(clock);
+  }
+
+  private requireMember(userId: string): WeddingMemberState {
+    const member = this.memberList.find((candidate) => candidate.userId === userId);
+    if (!member) throw DomainError.notFound(weddingKeys.memberNotFound);
+
+    return member;
   }
 
   /** Plánování patří jen tomuto uživateli – po jeho odchodu by nemělo majitele. */
-  isOwnedOnlyBy(userId: string): boolean {
-    return this.owners.length === 1 && this.owners[0] === userId;
+  isOnlyMember(userId: string): boolean {
+    return this.memberList.length === 1 && this.memberList[0]?.userId === userId;
   }
 
   /**
-   * Odebere vlastníka při smazání jeho účtu.
+   * Odebere člena při smazání jeho účtu.
    *
-   * Posledního vlastníka odebrat nejde – plánování bez majitele by nikdo neviděl
-   * ani nesmazal. Takové plánování se místo toho maže celé (`eraseUserWeddyData`).
+   * Když odchází admin a někdo zbývá, převezme roli nejdéle přidaný manager,
+   * jinak nejdéle přidaný viewer – jinak by plánování zůstalo bez správce
+   * a nikdo by ho nesmazal. Posledního člena odebrat nejde; takové plánování
+   * se maže celé (`eraseUserWeddyData`).
    */
-  removeOwner(userId: string, clock: Clock): void {
-    if (!this.owners.includes(userId)) return;
-    if (this.owners.length === 1) {
+  leave(userId: string, clock: Clock): void {
+    if (!this.roleOf(userId)) return;
+    if (this.memberList.length === 1) {
       throw DomainError.conflict(weddingKeys.lastOwner);
     }
 
-    this.owners = this.owners.filter((ownerId) => ownerId !== userId);
+    const leavingAdmin = this.roleOf(userId) === 'admin';
+    this.memberList = this.memberList.filter((member) => member.userId !== userId);
+
+    if (leavingAdmin) {
+      const successor = [...this.memberList].sort(
+        (a, b) =>
+          Number(b.role === 'manager') - Number(a.role === 'manager') ||
+          a.addedAt.localeCompare(b.addedAt),
+      )[0];
+
+      if (successor) successor.role = 'admin';
+    }
+
     this.touch(clock);
   }
 
@@ -135,7 +247,8 @@ export class Wedding {
       title: this.titleValue,
       groom: { ...this.groomValue },
       bride: { ...this.brideValue },
-      ownerIds: [...this.owners],
+      members: this.memberList.map((member) => ({ ...member })),
+      memberIds: [...this.memberIds],
       createdAt: this.createdAt,
       updatedAt: this.updatedAtValue,
     };
@@ -144,9 +257,9 @@ export class Wedding {
     return state;
   }
 
-  /** Tvar pro frontend – bez seznamu vlastníků. */
+  /** Tvar pro frontend – bez seznamu členů; roli doplní use-case podle volajícího. */
   toPublic(): WeddingData {
-    const { ownerIds: _ownerIds, ...rest } = this.toState();
+    const { members: _members, memberIds: _memberIds, ...rest } = this.toState();
     return rest;
   }
 }

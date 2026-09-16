@@ -19,7 +19,8 @@ import {
   eraseUserWeddyData,
   getWedding,
   listWeddings,
-  updateWedding,
+  updateCouple,
+  updateWeddingSettings,
 } from '../src/application/weddy/wedding.js';
 import { isDomainError } from '../src/domain/shared/DomainError.js';
 import { weddyTestDeps, validWedding, type WeddyTestContext } from './fakes.js';
@@ -34,18 +35,24 @@ async function withWedding(): Promise<{ deps: WeddyTestContext; weddingId: strin
 }
 
 describe('plánování svatby', () => {
-  it('vytvoří svatbu a nastaví zakladatele jako vlastníka', async () => {
+  it('vytvoří svatbu a ze zakladatele udělá admina', async () => {
     const { deps, weddingId } = await withWedding();
     const state = deps.weddings.items.get(weddingId);
 
-    assert.deepEqual(state?.ownerIds, [OWNER]);
+    assert.deepEqual(
+      state?.members.map((member) => [member.userId, member.role]),
+      [[OWNER, 'admin']],
+    );
+    assert.deepEqual(state?.memberIds, [OWNER]);
   });
 
-  it('odpověď pro frontend neobsahuje seznam vlastníků', async () => {
+  it('odpověď pro frontend nenese seznam členů, jen roli volajícího', async () => {
     const { deps, weddingId } = await withWedding();
     const wedding = await getWedding(deps, weddingId, OWNER);
 
-    assert.equal('ownerIds' in wedding, false);
+    assert.equal('members' in wedding, false);
+    assert.equal('memberIds' in wedding, false);
+    assert.equal(wedding.role, 'admin');
   });
 
   it('cizí uživatel svatbu nevidí', async () => {
@@ -60,7 +67,10 @@ describe('plánování svatby', () => {
   it('cizí uživatel svatbu nesmí upravit ani smazat', async () => {
     const { deps, weddingId } = await withWedding();
 
-    await assert.rejects(updateWedding(deps, weddingId, validWedding, STRANGER), isDomainError);
+    await assert.rejects(
+      updateCouple(deps, weddingId, { groom: validWedding.groom, bride: validWedding.bride }, STRANGER),
+      isDomainError,
+    );
     await assert.rejects(deleteWedding(deps, weddingId, STRANGER), isDomainError);
   });
 
@@ -433,7 +443,7 @@ describe('smazání dat uživatele při zrušení účtu', () => {
     await createGuest(deps, weddingId, { firstName: 'Eva', lastName: 'Malá', side: 'bride' }, OWNER);
     await createItem(deps, weddingId, { category: 'flowers', name: 'Kytice', price: 3000 }, OWNER);
 
-    await eraseUserWeddyData(deps, OWNER);
+    await eraseUserWeddyData(deps, { id: OWNER, email: 'owner@example.com' });
 
     assert.equal(deps.weddings.items.size, 0);
     assert.equal(deps.guests.items.size, 0);
@@ -445,19 +455,23 @@ describe('smazání dat uživatele při zrušení účtu', () => {
     await createGuest(deps, weddingId, { firstName: 'Eva', lastName: 'Malá', side: 'bride' }, OWNER);
     const wedding = await deps.weddings.findById(weddingId);
     assert.ok(wedding);
-    wedding.shareWith(STRANGER, deps.clock);
+    wedding.addMember(STRANGER, 'manager', deps.clock);
     await deps.weddings.save(wedding);
 
-    await eraseUserWeddyData(deps, OWNER);
+    await eraseUserWeddyData(deps, { id: OWNER, email: 'owner@example.com' });
 
-    assert.deepEqual(deps.weddings.items.get(weddingId)?.ownerIds, [STRANGER]);
+    // Po odchodu admina musí mít plánování zase správce.
+    assert.deepEqual(
+      deps.weddings.items.get(weddingId)?.members.map((member) => [member.userId, member.role]),
+      [[STRANGER, 'admin']],
+    );
     assert.equal(deps.guests.items.size, 1);
   });
 
   it('cizí plánování nechá být', async () => {
     const { deps, weddingId } = await withWedding();
 
-    await eraseUserWeddyData(deps, STRANGER);
+    await eraseUserWeddyData(deps, { id: STRANGER, email: 'stranger@example.com' });
 
     assert.ok(deps.weddings.items.has(weddingId));
   });

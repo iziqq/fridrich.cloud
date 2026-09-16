@@ -13,8 +13,10 @@ const props = withDefaults(
     hint?: string;
     required?: boolean;
     textarea?: boolean;
+    /** Jen ke čtení – používá se u role viewer. */
+    disabled?: boolean;
   }>(),
-  { type: 'text', numeric: false, required: false, textarea: false },
+  { type: 'text', numeric: false, required: false, textarea: false, disabled: false },
 );
 
 const model = defineModel<string>({ required: true });
@@ -43,6 +45,7 @@ const describedBy = computed(() => {
     <textarea
       v-if="textarea"
       :id="id"
+      :disabled="disabled"
       v-model="model"
       rows="3"
       :placeholder="placeholder"
@@ -54,6 +57,7 @@ const describedBy = computed(() => {
       v-else
       :id="id"
       v-model="model"
+      :disabled="disabled"
       :type="type"
       :inputmode="numeric ? 'numeric' : undefined"
       :placeholder="placeholder"
@@ -67,6 +71,13 @@ const describedBy = computed(() => {
 </template>
 
 <style scoped>
+input:disabled,
+textarea:disabled {
+  background: var(--sand-100);
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
 label {
   display: flex;
   gap: 0.5rem;

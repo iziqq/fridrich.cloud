@@ -49,7 +49,12 @@ const year = new Date().getFullYear();
 
 <style scoped>
 .site-footer {
-  margin-top: var(--section-gap);
+  /*
+   * Bez horního odsazení: obal aplikace je sloupec, ve kterém obsah vyplní
+   * zbytek okna (`style.css`), takže odstup od poslední sekce dělá její
+   * vlastní `padding-block: var(--section-gap)`. Pevná mezera navíc jen
+   * přetahovala krátké stránky přes okno a patička se ocitla pod přehybem.
+   */
   border-top: 1px solid var(--color-border);
   padding-block: var(--space-6) var(--space-4);
   background: var(--color-surface);

@@ -20,12 +20,28 @@ const weddingId = computed(() => String(route.params['weddingId'] ?? ''));
  */
 watch(weddingId, (id) => id && weddings.loadOne(id), { immediate: true });
 
-const tabs = computed(() => [
-  { to: weddyPath(`/weddings/${weddingId.value}/couple`), icon: '💑', label: t('weddy.layout.tabs.couple') },
-  { to: weddyPath(`/weddings/${weddingId.value}/guests`), icon: '👥', label: t('weddy.layout.tabs.guests') },
-  { to: weddyPath(`/weddings/${weddingId.value}/planning`), icon: '📋', label: t('weddy.layout.tabs.planning') },
-  { to: weddyPath(`/weddings/${weddingId.value}/budget`), icon: '💰', label: t('weddy.layout.tabs.budget') },
-]);
+/*
+ * Záložky. Nastavení vidí jen admin, takže manager i viewer mají o jednu
+ * méně – na mobilu je tak pořád co nejširší (doc/wiki/domains/weddyWedding.md).
+ */
+const tabs = computed(() => {
+  const base = [
+    { to: weddyPath(`/weddings/${weddingId.value}/couple`), icon: '💑', label: t('weddy.layout.tabs.couple') },
+    { to: weddyPath(`/weddings/${weddingId.value}/guests`), icon: '👥', label: t('weddy.layout.tabs.guests') },
+    { to: weddyPath(`/weddings/${weddingId.value}/planning`), icon: '📋', label: t('weddy.layout.tabs.planning') },
+    { to: weddyPath(`/weddings/${weddingId.value}/budget`), icon: '💰', label: t('weddy.layout.tabs.budget') },
+  ];
+
+  if (!weddings.canManageSettings) return base;
+
+  return [
+    ...base,
+    { to: weddyPath(`/weddings/${weddingId.value}/settings`), icon: '⚙️', label: t('weddy.layout.tabs.settings') },
+  ];
+});
+
+/** Viewer nesmí nic měnit – ať to ví dřív, než na něco klikne. */
+const readonly = computed(() => weddings.current !== null && !weddings.canEdit);
 
 const title = computed(() => weddings.current?.title ?? t('weddy.layout.fallbackTitle'));
 </script>
@@ -38,6 +54,7 @@ const title = computed(() => weddings.current?.title ?? t('weddy.layout.fallback
           <span aria-hidden="true">←</span>
         </RouterLink>
         <h1>{{ title }}</h1>
+        <span v-if="readonly" class="readonly">{{ t('weddy.layout.readonly') }}</span>
         <!-- Plánovač nemá navigaci portálu, jazyk se proto přepíná v horní liště. -->
         <LocaleSwitcher class="locale" />
       </div>
@@ -58,6 +75,16 @@ const title = computed(() => weddings.current?.title ?? t('weddy.layout.fallback
 </template>
 
 <style scoped>
+.readonly {
+  flex-shrink: 0;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--sand-100);
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .top {
   position: sticky;
   top: 0;
@@ -112,7 +139,10 @@ const title = computed(() => weddings.current?.title ?? t('weddy.layout.fallback
   inset: auto 0 0;
   z-index: 50;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* Počet záložek se liší podle role (admin jich má pět), proto auto-columns
+     – `repeat(var(--tab-count), …)` není platné CSS a rozpadlo by se to do řádků. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
   padding-bottom: env(safe-area-inset-bottom);

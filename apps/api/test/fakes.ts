@@ -3,7 +3,7 @@ import type { WeddingInput } from '@fridrich/weddy-shared';
 import type { IdentityDeps } from '../src/application/identity/deps.js';
 import type { WeddyDeps } from '../src/application/weddy/deps.js';
 import type { EmailAddress } from '../src/domain/identity/EmailAddress.js';
-import type { EmailMessage, EmailSender } from '../src/domain/identity/EmailSender.js';
+import type { EmailMessage, EmailSender } from '../src/domain/shared/EmailSender.js';
 import { LoginCode } from '../src/domain/identity/LoginCode.js';
 import { OneTimeToken } from '../src/domain/identity/OneTimeToken.js';
 import { Session } from '../src/domain/identity/Session.js';
@@ -16,6 +16,7 @@ import type {
   TokenGenerator,
   TokenRepository,
   UserDataEraser,
+  UserRegistrationListener,
   UserRepository,
 } from '../src/domain/identity/ports.js';
 import { Guest } from '../src/domain/weddy/guests/Guest.js';
@@ -24,6 +25,9 @@ import { PlanningItem } from '../src/domain/weddy/planning/PlanningItem.js';
 import type { PlanningItemRepository } from '../src/domain/weddy/planning/PlanningItemRepository.js';
 import { Wedding } from '../src/domain/weddy/wedding/Wedding.js';
 import type { WeddingRepository } from '../src/domain/weddy/wedding/WeddingRepository.js';
+import { WeddingInvitation } from '../src/domain/weddy/wedding/WeddingInvitation.js';
+import type { WeddingInvitationRepository } from '../src/domain/weddy/wedding/WeddingInvitationRepository.js';
+import type { DirectoryUser, UserDirectory } from '../src/domain/weddy/wedding/UserDirectory.js';
 import { FixedClock } from '../src/domain/shared/Clock.js';
 
 /**
@@ -203,8 +207,17 @@ export class CountingRateLimiter implements RateLimiter {
 export class RecordingUserDataEraser implements UserDataEraser {
   readonly erasedUserIds: string[] = [];
 
-  async eraseUserData(userId: string): Promise<void> {
-    this.erasedUserIds.push(userId);
+  async eraseUserData(user: { id: string; email: string }): Promise<void> {
+    this.erasedUserIds.push(user.id);
+  }
+}
+
+/** Zapamatuje si nové účty – test ověří, že se produkty o registraci dozvěděly. */
+export class RecordingRegistrationListener implements UserRegistrationListener {
+  readonly registered: { id: string; email: string }[] = [];
+
+  async onUserRegistered(user: { id: string; email: string }): Promise<void> {
+    this.registered.push(user);
   }
 }
 
@@ -218,9 +231,9 @@ export class InMemoryWeddingRepository implements WeddingRepository {
     return state ? Wedding.fromState(state) : undefined;
   }
 
-  async listForOwner(ownerId: string): Promise<Wedding[]> {
+  async listForMember(userId: string): Promise<Wedding[]> {
     return [...this.items.values()]
-      .filter((state) => state.ownerIds.includes(ownerId))
+      .filter((state) => state.memberIds.includes(userId))
       .map((state) => Wedding.fromState(state));
   }
 
@@ -299,6 +312,59 @@ export class InMemoryItemRepository implements PlanningItemRepository {
   }
 }
 
+export class InMemoryWeddingInvitationRepository implements WeddingInvitationRepository {
+  readonly items = new Map<string, ReturnType<WeddingInvitation['toState']>>();
+
+  async listForWedding(weddingId: string): Promise<WeddingInvitation[]> {
+    return [...this.items.values()]
+      .filter((state) => state.weddingId === weddingId)
+      .map((state) => WeddingInvitation.fromState(state));
+  }
+
+  async listForEmail(email: string): Promise<WeddingInvitation[]> {
+    return [...this.items.values()]
+      .filter((state) => state.email === email)
+      .map((state) => WeddingInvitation.fromState(state));
+  }
+
+  async findById(weddingId: string, invitationId: string): Promise<WeddingInvitation | undefined> {
+    const state = this.items.get(invitationId);
+    return state && state.weddingId === weddingId ? WeddingInvitation.fromState(state) : undefined;
+  }
+
+  async save(invitation: WeddingInvitation): Promise<void> {
+    this.items.set(invitation.id, invitation.toState());
+  }
+
+  async delete(_weddingId: string, invitationId: string): Promise<void> {
+    this.items.delete(invitationId);
+  }
+
+  async deleteAllForWedding(weddingId: string): Promise<void> {
+    for (const [id, state] of this.items) {
+      if (state.weddingId === weddingId) this.items.delete(id);
+    }
+  }
+}
+
+/** Náhrada portu do identity – test si účty naplní sám. */
+export class FakeUserDirectory implements UserDirectory {
+  readonly users = new Map<string, DirectoryUser>();
+
+  add(user: DirectoryUser): DirectoryUser {
+    this.users.set(user.id, user);
+    return user;
+  }
+
+  async findByEmail(email: string): Promise<DirectoryUser | undefined> {
+    return [...this.users.values()].find((user) => user.email === email);
+  }
+
+  async findByIds(ids: readonly string[]): Promise<DirectoryUser[]> {
+    return ids.map((id) => this.users.get(id)).filter((user) => user !== undefined);
+  }
+}
+
 /* --- Sestavení závislostí pro testy --- */
 
 export interface IdentityTestContext extends IdentityDeps {
@@ -311,10 +377,12 @@ export interface IdentityTestContext extends IdentityDeps {
   rateLimiter: CountingRateLimiter;
   clock: FixedClock;
   eraser: RecordingUserDataEraser;
+  registrationListener: RecordingRegistrationListener;
 }
 
 export function identityTestDeps(): IdentityTestContext {
   const eraser = new RecordingUserDataEraser();
+  const registrationListener = new RecordingRegistrationListener();
   return {
     users: new InMemoryUserRepository(),
     tokens: new InMemoryTokenRepository(),
@@ -327,6 +395,8 @@ export function identityTestDeps(): IdentityTestContext {
     rateLimiter: new CountingRateLimiter(),
     eraser,
     userDataErasers: [eraser],
+    registrationListener,
+    userRegistrationListeners: [registrationListener],
   };
 }
 
@@ -334,6 +404,9 @@ export interface WeddyTestContext extends WeddyDeps {
   weddings: InMemoryWeddingRepository;
   guests: InMemoryGuestRepository;
   items: InMemoryItemRepository;
+  invitations: InMemoryWeddingInvitationRepository;
+  directory: FakeUserDirectory;
+  email: CollectingEmailSender;
   clock: FixedClock;
 }
 
@@ -342,6 +415,10 @@ export function weddyTestDeps(): WeddyTestContext {
     weddings: new InMemoryWeddingRepository(),
     guests: new InMemoryGuestRepository(),
     items: new InMemoryItemRepository(),
+    invitations: new InMemoryWeddingInvitationRepository(),
+    directory: new FakeUserDirectory(),
+    email: new CollectingEmailSender(),
+    appUrl: 'https://www.fridrich.cloud',
     ids: new SequentialIds(),
     clock: new FixedClock(new Date('2026-01-01T10:00:00.000Z')),
   };

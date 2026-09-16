@@ -56,6 +56,12 @@ export const weddyRoutes: RouteRecordRaw[] = [
             component: () => import('./planning/PlanningCategoryView.vue'),
           },
           { path: 'budget', name: 'weddy-budget', component: () => import('./budget/BudgetView.vue') },
+          // Nastavení vidí jen admin; ostatní role pošle obrazovka zpět na Snoubence.
+          {
+            path: 'settings',
+            name: 'weddy-settings',
+            component: () => import('./wedding/SettingsView.vue'),
+          },
         ],
       },
       {

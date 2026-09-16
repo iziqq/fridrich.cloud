@@ -32,7 +32,13 @@ import { createWeddingEndpoint } from './endpoints/weddy/wedding/createWedding.e
 import { deleteWeddingEndpoint } from './endpoints/weddy/wedding/deleteWedding.endpoint.js';
 import { getWeddingEndpoint } from './endpoints/weddy/wedding/getWedding.endpoint.js';
 import { listWeddingsEndpoint } from './endpoints/weddy/wedding/listWeddings.endpoint.js';
-import { updateWeddingEndpoint } from './endpoints/weddy/wedding/updateWedding.endpoint.js';
+import { updateCoupleEndpoint } from './endpoints/weddy/wedding/updateCouple.endpoint.js';
+import { updateWeddingSettingsEndpoint } from './endpoints/weddy/wedding/updateWeddingSettings.endpoint.js';
+import { cancelWeddingInvitationEndpoint } from './endpoints/weddy/access/cancelWeddingInvitation.endpoint.js';
+import { changeWeddingMemberRoleEndpoint } from './endpoints/weddy/access/changeWeddingMemberRole.endpoint.js';
+import { inviteToWeddingEndpoint } from './endpoints/weddy/access/inviteToWedding.endpoint.js';
+import { listWeddingAccessEndpoint } from './endpoints/weddy/access/listWeddingAccess.endpoint.js';
+import { removeWeddingMemberEndpoint } from './endpoints/weddy/access/removeWeddingMember.endpoint.js';
 import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 import { registerEndpoints } from './http/endpoint.js';
 
@@ -57,8 +63,16 @@ const personalDataEndpoints = [
   listWeddingsEndpoint,
   createWeddingEndpoint,
   getWeddingEndpoint,
-  updateWeddingEndpoint,
+  updateCoupleEndpoint,
+  updateWeddingSettingsEndpoint,
   deleteWeddingEndpoint,
+
+  // weddy / access
+  listWeddingAccessEndpoint,
+  inviteToWeddingEndpoint,
+  changeWeddingMemberRoleEndpoint,
+  removeWeddingMemberEndpoint,
+  cancelWeddingInvitationEndpoint,
 
   // weddy / guests
   listGuestsEndpoint,

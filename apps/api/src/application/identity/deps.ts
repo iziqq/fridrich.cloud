@@ -7,9 +7,10 @@ import type {
   TokenGenerator,
   TokenRepository,
   UserDataEraser,
+  UserRegistrationListener,
   UserRepository,
 } from '../../domain/identity/ports.js';
-import type { EmailSender } from '../../domain/identity/EmailSender.js';
+import type { EmailSender } from '../../domain/shared/EmailSender.js';
 
 /** Závislosti use-casů modulu identity – předávají se explicitně, ne importem. */
 export interface IdentityDeps {
@@ -24,4 +25,6 @@ export interface IdentityDeps {
   rateLimiter: RateLimiter;
   /** Mazání dat uživatele v produktech (IziWeddy, …) při smazání účtu. */
   userDataErasers: UserDataEraser[];
+  /** Produkty, které chtějí vědět o novém účtu (čekající pozvánky do plánování). */
+  userRegistrationListeners: UserRegistrationListener[];
 }
