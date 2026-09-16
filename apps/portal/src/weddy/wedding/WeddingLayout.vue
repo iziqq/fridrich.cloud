@@ -81,7 +81,7 @@ const title = computed(() => weddings.current?.title ?? t('weddy.layout.fallback
   border-radius: 999px;
   background: var(--sand-100);
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
@@ -156,7 +156,7 @@ const title = computed(() => weddings.current?.title ?? t('weddy.layout.fallback
   justify-content: center;
   min-height: var(--bottom-nav);
   color: var(--color-muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease);

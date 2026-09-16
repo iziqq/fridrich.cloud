@@ -261,7 +261,7 @@ textarea {
 
 .consent {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .consent a {
@@ -306,6 +306,6 @@ textarea {
 
 .field .error,
 .status {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 </style>

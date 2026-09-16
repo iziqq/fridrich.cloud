@@ -131,6 +131,18 @@ export class Wedding {
     return this.memberList;
   }
 
+  /**
+   * Správce plánování – ten, kdo ho založil, případně jeho nástupce.
+   *
+   * Plánování má admina vždy právě jednoho: odchodem se role předá dál
+   * (`leave`), takže tahle hodnota nikdy nechybí u plánování, které existuje.
+   */
+  get adminId(): string {
+    const admin = this.memberList.find((member) => member.role === 'admin');
+    if (!admin) throw new Error(`Plánování ${this.id} nemá admina.`);
+    return admin.userId;
+  }
+
   get memberIds(): readonly string[] {
     return this.memberList.map((member) => member.userId);
   }

@@ -23,6 +23,17 @@ async function loadEntry(deps: BudgyDeps, entryId: string, userId: string): Prom
   return entry;
 }
 
+/**
+ * Zápis z jiné aplikace mění jen ta aplikace.
+ *
+ * Úprava v rozpočtu by vydržela jen do příštího uložení tam a smazaný zápis
+ * by se při něm vrátil – uživatel by nerozuměl, proč. Odmítnutí s vysvětlením
+ * je poctivější.
+ */
+function assertEditable(entry: BudgetEntry): void {
+  if (entry.source) throw DomainError.conflict(entriesKeys.entryManaged);
+}
+
 export async function createEntry(
   deps: BudgyDeps,
   input: BudgetEntryInput,
@@ -46,6 +57,7 @@ export async function updateEntry(
   userId: string,
 ): Promise<EntryData> {
   const entry = await loadEntry(deps, entryId, userId);
+  assertEditable(entry);
   entry.update(input, deps.clock);
 
   await deps.entries.save(entry);
@@ -58,6 +70,7 @@ export async function deleteEntry(
   userId: string,
 ): Promise<void> {
   const entry = await loadEntry(deps, entryId, userId);
+  assertEditable(entry);
   await deps.entries.delete(entry.userId, entry.id);
 }
 

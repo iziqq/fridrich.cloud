@@ -97,14 +97,14 @@ export const privacyPolicy: LegalDocument = {
             ],
             [
               'Aplikace IziWeddy',
-              'název a datum svatby; jméno a příjmení snoubenců; jméno, příjmení, strana, věková skupina, stav pozvání, rodina a poznámka u hostů; položky příprav (název, odkaz, cena, stav)',
+              'název a datum svatby; jméno a příjmení snoubenců; jméno, příjmení, strana, věková skupina, stav pozvání, rodina a poznámka u hostů; položky příprav a balíčky (název, odkaz, cena, stav, záloha a její úhrada, úhrada celé platby)',
               'Poskytování aplikace podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Údaje snoubenců a hostů zadává uživatel a zpracovávám je jen proto, aby mu aplikace fungovala.',
               'Do smazání plánování nebo účtu, včetně automatického smazání neaktivního účtu.',
             ],
             [
               'Aplikace IziBudgy',
-              'položky rozpočtu domácnosti – název, částka, kategorie, datum nebo platnost od–do a poznámka; příjmy i výdaje',
-              'Poskytování aplikace podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Rozpočet vidí jen ten, kdo ho zadal; nesdílí se s nikým dalším.',
+              'položky rozpočtu domácnosti – název, částka, kategorie, datum nebo platnost od–do a poznámka; příjmy, výdaje i investice; u správce plánování v IziWeddy také uhrazené zálohy a platby z plánování (název položky nebo balíčku, částka, datum)',
+              'Poskytování aplikace podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Rozpočet vidí jen jeho vlastník; nesdílí se s nikým dalším. Platby z IziWeddy se do něj propisují, aby měl správce svatby výdaje na jednom místě.',
               'Do smazání položky nebo účtu, včetně automatického smazání neaktivního účtu.',
             ],
             [

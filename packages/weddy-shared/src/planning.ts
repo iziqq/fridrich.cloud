@@ -50,6 +50,8 @@ const cs = {
   priceInvalid: 'Cena musí být kladné číslo',
   itemNotFound: 'Položka neexistuje',
   bundleNotFound: 'Balíček neexistuje',
+  depositInvalid: 'Záloha musí být kladná částka',
+  depositOverPrice: 'Záloha nemůže být vyšší než cena',
 };
 
 const en: Catalog<typeof cs> = {
@@ -76,6 +78,8 @@ const en: Catalog<typeof cs> = {
   priceInvalid: 'The price must be a positive number',
   itemNotFound: 'The item does not exist',
   bundleNotFound: 'The bundle does not exist',
+  depositInvalid: 'The deposit must be a positive amount',
+  depositOverPrice: 'The deposit cannot be higher than the price',
 };
 
 /** Hlášky a popisky subdomény `planning` – jmenný prostor `weddyShared.planning`. */
@@ -111,6 +115,38 @@ export type PlanningCategory = v.InferOutput<typeof PlanningCategorySchema>;
 export const PlanningItemStatusSchema = v.picklist(PLANNING_ITEM_STATUSES, planningKeys.statusInvalid);
 export type PlanningItemStatus = v.InferOutput<typeof PlanningItemStatusSchema>;
 
+/* --- Platby --- */
+
+/**
+ * Záloha u položky nebo balíčku – kolik a jestli je uhrazená.
+ *
+ * Jen u věcí s vlastní cenou: položka v balíčku zálohu nemá, platí se
+ * balíček (stejně jako u ceny a stavu).
+ */
+export const DepositSchema = v.object({
+  /** V CZK, celé koruny. */
+  amount: v.number(),
+  paid: v.boolean(),
+});
+export type Deposit = v.InferOutput<typeof DepositSchema>;
+
+/** Cena z formuláře – koruny, nula až strop, zaokrouhlená. */
+function priceInput(min: number, message: string) {
+  return v.pipe(
+    v.number(message),
+    v.finite(message),
+    v.minValue(min, message),
+    v.maxValue(PRICE_MAX, message),
+    v.transform(Math.round),
+  );
+}
+
+/** Záloha z formuláře. Zaškrtnuté políčko „Záloha" = objekt je, jinak chybí. */
+export const DepositInputSchema = v.object({
+  amount: priceInput(1, planningKeys.depositInvalid),
+  paid: v.optional(v.boolean()),
+});
+
 /* --- Položka --- */
 
 export const PlanningItemSchema = v.object({
@@ -125,6 +161,9 @@ export const PlanningItemSchema = v.object({
   status: PlanningItemStatusSchema,
   /** Balíček, ve kterém je položka zahrnutá. */
   bundleId: v.optional(v.string()),
+  deposit: v.optional(DepositSchema),
+  /** Zaplaceno celé. Chybí u dokumentů z doby před platbami – znamená ne. */
+  paid: v.optional(v.boolean()),
   createdAt: v.string(),
   updatedAt: v.string(),
 });
@@ -144,18 +183,21 @@ export const PlanningItemInputSchema = v.pipe(
     category: PlanningCategorySchema,
     name: optionalText(NAME_MAX, planningKeys.nameTooLong),
     url: optionalHttpUrl(URL_MAX, planningKeys.urlInvalid),
-    price: v.optional(
-      v.pipe(
-        v.number(PRICE_MESSAGE),
-        v.finite(PRICE_MESSAGE),
-        v.minValue(0, PRICE_MESSAGE),
-        v.maxValue(PRICE_MAX, PRICE_MESSAGE),
-        v.transform(Math.round),
-      ),
-    ),
+    price: v.optional(priceInput(0, PRICE_MESSAGE)),
     status: v.optional(PlanningItemStatusSchema),
     bundleId: v.optional(v.string()),
+    deposit: v.optional(DepositInputSchema),
+    paid: v.optional(v.boolean()),
   }),
+  // Záloha nesmí přerůst cenu – chyba sedí na poli částky zálohy.
+  v.forward(
+    v.check(
+      (input) =>
+        !input.deposit || input.price === undefined || input.deposit.amount <= input.price,
+      planningKeys.depositOverPrice,
+    ),
+    ['deposit', 'amount'],
+  ),
   v.forward(
     v.check(
       (input) => Boolean(input.bundleId) || Boolean(input.name),
@@ -176,26 +218,34 @@ export const PlanningBundleSchema = v.object({
   /** V CZK, celé koruny – jedna cena za všechno, co balíček obsahuje. */
   price: v.optional(v.number()),
   status: PlanningItemStatusSchema,
+  deposit: v.optional(DepositSchema),
+  /** Zaplaceno celé. Chybí u dokumentů z doby před platbami – znamená ne. */
+  paid: v.optional(v.boolean()),
   createdAt: v.string(),
   updatedAt: v.string(),
 });
 export type PlanningBundle = v.InferOutput<typeof PlanningBundleSchema>;
 
 /** Balíček z formuláře. Sekce se nezadávají – vyplynou z položek, které do něj patří. */
-export const PlanningBundleInputSchema = v.object({
-  name: requiredText(planningKeys.nameRequired, NAME_MAX, planningKeys.nameTooLong),
-  url: optionalHttpUrl(URL_MAX, planningKeys.urlInvalid),
-  price: v.optional(
-    v.pipe(
-      v.number(PRICE_MESSAGE),
-      v.finite(PRICE_MESSAGE),
-      v.minValue(0, PRICE_MESSAGE),
-      v.maxValue(PRICE_MAX, PRICE_MESSAGE),
-      v.transform(Math.round),
+export const PlanningBundleInputSchema = v.pipe(
+  v.object({
+    name: requiredText(planningKeys.nameRequired, NAME_MAX, planningKeys.nameTooLong),
+    url: optionalHttpUrl(URL_MAX, planningKeys.urlInvalid),
+    price: v.optional(priceInput(0, PRICE_MESSAGE)),
+    status: v.optional(PlanningItemStatusSchema),
+    deposit: v.optional(DepositInputSchema),
+    paid: v.optional(v.boolean()),
+  }),
+  // Záloha nesmí přerůst cenu – chyba sedí na poli částky zálohy.
+  v.forward(
+    v.check(
+      (input) =>
+        !input.deposit || input.price === undefined || input.deposit.amount <= input.price,
+      planningKeys.depositOverPrice,
     ),
+    ['deposit', 'amount'],
   ),
-  status: v.optional(PlanningItemStatusSchema),
-});
+);
 export type PlanningBundleInput = v.InferOutput<typeof PlanningBundleInputSchema>;
 
 /**
@@ -227,6 +277,55 @@ export function itemTitle(
   if (!item.bundleId) return '';
 
   return bundles.find((bundle) => bundle.id === item.bundleId)?.name ?? '';
+}
+
+/**
+ * Kolik je z ceny už zaplaceno.
+ *
+ * Zaplaceno celé → celá cena; jinak uhrazená záloha; jinak nic. „Zaplaceno
+ * celé" v sobě zálohu zahrnuje – kdo zaplatil všechno, zaplatil i ji – a
+ * uložená záloha se kvůli tomu nepřepisuje, aby se po odškrtnutí vrátila.
+ * Bez ceny nelze říct, kolik z ní odešlo, takže se nepočítá nic.
+ */
+export function paidAmount(entry: {
+  price?: number;
+  paid?: boolean;
+  deposit?: Deposit;
+}): number {
+  if (entry.price === undefined) return entry.deposit?.paid ? entry.deposit.amount : 0;
+  if (entry.paid) return entry.price;
+  return entry.deposit?.paid ? Math.min(entry.deposit.amount, entry.price) : 0;
+}
+
+/**
+ * Uhrazené platby jedné věci – tak, jak se mají propsat do rozpočtu.
+ *
+ * Záloha a doplatek jsou dvě platby: odešly v jiné dny a v rozpočtu mají být
+ * dvě. Když je celé zaplaceno bez uhrazené zálohy, je to jedna platba za celou
+ * cenu. Celá platba potřebuje cenu (bez ní není co propsat), záloha má vlastní
+ * částku. Součet nikdy nepřeroste cenu, takže se nic nezapočte dvakrát.
+ */
+export function paidParts(entry: {
+  price?: number;
+  paid?: boolean;
+  deposit?: Deposit;
+}): { part: 'deposit' | 'rest' | 'full'; amount: number }[] {
+  const parts: { part: 'deposit' | 'rest' | 'full'; amount: number }[] = [];
+
+  const depositPaid = entry.deposit?.paid === true && entry.deposit.amount > 0;
+  const deposit = depositPaid
+    ? Math.min(entry.deposit!.amount, entry.price ?? entry.deposit!.amount)
+    : 0;
+
+  if (deposit > 0) parts.push({ part: 'deposit', amount: deposit });
+
+  if (entry.paid && entry.price !== undefined) {
+    const rest = entry.price - deposit;
+    if (depositPaid && rest > 0) parts.push({ part: 'rest', amount: rest });
+    else if (!depositPaid && entry.price > 0) parts.push({ part: 'full', amount: entry.price });
+  }
+
+  return parts;
 }
 
 /** Sekce, které balíček pokrývá – odvozené ze sekcí jeho položek, v pořadí výčtu. */

@@ -177,7 +177,7 @@ async function submit(): Promise<void> {
 
 .saved {
   color: var(--color-success);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 @media (--tablet) {

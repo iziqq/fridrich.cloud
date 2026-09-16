@@ -167,7 +167,7 @@ form,
 
 .info {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .ok {

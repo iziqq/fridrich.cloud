@@ -181,7 +181,7 @@ watch(open, (isOpen) => {
 .label {
   display: block;
   margin-bottom: 0.35rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -198,7 +198,7 @@ watch(open, (isOpen) => {
   background: var(--color-surface);
   color: var(--color-text);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   text-align: left;
   cursor: pointer;
   transition:
@@ -265,7 +265,7 @@ watch(open, (isOpen) => {
   min-height: 2.5rem;
   padding: 0.5rem 0.65rem;
   border-radius: calc(var(--radius-sm) - 4px);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 

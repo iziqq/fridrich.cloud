@@ -83,13 +83,13 @@ label {
   gap: 0.5rem;
   align-items: baseline;
   margin-bottom: 0.35rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
 .optional {
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 400;
 }
 
@@ -121,7 +121,7 @@ textarea {
 .hint,
 .error {
   margin-top: 0.3rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .hint {

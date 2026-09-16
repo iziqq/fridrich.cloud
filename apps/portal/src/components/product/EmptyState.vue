@@ -34,7 +34,7 @@ defineProps<{ icon?: string; title: string; description?: string }>();
   margin: 0.35rem auto 0;
   max-width: 34ch;
   color: var(--color-muted);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
 }
 
 .action {

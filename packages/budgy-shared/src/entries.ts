@@ -31,6 +31,7 @@ const cs = {
     entertainment: 'Zábava',
     health: 'Zdraví',
     children: 'Děti',
+    wedding: 'Svatba',
     other: 'Ostatní',
   },
   kindInvalid: 'Neplatný druh položky',
@@ -46,6 +47,9 @@ const cs = {
   dateRequired: 'Vyplňte datum',
   rangeReversed: 'Konec nemůže být dřív než začátek',
   entryNotFound: 'Položka neexistuje',
+  entryManaged: 'Tuhle položku spravuje jiná aplikace – upravte ji tam',
+  sourcePart: { deposit: 'záloha', rest: 'doplatek', full: 'platba' },
+  sourceApp: { weddy: 'IziWeddy' },
 };
 
 const en: Catalog<typeof cs> = {
@@ -62,6 +66,7 @@ const en: Catalog<typeof cs> = {
     entertainment: 'Entertainment',
     health: 'Health',
     children: 'Children',
+    wedding: 'Wedding',
     other: 'Other',
   },
   kindInvalid: 'Invalid entry kind',
@@ -77,6 +82,9 @@ const en: Catalog<typeof cs> = {
   dateRequired: 'Please enter a date',
   rangeReversed: 'The end cannot be before the start',
   entryNotFound: 'The entry does not exist',
+  entryManaged: 'This entry is managed by another app – change it there',
+  sourcePart: { deposit: 'deposit', rest: 'remaining payment', full: 'payment' },
+  sourceApp: { weddy: 'IziWeddy' },
 };
 
 /** Hlášky a popisky subdomény `entries` – jmenný prostor `budgyShared.entries`. */
@@ -113,6 +121,8 @@ export const EXPENSE_CATEGORIES = [
   'entertainment',
   'health',
   'children',
+  // Platby propsané z IziWeddy – svatba stojí tolik, že v „Ostatní" by přebila všechno.
+  'wedding',
   'other',
 ] as const;
 
@@ -159,6 +169,32 @@ export function shiftMonth(month: Month, delta: number): Month {
   return `${String(shiftedYear).padStart(4, '0')}-${String(shiftedMonth + 1).padStart(2, '0')}`;
 }
 
+/* --- Původ položky --- */
+
+export const ENTRY_SOURCE_APPS = ['weddy'] as const;
+export const ENTRY_SOURCE_PARTS = ['deposit', 'rest', 'full'] as const;
+
+/**
+ * Odkud položka přišla, když ji nezadal uživatel, ale jiná aplikace.
+ *
+ * Takovou položku spravuje ta aplikace: podle `ref` + `part` ji najde a
+ * srovná s tím, co je u ní uhrazené, takže ji uživatel v rozpočtu nemění
+ * ani nemaže – změnil by ji jen do příštího uložení tam. Obecný tvar
+ * (aplikace, odkaz, část), ne svatební pojmy: rozpočet nemá vědět, co je
+ * balíček nebo záloha plánování, jen že má zápis z jiného místa.
+ */
+export const BudgetEntrySourceSchema = v.object({
+  app: v.picklist(ENTRY_SOURCE_APPS),
+  /** Odkaz na věc v té aplikaci, např. `wedding:w1:item:i2`. */
+  ref: v.string(),
+  /** Která platba to je – u jedné věci jich může být víc (záloha a doplatek). */
+  part: v.picklist(ENTRY_SOURCE_PARTS),
+  /** Cesta v portálu, kam zápis prokliká. */
+  path: v.optional(v.string()),
+});
+export type BudgetEntrySource = v.InferOutput<typeof BudgetEntrySourceSchema>;
+export type EntrySourcePart = (typeof ENTRY_SOURCE_PARTS)[number];
+
 /* --- Položka --- */
 
 export const BudgetEntrySchema = v.object({
@@ -176,6 +212,8 @@ export const BudgetEntrySchema = v.object({
   startsOn: v.optional(v.string()),
   endsOn: v.optional(v.string()),
   note: v.optional(v.string()),
+  /** Jen u zápisů z jiné aplikace – viz `BudgetEntrySourceSchema`. */
+  source: v.optional(BudgetEntrySourceSchema),
   createdAt: v.string(),
   updatedAt: v.string(),
 });

@@ -6,16 +6,56 @@ import type {
   PlanningItemInput,
   PlanningItemStatus,
 } from '@fridrich/weddy-shared';
-import { planningKeys } from '@fridrich/weddy-shared';
+import { paidParts, planningKeys } from '@fridrich/weddy-shared';
 import { DomainError } from '../../domain/shared/DomainError.js';
 import { PlanningBundle } from '../../domain/weddy/planning/PlanningBundle.js';
 import { PlanningItem } from '../../domain/weddy/planning/PlanningItem.js';
+import type { Wedding } from '../../domain/weddy/wedding/Wedding.js';
+import { bundleRef, itemRef } from './paymentRefs.js';
 import { loadWeddingFor } from './wedding.js';
 import type { WeddyDeps } from './deps.js';
 
 /*
  * Use-casy subdomény `planning` – položky v sekcích přípravy a balíčky.
  */
+
+/* --- Propsání plateb (port `PaymentLedger`) --- */
+
+/**
+ * Srovná uhrazené platby položky s rozpočtem správce plánování.
+ *
+ * Volá se po každém uložení, ne jen když se změnilo zaškrtnutí: změní se
+ * i cena nebo výše zálohy a zápis v rozpočtu musí sedět. Rozpočet porovnává
+ * sám, takže zbytečné volání nic nezmění.
+ */
+async function syncItemPayments(deps: WeddyDeps, wedding: Wedding, item: PlanningItem): Promise<void> {
+  const state = item.toState();
+
+  await deps.ledger.record({
+    ownerId: wedding.adminId,
+    ref: itemRef(wedding.id, item.id),
+    path: `/izi-weddy/weddings/${wedding.id}/planning/${state.category}`,
+    name: state.name ?? '',
+    // Položka v balíčku se neplatí – `paidParts` pro ni vrátí prázdný seznam.
+    payments: state.bundleId ? [] : paidParts(state),
+  });
+}
+
+async function syncBundlePayments(
+  deps: WeddyDeps,
+  wedding: Wedding,
+  bundle: PlanningBundle,
+): Promise<void> {
+  const state = bundle.toState();
+
+  await deps.ledger.record({
+    ownerId: wedding.adminId,
+    ref: bundleRef(wedding.id, bundle.id),
+    path: `/izi-weddy/weddings/${wedding.id}/planning/bundles/${bundle.id}`,
+    name: state.name,
+    payments: paidParts(state),
+  });
+}
 
 export async function listItems(
   deps: WeddyDeps,
@@ -33,13 +73,13 @@ async function loadItem(
   weddingId: string,
   itemId: string,
   userId: string,
-): Promise<PlanningItem> {
+): Promise<{ wedding: Wedding; item: PlanningItem }> {
   const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
 
   const item = await deps.items.findById(wedding.id, itemId);
   if (!item) throw DomainError.notFound(planningKeys.itemNotFound);
 
-  return item;
+  return { wedding, item };
 }
 
 /**
@@ -76,6 +116,7 @@ export async function createItem(
   });
 
   await deps.items.save(item);
+  await syncItemPayments(deps, wedding, item);
   return item.toState();
 }
 
@@ -86,11 +127,12 @@ export async function updateItem(
   input: PlanningItemInput,
   userId: string,
 ): Promise<ItemData> {
-  const item = await loadItem(deps, weddingId, itemId, userId);
+  const { wedding, item } = await loadItem(deps, weddingId, itemId, userId);
   await assertBundleExists(deps, item.weddingId, input.bundleId);
   item.update(input, deps.clock);
 
   await deps.items.save(item);
+  await syncItemPayments(deps, wedding, item);
   return item.toState();
 }
 
@@ -101,7 +143,7 @@ export async function changeItemStatus(
   status: PlanningItemStatus,
   userId: string,
 ): Promise<ItemData> {
-  const item = await loadItem(deps, weddingId, itemId, userId);
+  const { item } = await loadItem(deps, weddingId, itemId, userId);
   item.changeStatus(status, deps.clock);
 
   await deps.items.save(item);
@@ -114,8 +156,11 @@ export async function deleteItem(
   itemId: string,
   userId: string,
 ): Promise<void> {
-  const item = await loadItem(deps, weddingId, itemId, userId);
+  const { item } = await loadItem(deps, weddingId, itemId, userId);
   await deps.items.delete(item.weddingId, item.id);
+
+  // Peníze odešly i za smazanou položku – v rozpočtu zůstanou jako běžný výdaj.
+  await deps.ledger.release(itemRef(item.weddingId, item.id));
 }
 
 /* --- Balíčky --- */
@@ -135,13 +180,13 @@ async function loadBundle(
   weddingId: string,
   bundleId: string,
   userId: string,
-): Promise<PlanningBundle> {
+): Promise<{ wedding: Wedding; bundle: PlanningBundle }> {
   const wedding = await loadWeddingFor(deps, weddingId, userId, 'edit');
 
   const bundle = await deps.bundles.findById(wedding.id, bundleId);
   if (!bundle) throw DomainError.notFound(planningKeys.bundleNotFound);
 
-  return bundle;
+  return { wedding, bundle };
 }
 
 export async function createBundle(
@@ -160,6 +205,7 @@ export async function createBundle(
   });
 
   await deps.bundles.save(bundle);
+  await syncBundlePayments(deps, wedding, bundle);
   return bundle.toState();
 }
 
@@ -170,10 +216,11 @@ export async function updateBundle(
   input: PlanningBundleInput,
   userId: string,
 ): Promise<BundleData> {
-  const bundle = await loadBundle(deps, weddingId, bundleId, userId);
+  const { wedding, bundle } = await loadBundle(deps, weddingId, bundleId, userId);
   bundle.update(input, deps.clock);
 
   await deps.bundles.save(bundle);
+  await syncBundlePayments(deps, wedding, bundle);
   return bundle.toState();
 }
 
@@ -184,7 +231,7 @@ export async function changeBundleStatus(
   status: PlanningItemStatus,
   userId: string,
 ): Promise<BundleData> {
-  const bundle = await loadBundle(deps, weddingId, bundleId, userId);
+  const { bundle } = await loadBundle(deps, weddingId, bundleId, userId);
   bundle.changeStatus(status, deps.clock);
 
   await deps.bundles.save(bundle);
@@ -204,7 +251,7 @@ export async function deleteBundle(
   bundleId: string,
   userId: string,
 ): Promise<void> {
-  const bundle = await loadBundle(deps, weddingId, bundleId, userId);
+  const { bundle } = await loadBundle(deps, weddingId, bundleId, userId);
 
   const items = await deps.items.list(bundle.weddingId);
   for (const item of items.filter((item) => item.bundleId === bundle.id)) {
@@ -213,4 +260,5 @@ export async function deleteBundle(
   }
 
   await deps.bundles.delete(bundle.weddingId, bundle.id);
+  await deps.ledger.release(bundleRef(bundle.weddingId, bundle.id));
 }

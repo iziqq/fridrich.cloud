@@ -19,5 +19,7 @@ export const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
   entertainment: '#d2705e',
   health: '#b06a86',
   children: '#8a76b5',
+  // Růže z palety IziWeddy – odkud platba přišla, je poznat i bez legendy.
+  wedding: '#b4536f',
   other: '#9aa8a4',
 };

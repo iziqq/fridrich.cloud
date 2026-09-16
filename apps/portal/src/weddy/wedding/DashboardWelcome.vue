@@ -90,7 +90,7 @@ h1 {
 .note {
   margin: 0.5rem auto 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .features {
@@ -117,7 +117,7 @@ h1 {
 
 .text {
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 @media (--tablet) {

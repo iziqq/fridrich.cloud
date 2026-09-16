@@ -18,6 +18,7 @@ import { weddyPath } from '@/weddy/routes';
 import { useWeddingStore } from '@/weddy/wedding/wedding.store';
 import BundleSheet from './BundleSheet.vue';
 import { CATEGORY_ICONS } from './categoryIcons';
+import PaymentBadges from './PaymentBadges.vue';
 import { usePlanningStore } from './planning.store';
 
 /**
@@ -245,6 +246,10 @@ async function removeItem(item: PlanningItem): Promise<void> {
           </a>
         </p>
 
+        <p v-if="bundle.deposit || bundle.paid" class="payments">
+          <PaymentBadges :deposit="bundle.deposit" :paid="bundle.paid" />
+        </p>
+
         <p class="note">{{ t('weddy.planning.bundles.itemNote') }}</p>
       </header>
 
@@ -347,7 +352,7 @@ async function removeItem(item: PlanningItem): Promise<void> {
   display: inline-block;
   margin-bottom: var(--space-1);
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   text-decoration: none;
 }
 
@@ -378,15 +383,16 @@ async function removeItem(item: PlanningItem): Promise<void> {
 .muted {
   color: var(--color-muted);
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   font-weight: 400;
 }
 
 .link,
+.payments,
 .note {
   grid-column: 1 / -1;
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .note {
@@ -456,7 +462,7 @@ async function removeItem(item: PlanningItem): Promise<void> {
   gap: 0.5rem;
   margin: 0.15rem 0 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .sheet-form {
@@ -467,6 +473,6 @@ async function removeItem(item: PlanningItem): Promise<void> {
 .form-error {
   margin: 0;
   color: var(--color-danger);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 </style>

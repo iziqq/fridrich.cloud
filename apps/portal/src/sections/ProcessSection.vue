@@ -106,7 +106,7 @@ const { el, visible } = useReveal();
 
 .number {
   color: var(--color-accent);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .content {

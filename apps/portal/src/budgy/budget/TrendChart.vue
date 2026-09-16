@@ -135,7 +135,7 @@ function summaryLabel(month: MonthSummary): string {
 
 .label {
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-align: center;
 }
 
@@ -145,7 +145,7 @@ function summaryLabel(month: MonthSummary): string {
   justify-content: center;
   margin: var(--space-1) 0 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .key {

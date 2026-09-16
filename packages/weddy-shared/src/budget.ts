@@ -3,6 +3,7 @@ import {
   PLANNING_CATEGORIES,
   PlanningItemStatusSchema,
   bundleCategories,
+  paidAmount,
   PlanningCategorySchema,
   type PlanningBundle,
   type PlanningCategory,
@@ -24,6 +25,15 @@ export const BudgetBreakdownSchema = v.object({
   itemsWithoutPrice: v.number(),
   /** Položky, jejichž cenu nese balíček – v součtech nejsou, ale existují. */
   bundleItems: v.number(),
+  /** Kolik už odešlo – celé zaplacené ceny a uhrazené zálohy. */
+  paid: v.number(),
+  /**
+   * Kolik zbývá doplatit u **schválených** věcí s cenou.
+   *
+   * Návrhy se nepočítají: je to varianta, o které se teprve rozhoduje, a
+   * „zbývá doplatit" za tři nabídky fotografa by strašilo trojnásobkem.
+   */
+  toPay: v.number(),
 });
 export type BudgetBreakdown = v.InferOutput<typeof BudgetBreakdownSchema>;
 
@@ -50,6 +60,10 @@ export const BudgetBundleSchema = v.object({
   status: PlanningItemStatusSchema,
   categories: v.array(PlanningCategorySchema),
   itemCount: v.number(),
+  /** Kolik je z ceny balíčku zaplaceno (`paidAmount`). */
+  paid: v.number(),
+  deposit: v.optional(v.object({ amount: v.number(), paid: v.boolean() })),
+  fullyPaid: v.boolean(),
 });
 export type BudgetBundle = v.InferOutput<typeof BudgetBundleSchema>;
 
@@ -61,7 +75,15 @@ export const BudgetSummarySchema = v.object({
 export type BudgetSummary = v.InferOutput<typeof BudgetSummarySchema>;
 
 function emptyBreakdown(): BudgetBreakdown {
-  return { total: 0, accepted: 0, draft: 0, itemsWithoutPrice: 0, bundleItems: 0 };
+  return {
+    total: 0,
+    accepted: 0,
+    draft: 0,
+    itemsWithoutPrice: 0,
+    bundleItems: 0,
+    paid: 0,
+    toPay: 0,
+  };
 }
 
 function emptyByCategory(): Record<PlanningCategory, BudgetBreakdown> {
@@ -98,6 +120,9 @@ export function calculateBudget(
       status: bundle.status,
       categories: bundleCategories(bundle.id, items),
       itemCount: items.filter((item) => item.bundleId === bundle.id).length,
+      paid: paidAmount(bundle),
+      ...(bundle.deposit ? { deposit: bundle.deposit } : {}),
+      fullyPaid: bundle.paid === true,
     })),
   };
 
@@ -111,6 +136,11 @@ export function calculateBudget(
       continue;
     }
 
+    // Uhrazená záloha odešla, i když cena zatím není známá.
+    const paid = paidAmount(item);
+    summary.paid += paid;
+    category.paid += paid;
+
     if (!hasPrice(item.price)) {
       summary.itemsWithoutPrice += 1;
       category.itemsWithoutPrice += 1;
@@ -119,6 +149,11 @@ export function calculateBudget(
 
     summary.total += item.price;
     category.total += item.price;
+
+    if (item.status === 'accepted') {
+      summary.toPay += item.price - paid;
+      category.toPay += item.price - paid;
+    }
 
     if (item.status === 'accepted') {
       summary.accepted += item.price;
@@ -130,12 +165,16 @@ export function calculateBudget(
   }
 
   for (const bundle of bundles) {
+    const paid = paidAmount(bundle);
+    summary.paid += paid;
+
     if (!hasPrice(bundle.price)) {
       summary.itemsWithoutPrice += 1;
       continue;
     }
 
     summary.total += bundle.price;
+    if (bundle.status === 'accepted') summary.toPay += bundle.price - paid;
     if (bundle.status === 'accepted') summary.accepted += bundle.price;
     else summary.draft += bundle.price;
   }

@@ -29,6 +29,19 @@ function money(amount: number): string {
   return formatCurrency(amount, currentLocale.value);
 }
 
+/*
+ * Dlouhá částka dostane menší stupeň písma.
+ *
+ * Součty za celou dobu snadno přerostou milion a „1 375 000 Kč" se na
+ * telefonu do poloviční karty nevejde. Zalomit ji nejde – mezery uvnitř
+ * jsou nezlomitelné – a zmenšovat všechny částky kvůli těm dlouhým by
+ * vzalo čitelnost i těm krátkým. Rozhoduje délka zápisu, ne velikost čísla:
+ * záleží na tom, kolik znaků se musí vejít.
+ */
+function amountSize(amount: number): string {
+  return money(amount).length > 10 ? 'long' : '';
+}
+
 const monthLabel = computed(() =>
   new Intl.DateTimeFormat(currentLocale.value, { month: 'long', year: 'numeric', timeZone: 'UTC' })
     .format(new Date(`${store.month}-01T00:00:00.000Z`)),
@@ -112,28 +125,37 @@ function openCreate(kind: EntryKind): void {
         <ul class="totals">
           <li class="total card">
             <p class="label">{{ t('budgy.summary.income') }}</p>
-            <p class="amount value income">{{ money(store.overall.income) }}</p>
+            <p class="amount value income" :class="amountSize(store.overall.income)">
+              {{ money(store.overall.income) }}
+            </p>
             <p class="per-month">
               {{ t('budgy.overview.perMonth', { amount: money(store.overall.monthlyIncome) }) }}
             </p>
           </li>
           <li class="total card">
             <p class="label">{{ t('budgy.summary.expenses') }}</p>
-            <p class="amount value expense">{{ money(store.overall.expenses) }}</p>
+            <p class="amount value expense" :class="amountSize(store.overall.expenses)">
+              {{ money(store.overall.expenses) }}
+            </p>
             <p class="per-month">
               {{ t('budgy.overview.perMonth', { amount: money(store.overall.monthlyExpenses) }) }}
             </p>
           </li>
           <li class="total card">
             <p class="label">{{ t('budgy.summary.investments') }}</p>
-            <p class="amount value investment">{{ money(store.overall.investments) }}</p>
+            <p class="amount value investment" :class="amountSize(store.overall.investments)">
+              {{ money(store.overall.investments) }}
+            </p>
             <p class="per-month">
               {{ t('budgy.overview.perMonth', { amount: money(store.overall.monthlyInvestments) }) }}
             </p>
           </li>
           <li class="total card">
             <p class="label">{{ t('budgy.overview.saved') }}</p>
-            <p class="amount value" :class="{ negative: store.overall.remaining < 0 }">
+            <p
+              class="amount value"
+              :class="[amountSize(store.overall.remaining), { negative: store.overall.remaining < 0 }]"
+            >
               {{ money(store.overall.remaining) }}
             </p>
             <p class="per-month">
@@ -212,7 +234,7 @@ function openCreate(kind: EntryKind): void {
 .since {
   margin: 0.15rem 0 0;
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .totals {
@@ -229,19 +251,32 @@ function openCreate(kind: EntryKind): void {
 .label {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .value {
   margin: 0.2rem 0 0;
-  font-size: 1.25rem;
+  font-size: 1.375rem;
   font-weight: 600;
+}
+
+.value.long {
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+}
+
+/* Od tabletu je karet víc vedle sebe, ale každá je širší – dlouhá částka se vejde. */
+@media (--notebook) {
+  .value.long {
+    font-size: 1.375rem;
+    letter-spacing: normal;
+  }
 }
 
 .per-month {
   margin: 0.15rem 0 0;
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .income {
@@ -282,7 +317,7 @@ function openCreate(kind: EntryKind): void {
 
 .open {
   color: var(--color-accent);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -292,7 +327,7 @@ a.widget:hover {
 
 .month {
   margin: 0.35rem 0 0;
-  font-size: 1.375rem;
+  font-size: 1.5rem;
   font-weight: 600;
   text-transform: capitalize;
 }
@@ -306,12 +341,12 @@ a.widget:hover {
 
 .figures dt {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .figures dd {
   margin: 0.1rem 0 0;
-  font-size: 1.0625rem;
+  font-size: 1.1875rem;
   font-weight: 600;
 }
 

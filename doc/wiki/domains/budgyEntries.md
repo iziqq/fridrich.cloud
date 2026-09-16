@@ -4,6 +4,7 @@ type: domain
 sources:
   - raw/2026-09-17-budgyStart.md
   - raw/2026-09-17-budgyDashboard.md
+  - raw/2026-09-17-weddyPaymentsToBudgy.md
   - code: packages/budgy-shared/src/entries.ts, apps/api/src/domain/budgy/entry, apps/portal/src/budgy/budget
 updated: 2026-09-17
 ---
@@ -27,6 +28,7 @@ updated: 2026-09-17
 | `date` | required for a one-off entry (`YYYY-MM-DD`, the day must exist) |
 | `startsOn`, `endsOn` | a recurring entry: from which month it applies and optionally until which (`YYYY-MM`) |
 | `note` | optional, max. 500 |
+| `source` | only on entries written by another app: `{ app, ref, part, path }` – see below |
 
 Income and investments deliberately have **no category**: the brief asks for
 income as a list of entries, and one more enum would be a field to fill in with
@@ -52,7 +54,8 @@ and its own total.
 | 8 | `entertainment` | Zábava (entertainment) |
 | 9 | `health` | Zdraví (health) |
 | 10 | `children` | Děti (children) |
-| 11 | `other` | Ostatní (other) |
+| 11 | `wedding` | Svatba (wedding) – paid payments from IziWeddy |
+| 12 | `other` | Ostatní (other) |
 
 The order goes from the roof over one's head to the small things – that is how
 a budget is read. Category colours are in `budgy/categoryColors.ts`, typed by
@@ -78,6 +81,33 @@ the enum, so a new category without a colour fails typecheck.
 - The budget belongs to **one account**. Every use case works with `userId`, so
   someone else's entry cannot even be read (`notFound`, not `forbidden` – a
   stranger should not learn that the id exists).
+
+## Entries written by another app
+
+IziWeddy writes paid deposits and payments into the plan admin's budget
+([weddyPlanning.md](weddyPlanning.md#paid-payments-in-izibudgy)). Such an entry
+carries a `source`:
+
+| Field | Meaning |
+|---|---|
+| `app` | `weddy` |
+| `ref` | the thing in that app, e.g. `wedding:w1:item:i2` – how the entry is found again |
+| `part` | `deposit`, `rest` or `full` – one thing can have two payments |
+| `path` | where in the portal the entry links to |
+
+- The shape is **generic on purpose**: the budget does not know what a bundle
+  or a deposit is, only that an entry came from somewhere else.
+- **The user cannot update or delete it** in the budget (`conflict`,
+  `entryManaged`): a change would last only until the next save in Weddy and a
+  deleted entry would come back. The screen shows *Spravuje IziWeddy ↗* (Managed
+  in IziWeddy) instead of the edit buttons.
+- When the source disappears the entry is **released** – `source` is removed
+  and it becomes an ordinary, editable expense.
+- `recordExternalPayments` / `releaseExternalPayments`
+  (`application/budgy/externalPayments.ts`) implement weddy's `PaymentLedger`;
+  the repository finds entries by reference **across accounts**
+  (`listBySourceRef`), because the admin may have changed since the entry was
+  written.
 
 ## Endpoints
 

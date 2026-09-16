@@ -43,7 +43,7 @@ const name = useId();
 legend {
   margin-bottom: 0.35rem;
   padding: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -67,7 +67,7 @@ legend {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   text-align: center;
   cursor: pointer;
   transition:

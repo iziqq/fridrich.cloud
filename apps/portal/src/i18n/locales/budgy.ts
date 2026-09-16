@@ -75,6 +75,7 @@ export const budgyCs = {
     delete: 'Smazat položku',
     confirmDelete: 'Položka „{name}" z rozpočtu zmizí. Tohle nejde vrátit.',
     until: 'do {month}',
+    fromApp: 'Spravuje {app} ↗',
   },
   empty: {
     title: 'Začněme příjmem',
@@ -172,6 +173,7 @@ export const budgyEn: Catalog<typeof budgyCs> = {
     delete: 'Delete entry',
     confirmDelete: 'The entry "{name}" disappears from the budget. This cannot be undone.',
     until: 'until {month}',
+    fromApp: 'Managed in {app} ↗',
   },
   empty: {
     title: 'Let us start with the income',

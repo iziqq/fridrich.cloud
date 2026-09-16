@@ -96,7 +96,7 @@ const project = computed(() =>
   border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
   font-weight: 500;
 }
 

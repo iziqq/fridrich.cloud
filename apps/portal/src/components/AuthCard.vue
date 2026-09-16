@@ -61,7 +61,7 @@ defineProps<{ label: string; title: string }>();
   padding-top: var(--space-2);
   border-top: 1px solid var(--color-border);
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .foot :deep(a) {

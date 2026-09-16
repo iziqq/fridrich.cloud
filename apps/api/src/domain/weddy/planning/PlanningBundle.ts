@@ -1,4 +1,5 @@
 import type {
+  Deposit,
   PlanningBundle as PlanningBundleData,
   PlanningBundleInput,
   PlanningItemStatus,
@@ -10,6 +11,8 @@ interface BundleDetails {
   url: string | undefined;
   price: number | undefined;
   status: PlanningItemStatus;
+  deposit: Deposit | undefined;
+  paid: boolean;
 }
 
 /**
@@ -50,7 +53,14 @@ export class PlanningBundle {
     return new PlanningBundle(
       state.id,
       state.weddingId,
-      { name: state.name, url: state.url, price: state.price, status: state.status },
+      {
+        name: state.name,
+        url: state.url,
+        price: state.price,
+        status: state.status,
+        deposit: state.deposit,
+        paid: state.paid === true,
+      },
       state.createdAt,
       state.updatedAt,
     );
@@ -63,6 +73,10 @@ export class PlanningBundle {
       url: bundle.url,
       price: bundle.price,
       status: bundle.status ?? 'draft',
+      deposit: bundle.deposit
+        ? { amount: bundle.deposit.amount, paid: bundle.deposit.paid ?? false }
+        : undefined,
+      paid: bundle.paid === true,
     };
   }
 
@@ -98,6 +112,8 @@ export class PlanningBundle {
 
     if (this.details.url) state.url = this.details.url;
     if (this.details.price !== undefined) state.price = this.details.price;
+    if (this.details.deposit) state.deposit = this.details.deposit;
+    if (this.details.paid) state.paid = true;
     return state;
   }
 }

@@ -78,8 +78,11 @@ const tabs = computed(() => [
 }
 
 .back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -110,11 +113,14 @@ const tabs = computed(() => [
 }
 
 .tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
   padding: 0.4rem 0.85rem;
   border: 1px solid transparent;
   border-radius: 999px;
   color: var(--color-muted);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   text-decoration: none;
   white-space: nowrap;
   text-transform: capitalize;

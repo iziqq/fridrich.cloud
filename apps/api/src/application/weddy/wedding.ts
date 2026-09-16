@@ -15,6 +15,7 @@ import {
 import { DomainError } from '../../domain/shared/DomainError.js';
 import { Wedding } from '../../domain/weddy/wedding/Wedding.js';
 import type { WeddyDeps } from './deps.js';
+import { weddingRefPrefix } from './paymentRefs.js';
 
 /*
  * Use-casy subdomény `wedding` – plánování jako celek a snoubenci.
@@ -193,6 +194,9 @@ async function deleteWithContent(deps: WeddyDeps, wedding: Wedding): Promise<voi
     deps.bundles.deleteAllForWedding(wedding.id),
     deps.invitations.deleteAllForWedding(wedding.id),
   ]);
+
+  // Zaplacené peníze nezmizely se svatbou – v rozpočtu zůstanou jako běžné výdaje.
+  await deps.ledger.releaseAll(weddingRefPrefix(wedding.id));
 
   await deps.weddings.delete(wedding.id);
 }

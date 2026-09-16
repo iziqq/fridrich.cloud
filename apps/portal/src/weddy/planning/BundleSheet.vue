@@ -8,6 +8,8 @@ import { translateMessage } from '@/i18n';
 import BottomSheet from '@/components/product/BottomSheet.vue';
 import ChoiceField from '@/components/product/ChoiceField.vue';
 import FormField from '@/components/product/FormField.vue';
+import PaymentFields from './PaymentFields.vue';
+import { emptyPaymentForm, paymentFormFrom, paymentInput, type PaymentForm } from './payments';
 import { usePlanningStore } from './planning.store';
 
 /**
@@ -24,6 +26,7 @@ const store = usePlanningStore();
 const { t } = useI18n();
 
 const form = reactive({ name: '', url: '', price: '', status: 'draft' });
+const payment = ref<PaymentForm>(emptyPaymentForm());
 const errors = ref<Record<string, string>>({});
 const saving = ref(false);
 
@@ -43,6 +46,7 @@ watch(open, (isOpen) => {
     price: bundle?.price === undefined ? '' : String(bundle.price),
     status: bundle?.status ?? 'draft',
   });
+  payment.value = bundle ? paymentFormFrom(bundle) : emptyPaymentForm();
   errors.value = {};
 });
 
@@ -60,6 +64,7 @@ async function submit(): Promise<void> {
     url: form.url.trim() || undefined,
     price: form.price.trim() === '' ? undefined : Number(form.price),
     status: form.status,
+    ...paymentInput(payment.value),
   } as Parameters<typeof store.addBundle>[1];
 
   try {
@@ -117,6 +122,7 @@ async function submit(): Promise<void> {
         :label="t('weddy.planning.bundles.form.status')"
         :options="statusOptions"
       />
+      <PaymentFields v-model="payment" :deposit-error="errorText('deposit.amount')" />
 
       <p v-if="errors['form']" class="general-error" role="alert">
         {{ translateMessage(errors['form']) }}
@@ -140,6 +146,6 @@ async function submit(): Promise<void> {
 .general-error {
   margin: 0;
   color: var(--color-danger);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 </style>

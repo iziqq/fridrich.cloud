@@ -7,6 +7,20 @@ import type { Catalog } from '@fridrich/shared';
  */
 
 export const weddyPlanningCs = {
+  payment: {
+    title: 'Platba',
+    deposit: 'Záloha',
+    depositHint: 'Zaškrtněte, pokud dodavatel chce zálohu předem.',
+    depositAmount: 'Výše zálohy',
+    depositState: 'Stav zálohy',
+    fullState: 'Celá platba',
+    unpaid: 'Neuhrazeno',
+    paid: 'Uhrazeno',
+    fullyPaid: 'Zaplaceno',
+    depositPaid: 'Záloha {amount} uhrazena',
+    depositUnpaid: 'Záloha {amount} neuhrazena',
+    ledgerNote: 'Uhrazená záloha i platba se propíše do rozpočtu IziBudgy správce plánování jako výdaj Svatba.',
+  },
   overview: {
     lead: '{n} oblastí přípravy. V každé si můžete držet víc variant a rozhodnout se později.',
     empty: 'Zatím prázdné',
@@ -91,6 +105,20 @@ export const weddyPlanningCs = {
 };
 
 export const weddyPlanningEn: Catalog<typeof weddyPlanningCs> = {
+  payment: {
+    title: 'Payment',
+    deposit: 'Deposit',
+    depositHint: 'Tick it if the vendor wants a deposit up front.',
+    depositAmount: 'Deposit amount',
+    depositState: 'Deposit status',
+    fullState: 'Full payment',
+    unpaid: 'Unpaid',
+    paid: 'Paid',
+    fullyPaid: 'Paid',
+    depositPaid: 'Deposit {amount} paid',
+    depositUnpaid: 'Deposit {amount} unpaid',
+    ledgerNote: "A paid deposit or payment is copied into the plan admin's IziBudgy budget as a Wedding expense.",
+  },
   overview: {
     lead: '{n} areas of preparation. In each one you can keep several options and decide later.',
     empty: 'Empty so far',

@@ -35,7 +35,7 @@ const label = computed(() =>
   padding: 0.15rem 0.55rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   white-space: nowrap;
 }

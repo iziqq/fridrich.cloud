@@ -139,15 +139,46 @@ Rules:
 - **Touch targets at least 44 × 44 px** on every width; nothing depends on hover.
 - Fluid typography and spacing with `clamp()` where the specification defines a
   mobile → desktop scale ([portal.md](../domains/portal.md)).
+- **Font sizes come from tokens, never literal `rem`** below body size – see
+  [Type scale on mobile](#type-scale-on-mobile).
 - Images and media `max-width: 100%`; no fixed widths in px on layout containers.
 - **Check before finishing:** every changed screen at 360, 768 and 1024 px
   (browser device toolbar) – page width must equal the viewport width.
+
+> ⚠️ **Headless Chrome cannot make a window narrower than 500 px.**
+> `--window-size=360,…` only crops the screenshot – the page is still laid out
+> at 500 px, so a "360 px" check done that way proves nothing about a phone.
+> Until 2026-09-17 every automated mobile check in this project was made like
+> that. A real phone width needs device emulation over the DevTools protocol
+> (`Emulation.setDeviceMetricsOverride` with `mobile: true`), and the check that
+> matters is `document.documentElement.scrollWidth === clientWidth`, not the
+> look of the picture.
+
+### Type scale on mobile
+
+`packages/design/src/primitives.css` holds the scale. It is **one step larger on
+a phone** and shrinks from `--tablet` up – a phone is held further from the eyes
+than its size suggests, and 12 px secondary text on it reads badly.
+
+| Token | Mobile | Tablet and up | For |
+|---|---|---|---|
+| `--text-body` | 17 px | 17–18 px | running text |
+| `--text-sm` | 15 px | 14 px | secondary text – field labels, meta lines, small links |
+| `--text-xs` | 13 px | 12 px | the smallest text allowed – units, shares, dates |
+| `--text-label` | 13 px | 12 px | uppercase `.mono` labels |
+
+Components use the tokens (`font-size: var(--text-sm)`) instead of `0.875rem`;
+literal sizes below body size were replaced across the portal and both products.
+Headline figures (budget amounts) are set per component and get their own
+mobile size. An amount that would not fit its card – `1 375 000 Kč` in half a
+phone screen – gets a smaller step by the length of its text, because the spaces
+inside a formatted amount do not break.
 
 Current use:
 
 | Breakpoint | Components |
 |---|---|
-| `--tablet` | `SiteNav` (full menu), `SiteFooter`, `ServicesSection` (2 columns), `ProjectsSection`, `AccountView`, `BottomSheet` (centred dialog), `WeddingForm`, `GuestsView` (form rows), `DashboardView`, `PlanningView` |
+| `--tablet` | `SiteNav` (full menu), `SiteFooter`, `ServicesSection` (2 columns), `ProjectsSection`, `AccountView`, `BottomSheet` (centred dialog), `WeddingForm`, `GuestsView` (form rows), `DashboardView`, `PlanningView`, `primitives.css` (type scale steps down) |
 | `--notebook` | `ServicesSection` (4 columns), `AboutSection` and `ContactSection` (side-by-side), `ProcessSection` (horizontal stepper, 3 × 2) |
 
 ## Routing and product look
@@ -200,6 +231,14 @@ pink.
 > dimming it. Which product is on screen is held by `components/product/theme.ts`
 > (`useProductTheme('budgy')` in the shell), so the overlays do not have to
 > guess the class.
+
+> ⚠️ **A scoped class in a view also lands on the root of a child component.**
+> Vue gives the child's root element the parent's scope attribute, so a scoped
+> `.badge` in `GuestsView` (the filter counter, rose with a fixed height) styled
+> every `StatusBadge` in the list too – guest statuses were rose instead of
+> their colours, and the larger mobile font then clipped the text. Name
+> view-local classes after their purpose (`.filter-count`), not after a generic
+> component word.
 
 Form controls that the operating system would draw are replaced by our own
 components – `SelectField.vue` instead of `<select>`, `ConfirmDialog.vue`

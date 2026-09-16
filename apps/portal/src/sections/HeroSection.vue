@@ -102,7 +102,7 @@ const { t } = useI18n();
   padding: 0.75rem 1.25rem;
   border-radius: var(--radius-lg);
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 </style>

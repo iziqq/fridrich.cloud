@@ -42,6 +42,19 @@ export const budgetEntryCosmosRepository: BudgetEntryRepository = {
     await container.item(entryId, userId).delete();
   },
 
+  async listBySourceRef(refPrefix) {
+    const container = await getContainer(CONTAINERS.budgetEntries);
+    // Napříč oddíly schválně – viz port. Děje se jen při ukládání platby ve Weddy.
+    const { resources } = await container.items
+      .query<EntryDocument>({
+        query: 'SELECT * FROM c WHERE IS_DEFINED(c.source) AND STARTSWITH(c.source.ref, @prefix)',
+        parameters: [{ name: '@prefix', value: refPrefix }],
+      })
+      .fetchAll();
+
+    return resources.map((state) => BudgetEntry.fromState(stripSystemFields(state)));
+  },
+
   async deleteAllForUser(userId) {
     const container = await getContainer(CONTAINERS.budgetEntries);
     const { resources } = await container.items

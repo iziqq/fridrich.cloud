@@ -12,6 +12,7 @@ import ErrorBlock from '@/components/product/ErrorBlock.vue';
 import FabButton from '@/components/product/FabButton.vue';
 import LoadingBlock from '@/components/product/LoadingBlock.vue';
 import { askConfirm } from '@/components/product/confirm';
+import { RouterLink } from 'vue-router';
 import { currentLocale, translateMessage } from '@/i18n';
 import { CATEGORY_COLORS } from '../categoryColors';
 import EntrySheet from './EntrySheet.vue';
@@ -155,6 +156,9 @@ function swatchColor(entry: BudgetEntry): string {
 /** Popisek pod názvem – u výdaje kategorie, u jednorázové položky i den. */
 function entryMeta(entry: BudgetEntry): string {
   const parts: string[] = [];
+
+  // U propsané platby řekne, která to je – záloha, doplatek, nebo celá.
+  if (entry.source) parts.push(t(entriesKeys.sourcePart[entry.source.part]));
 
   if (entry.recurrence === 'once' && entry.date) parts.push(dayLabel(entry.date));
   if (entry.category) parts.push(t(entriesKeys.category[entry.category]));
@@ -306,13 +310,17 @@ function entryMeta(entry: BudgetEntry): string {
               <div class="info">
                 <p class="name">{{ entry.name }}</p>
                 <p v-if="entryMeta(entry)" class="meta">{{ entryMeta(entry) }}</p>
+                <!-- Propsanou platbu mění aplikace, ze které přišla – tam se dá prokliknout. -->
+                <RouterLink v-if="entry.source?.path" :to="entry.source.path" class="source">
+                  {{ t('budgy.entry.fromApp', { app: t(entriesKeys.sourceApp[entry.source.app]) }) }}
+                </RouterLink>
               </div>
 
               <p class="amount value" :class="entry.kind">
                 {{ entry.kind === 'income' ? '+' : '−' }}{{ money(entry.amount) }}
               </p>
 
-              <div class="controls">
+              <div v-if="!entry.source" class="controls">
                 <button type="button" class="icon-button" @click="openEdit(entry)">
                   <span class="visually-hidden">{{ t('budgy.entry.edit') }}</span>
                   <span aria-hidden="true">✏️</span>
@@ -391,7 +399,7 @@ function entryMeta(entry: BudgetEntry): string {
 }
 
 .today {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .summary {
@@ -407,12 +415,12 @@ function entryMeta(entry: BudgetEntry): string {
 .figure .label {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .value {
   margin: 0.15rem 0 0;
-  font-size: 1.125rem;
+  font-size: 1.3125rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -466,7 +474,7 @@ function entryMeta(entry: BudgetEntry): string {
 .note {
   margin: var(--space-1) 0 0;
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .charts {
@@ -533,7 +541,7 @@ function entryMeta(entry: BudgetEntry): string {
   grid-column: 2;
   grid-row: 2;
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.0625rem;
 }
 
 .controls {
@@ -558,7 +566,7 @@ function entryMeta(entry: BudgetEntry): string {
 .meta {
   margin: 0.1rem 0 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .controls {
@@ -581,13 +589,23 @@ function entryMeta(entry: BudgetEntry): string {
   background: var(--slate-100);
 }
 
+.source {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-decoration: none;
+}
+
 .empty-row {
   margin: 0.35rem 0 0;
 }
 
 .add {
   margin-top: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 @media (--tablet) {

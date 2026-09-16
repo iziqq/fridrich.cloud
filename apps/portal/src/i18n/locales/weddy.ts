@@ -122,6 +122,9 @@ export const weddyCs = {
     drafts: 'Návrhy',
     itemsWithoutPrice:
       '{n} položek nemá vyplněnou cenu, takže součet nemusí být úplný. | {n} položka nemá vyplněnou cenu, takže součet nemusí být úplný. | {n} položky nemají vyplněnou cenu, takže součet nemusí být úplný. | {n} položek nemá vyplněnou cenu, takže součet nemusí být úplný.',
+    paid: 'Zaplaceno',
+    toPay: 'Zbývá doplatit',
+    toPayHint: 'Počítají se jen schválené položky – návrhy jsou teprve varianty.',
     bundles: 'Balíčky',
     bundlesHint: 'Cena balíčku je v celkové částce, ale ne v rozpisu sekcí – jedna cena se mezi ně rozpočítat nedá.',
     bundleCovers: 'Pokrývá {sections}',
@@ -249,6 +252,9 @@ export const weddyEn: Catalog<typeof weddyCs> = {
     drafts: 'Drafts',
     itemsWithoutPrice:
       '{n} items have no price, so the total may be incomplete. | {n} item has no price, so the total may be incomplete. | {n} items have no price, so the total may be incomplete.',
+    paid: 'Paid',
+    toPay: 'Left to pay',
+    toPayHint: 'Only approved items count – drafts are still just options.',
     bundles: 'Bundles',
     bundlesHint: 'A bundle price is part of the total, but not of the section breakdown – one price cannot be split between sections.',
     bundleCovers: 'Covers {sections}',

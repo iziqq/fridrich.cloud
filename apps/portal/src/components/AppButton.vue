@@ -45,7 +45,7 @@ const internal = computed(() => props.href?.startsWith('/') && !props.href.start
   border-radius: var(--radius-pill);
   background: transparent;
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: -0.005em;
   text-decoration: none;

@@ -4,8 +4,10 @@ type: domain
 sources:
   - raw/iziweddySpec.md (ch. 4.2, 5.4, 7.3, 8)
   - raw/2026-09-16-planningBundles.md
+  - raw/2026-09-17-weddyPayments.md
+  - raw/2026-09-17-weddyPaymentsToBudgy.md
   - code: packages/weddy-shared/src/planning.ts, apps/api/src/domain/weddy/planning, apps/portal/src/weddy/planning
-updated: 2026-09-16
+updated: 2026-09-17
 ---
 
 # `weddy / planning` – preparation sections and items
@@ -64,6 +66,62 @@ bundle, so the same section looks the same everywhere.
   (`itemTitle(item, bundles)`). The rule lives in `PlanningItemInputSchema` as a
   `v.forward(v.check(…), ['name'])`, not in the domain, so the error lands on
   the `name` field and the form can show it.
+
+## Payments
+
+A standalone item and a bundle – anything with its own price – carry two
+payment facts:
+
+| Field | Rule |
+|---|---|
+| `deposit` | optional `{ amount, paid }`; the form's **Záloha** (Deposit) checkbox decides whether it exists. Amount 1 – 100,000,000 CZK and **not above the price** (the error lands on `deposit.amount`) |
+| `paid` | the whole thing is paid; missing on older documents means no |
+
+- **An item inside a bundle has no payments** – the bundle is paid, just like it
+  carries the price and the status. The domain drops them even if a form sends
+  them.
+- **"Paid" includes the deposit** (`paidAmount`): whoever paid everything paid
+  the deposit too. The stored deposit is not overwritten, so unticking "paid"
+  brings its own state back.
+- Cards show a chip – *Záloha 20 000 Kč neuhrazena* (deposit unpaid) or
+  *✓ Zaplaceno* (paid), which wins over the deposit.
+- Shared UI: `PaymentFields.vue` (the form block), `PaymentBadges.vue` (the
+  chips), `payments.ts` (form state ↔ schema), `CheckboxField.vue` in the
+  product kit.
+
+### Paid payments in IziBudgy
+
+Every save of an item or a bundle (create, update) sends its **current** paid
+payments through the port `PaymentLedger` (`domain/weddy/planning/PaymentLedger.ts`);
+budgy implements it and `infrastructure/container.ts` wires it
+(CLAUDE.md rule 3 – planning does not know IziBudgy exists).
+
+| Situation in Weddy | In IziBudgy |
+|---|---|
+| Deposit marked paid | one-off expense *Svatba* (Wedding) for the deposit amount |
+| Whole payment marked paid, deposit paid before | a second expense for the rest (`price − deposit`) |
+| Whole payment marked paid, no paid deposit | one expense for the price |
+| Price or deposit amount changed | the existing expense is rewritten; its date stays |
+| Unmarked (back to unpaid) or no price for a full payment | the expense disappears |
+| Item moved into a bundle | its expenses disappear – a bundle item is not paid on its own |
+| Item, bundle or the whole plan deleted | the expense **stays** as an ordinary one, just unlinked – the money was spent |
+
+- **Always into the plan admin's budget** (`Wedding.adminId`), whoever marks
+  the payment. An expense already written stays where it is: if the admin
+  changes, the old one is still found (by reference, across accounts) and
+  rewritten or removed there.
+- `paidParts` in the shared kernel decides the parts (`deposit`, `rest`,
+  `full`); together they never exceed the price.
+- The reference is `wedding:{id}:item:{id}` or `wedding:{id}:bundle:{id}`
+  (`application/weddy/paymentRefs.ts`) and must not change – it is how the
+  budget finds its entries. Releasing one item matches it **exactly**, because
+  `…:item:i1` is also a prefix of `…:item:i10`; only a deleted plan releases by
+  prefix (`releaseAll`).
+- Sync runs after the save; if it fails, the request fails and saving again
+  repairs it – the call is idempotent. Cosmos DB has no transactions, so the
+  opposite order would risk an expense for a payment that was never saved.
+- The payment block in the form says where a paid payment goes, so the copy
+  into someone else's budget is not a surprise.
 
 ## Bundle
 

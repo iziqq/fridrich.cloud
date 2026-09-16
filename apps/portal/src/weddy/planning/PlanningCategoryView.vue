@@ -20,6 +20,9 @@ import StatusBadge from '@/weddy/components/StatusBadge.vue';
 import { weddyPath } from '@/weddy/routes';
 import type { CreatePlanningItemRequest } from './endpoints/createPlanningItem.endpoint';
 import { useWeddingStore } from '@/weddy/wedding/wedding.store';
+import PaymentBadges from './PaymentBadges.vue';
+import PaymentFields from './PaymentFields.vue';
+import { emptyPaymentForm, paymentFormFrom, paymentInput, type PaymentForm } from './payments';
 import { usePlanningStore } from './planning.store';
 
 const route = useRoute();
@@ -67,6 +70,7 @@ function errorText(field: string): string | undefined {
 }
 
 const form = reactive({ name: '', url: '', price: '', status: 'draft', bundleId: '' });
+const payment = ref<PaymentForm>(emptyPaymentForm());
 
 /*
  * Prázdná hodnota znamená „bez balíčku". Vlastní rozbalovátko pracuje s
@@ -82,6 +86,7 @@ const bundleOptions = computed(() => [
 function openCreate(): void {
   editing.value = null;
   Object.assign(form, { name: '', url: '', price: '', status: 'draft', bundleId: NO_BUNDLE });
+  payment.value = emptyPaymentForm();
   formErrors.value = {};
   sheetOpen.value = true;
 }
@@ -95,6 +100,7 @@ function openEdit(item: PlanningItem): void {
     status: item.status,
     bundleId: item.bundleId ?? NO_BUNDLE,
   });
+  payment.value = paymentFormFrom(item);
   formErrors.value = {};
   sheetOpen.value = true;
 }
@@ -114,6 +120,8 @@ async function submit(): Promise<void> {
     price: inBundle || form.price.trim() === '' ? undefined : Number(form.price),
     status: form.status,
     bundleId: inBundle ? form.bundleId : undefined,
+    // Položka v balíčku se neplatí zvlášť – platí se balíček.
+    ...(inBundle ? {} : paymentInput(payment.value)),
   } as CreatePlanningItemRequest;
 
   try {
@@ -235,6 +243,9 @@ const statusOptions = computed(() => [
               <span v-else-if="item.price !== undefined">{{ money(item.price) }}</span>
               <span v-else class="no-price">{{ t('weddy.planning.category.noPrice') }}</span>
             </p>
+            <p v-if="!item.bundleId && (item.deposit || item.paid)" class="payments">
+              <PaymentBadges :deposit="item.deposit" :paid="item.paid" />
+            </p>
           </div>
 
           <div class="controls">
@@ -324,6 +335,7 @@ const statusOptions = computed(() => [
               :label="t('weddy.planning.category.form.status')"
               :options="statusOptions"
             />
+            <PaymentFields v-model="payment" :deposit-error="errorText('deposit.amount')" />
           </template>
           <p v-else class="bundle-note">{{ t('weddy.planning.bundles.itemNote') }}</p>
 
@@ -347,7 +359,7 @@ const statusOptions = computed(() => [
   display: inline-block;
   margin-bottom: var(--space-1);
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   text-decoration: none;
 }
 
@@ -362,7 +374,7 @@ h2 {
 .summary {
   margin-bottom: var(--space-2);
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .warn {
@@ -389,7 +401,7 @@ h2 {
 
 .meta {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .no-price {
@@ -442,10 +454,14 @@ h2 {
   text-decoration: underline;
 }
 
+.payments {
+  margin: 0.35rem 0 0;
+}
+
 .bundle-note {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .form-error {

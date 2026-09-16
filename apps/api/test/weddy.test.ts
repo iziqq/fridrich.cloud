@@ -11,6 +11,7 @@ import {
   groupIntoFamilies,
   itemStatus,
   itemTitle,
+  paidAmount,
 } from '@fridrich/weddy-shared';
 import { getBudget } from '../src/application/weddy/budget.js';
 import {
@@ -28,9 +29,14 @@ import {
   createBundle,
   createItem,
   deleteBundle,
+  deleteItem,
   listBundles,
   listItems,
+  updateBundle,
+  updateItem,
 } from '../src/application/weddy/planning.js';
+import { deleteEntry, listEntries, updateEntry } from '../src/application/budgy/entries.js';
+import { releaseExternalPayments, recordExternalPayments } from '../src/application/budgy/externalPayments.js';
 import {
   createWedding,
   deleteWedding,
@@ -387,6 +393,232 @@ describe('balíčky plánování', () => {
         ),
       (error: unknown) => isDomainError(error) && error.kind === 'notFound',
     );
+  });
+});
+
+describe('platby – záloha a zaplaceno', () => {
+  it('rozpočet sečte zaplacené a zbývající částky schválených věcí', async () => {
+    const { deps, weddingId } = await withWedding();
+
+    // Schválené místo s uhrazenou zálohou, schválený fotograf zaplacený celý,
+    // návrh květin s neuhrazenou zálohou.
+    await createItem(
+      deps,
+      weddingId,
+      {
+        category: 'receptionVenue',
+        name: 'Sál',
+        price: 120000,
+        status: 'accepted',
+        deposit: { amount: 30000, paid: true },
+      },
+      OWNER,
+    );
+    await createItem(
+      deps,
+      weddingId,
+      { category: 'otherActivities', name: 'Fotograf', price: 25000, status: 'accepted', paid: true },
+      OWNER,
+    );
+    await createItem(
+      deps,
+      weddingId,
+      { category: 'flowers', name: 'Kytice', price: 15000, deposit: { amount: 5000 } },
+      OWNER,
+    );
+
+    const budget = await getBudget(deps, weddingId, OWNER);
+
+    assert.equal(budget.paid, 30000 + 25000);
+    assert.equal(budget.toPay, 120000 - 30000, 'návrh květin se do dluhu nepočítá');
+    assert.equal(budget.byCategory.receptionVenue.paid, 30000);
+  });
+
+  it('zaplaceno celé zahrnuje i zálohu, ale uloženou zálohu nepřepisuje', () => {
+    const item = { price: 100000, paid: true, deposit: { amount: 20000, paid: false } };
+
+    assert.equal(paidAmount(item), 100000);
+    assert.equal(paidAmount({ ...item, paid: false }), 0, 'po odškrtnutí platí zase záloha');
+  });
+
+  it('položka v balíčku zálohu ani platbu mít nemůže – platí se balíček', async () => {
+    const { deps, weddingId } = await withWedding();
+    const bundle = await createBundle(
+      deps,
+      weddingId,
+      { name: 'Zámek', price: 200000, status: 'accepted', deposit: { amount: 50000, paid: true } },
+      OWNER,
+    );
+
+    const item = await createItem(
+      deps,
+      weddingId,
+      { category: 'food', bundleId: bundle.id, deposit: { amount: 1000, paid: true }, paid: true },
+      OWNER,
+    );
+
+    assert.equal(item.deposit, undefined);
+    assert.equal(item.paid, undefined);
+
+    const budget = await getBudget(deps, weddingId, OWNER);
+    assert.equal(budget.paid, 50000);
+    assert.equal(budget.toPay, 150000);
+    assert.equal(budget.bundles[0]?.paid, 50000);
+  });
+
+  it('záloha vyšší než cena neprojde a chyba sedí na částce zálohy', () => {
+    const result = v.safeParse(PlanningItemInputSchema, {
+      category: 'dress',
+      name: 'Šaty',
+      price: 20000,
+      deposit: { amount: 25000 },
+    });
+
+    assert.equal(result.success, false);
+    assert.deepEqual(
+      issuesToDetails(result.issues ?? []).map((detail) => detail.field),
+      ['deposit.amount'],
+    );
+  });
+});
+
+describe('propsání plateb do rozpočtu', () => {
+  const MANAGER = 'user-manager';
+  const venue = {
+    category: 'receptionVenue' as const,
+    name: 'Sál',
+    price: 120000,
+    status: 'accepted' as const,
+  };
+
+  it('uhrazená záloha se objeví v rozpočtu admina v kategorii Svatba', async () => {
+    const { deps, weddingId } = await withWedding();
+    await createItem(deps, weddingId, { ...venue, deposit: { amount: 30000, paid: true } }, OWNER);
+
+    const [entry] = await listEntries(deps.budgy, OWNER);
+
+    assert.equal(entry?.amount, 30000);
+    assert.equal(entry?.category, 'wedding');
+    assert.equal(entry?.recurrence, 'once');
+    assert.equal(entry?.name, 'Sál');
+    assert.equal(entry?.source?.part, 'deposit');
+  });
+
+  it('doplatek po záloze je druhý zápis a po odškrtnutí oba zmizí', async () => {
+    const { deps, weddingId } = await withWedding();
+    const item = await createItem(
+      deps,
+      weddingId,
+      { ...venue, deposit: { amount: 30000, paid: true } },
+      OWNER,
+    );
+
+    await updateItem(deps, weddingId, item.id, { ...venue, deposit: { amount: 30000, paid: true }, paid: true }, OWNER);
+    const paid = await listEntries(deps.budgy, OWNER);
+    assert.deepEqual(
+      paid.map((entry) => [entry.source?.part, entry.amount]).sort(),
+      [['deposit', 30000], ['rest', 90000]],
+      'dohromady přesně cena, nic dvakrát',
+    );
+
+    await updateItem(deps, weddingId, item.id, { ...venue, deposit: { amount: 30000, paid: false } }, OWNER);
+    assert.equal((await listEntries(deps.budgy, OWNER)).length, 0);
+  });
+
+  it('celá platba bez zálohy je jeden zápis a změna ceny ho přepíše, datum zůstane', async () => {
+    const { deps, weddingId } = await withWedding();
+    const item = await createItem(deps, weddingId, { ...venue, paid: true }, OWNER);
+    const [before] = await listEntries(deps.budgy, OWNER);
+
+    deps.budgy.clock.advance(3 * 24 * 60 * 60 * 1000);
+    await updateItem(deps, weddingId, item.id, { ...venue, price: 135000, paid: true }, OWNER);
+    const after = await listEntries(deps.budgy, OWNER);
+
+    assert.equal(after.length, 1);
+    assert.equal(after[0]?.id, before?.id);
+    assert.equal(after[0]?.amount, 135000);
+    assert.equal(after[0]?.date, before?.date);
+  });
+
+  it('celá platba bez ceny se nepropíše – není co zapsat', async () => {
+    const { deps, weddingId } = await withWedding();
+    await createItem(deps, weddingId, { category: 'dress', name: 'Šaty', paid: true }, OWNER);
+
+    assert.equal((await listEntries(deps.budgy, OWNER)).length, 0);
+  });
+
+  it('když platbu označí manager, zápis jde přesto do rozpočtu admina', async () => {
+    const { deps, weddingId } = await withWedding();
+    const wedding = await deps.weddings.findById(weddingId);
+    wedding!.addMember(MANAGER, 'manager', deps.clock);
+    await deps.weddings.save(wedding!);
+
+    await createBundle(deps, weddingId, { name: 'Zámek', price: 250000, paid: true }, MANAGER);
+
+    assert.equal((await listEntries(deps.budgy, MANAGER)).length, 0);
+    assert.equal((await listEntries(deps.budgy, OWNER))[0]?.amount, 250000);
+  });
+
+  it('smazaná položka nechá v rozpočtu běžný výdaj, který jde upravit', async () => {
+    const { deps, weddingId } = await withWedding();
+    const item = await createItem(deps, weddingId, { ...venue, paid: true }, OWNER);
+
+    await deleteItem(deps, weddingId, item.id, OWNER);
+    const [entry] = await listEntries(deps.budgy, OWNER);
+
+    assert.equal(entry?.amount, 120000);
+    assert.equal(entry?.source, undefined, 'už není vázaný na plánování');
+    await deleteEntry(deps.budgy, entry!.id, OWNER);
+  });
+
+  it('smazané plánování odpojí zápisy všech svých položek i balíčků', async () => {
+    const { deps, weddingId } = await withWedding();
+    await createItem(deps, weddingId, { ...venue, paid: true }, OWNER);
+    await createBundle(deps, weddingId, { name: 'Foto', price: 30000, paid: true }, OWNER);
+
+    await deleteWedding(deps, weddingId, OWNER);
+    const entries = await listEntries(deps.budgy, OWNER);
+
+    assert.equal(entries.length, 2);
+    assert.ok(entries.every((entry) => entry.source === undefined));
+  });
+
+  it('propsaný zápis se v rozpočtu nedá upravit ani smazat', async () => {
+    const { deps, weddingId } = await withWedding();
+    const bundle = await createBundle(deps, weddingId, { name: 'Zámek', price: 250000, paid: true }, OWNER);
+    const [entry] = await listEntries(deps.budgy, OWNER);
+
+    await assert.rejects(
+      () => deleteEntry(deps.budgy, entry!.id, OWNER),
+      (error: unknown) => isDomainError(error) && error.kind === 'conflict',
+    );
+    await assert.rejects(
+      () =>
+        updateEntry(
+          deps.budgy,
+          entry!.id,
+          { kind: 'expense', recurrence: 'once', name: 'x', amount: 1, category: 'other', date: '2026-01-01' },
+          OWNER,
+        ),
+      (error: unknown) => isDomainError(error) && error.kind === 'conflict',
+    );
+
+    // Změnit ho jde jen ve Weddy.
+    await updateBundle(deps, weddingId, bundle.id, { name: 'Zámek', price: 250000 }, OWNER);
+    assert.equal((await listEntries(deps.budgy, OWNER)).length, 0);
+  });
+
+  it('uvolnění jedné položky nesáhne na jinou, jejíž odkaz ho jen začíná', async () => {
+    const { deps } = await withWedding();
+    const base = { app: 'weddy' as const, ownerId: OWNER, path: '/', name: 'x' };
+    await recordExternalPayments(deps.budgy, { ...base, ref: 'wedding:w:item:i1', payments: [{ part: 'full', amount: 100 }] });
+    await recordExternalPayments(deps.budgy, { ...base, ref: 'wedding:w:item:i10', payments: [{ part: 'full', amount: 200 }] });
+
+    await releaseExternalPayments(deps.budgy, { ref: 'wedding:w:item:i1' });
+    const entries = await listEntries(deps.budgy, OWNER);
+
+    assert.equal(entries.find((entry) => entry.amount === 100)?.source, undefined);
+    assert.equal(entries.find((entry) => entry.amount === 200)?.source?.ref, 'wedding:w:item:i10');
   });
 });
 

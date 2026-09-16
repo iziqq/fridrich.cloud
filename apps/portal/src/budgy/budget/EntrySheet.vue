@@ -190,6 +190,6 @@ async function submit(): Promise<void> {
 .form-error {
   margin: 0;
   color: var(--color-danger);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 </style>

@@ -170,7 +170,7 @@ function isActive(to: string): boolean {
   padding-inline: 0.875rem;
   border-radius: var(--radius-pill);
   color: var(--color-text);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   font-weight: 500;
   text-decoration: none;
   transition:

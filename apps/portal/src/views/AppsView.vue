@@ -91,8 +91,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/*
+ * Záře je schválně širší než obrazovka, aby okraje nebyly vidět – bez ořezu
+ * by ale na telefonu roztáhla stránku a šla by posouvat do strany.
+ * `clip` místo `hidden`: neudělá z obalu scrollovací kontejner.
+ */
 .apps {
   position: relative;
+  overflow-x: clip;
   padding-block: 7rem var(--space-8);
 }
 
@@ -176,7 +182,7 @@ onMounted(() => {
   padding: 0.15rem 0.6rem;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .badge.live {
@@ -186,13 +192,13 @@ onMounted(() => {
 
 .needs-account {
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .open {
   margin-top: 0.5rem;
   color: var(--color-accent);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 

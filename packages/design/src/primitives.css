@@ -8,12 +8,23 @@
  */
 
 :root {
-  /* --- Typografická škála (mobil → desktop) --- */
+  /*
+   * Typografická škála (mobil → desktop).
+   *
+   * Na mobilu je celá o stupeň výš než na desktopu: telefon se drží dál od
+   * očí, než by odpovídalo jeho velikosti, a doplňkový text v 12 px se na něm
+   * čte špatně. Proto jsou `--text-sm` a `--text-xs` na úzké obrazovce větší
+   * a od tabletu se stahují – ne naopak.
+   */
   --text-h1: clamp(2.5rem, 1.2rem + 6.5vw, 5rem);
   --text-h2: clamp(1.75rem, 1.1rem + 3.2vw, 3rem);
   --text-h3: clamp(1.25rem, 1.05rem + 1vw, 1.75rem);
-  --text-body: clamp(1rem, 0.98rem + 0.15vw, 1.0625rem);
-  --text-label: 0.75rem;
+  --text-body: clamp(1.0625rem, 1.03rem + 0.15vw, 1.125rem);
+  /** Doplňkový text – popisky polí, meta řádky, drobné odkazy. */
+  --text-sm: 0.9375rem;
+  /** Nejmenší text, který smí do rozhraní – jednotky, podíly, data. */
+  --text-xs: 0.8125rem;
+  --text-label: 0.8125rem;
 
   /* --- Rozestupy (násobky 8px) --- */
   --space-1: 0.5rem;
@@ -36,4 +47,16 @@
 
   /* Dotykové cíle mají mít nejméně 44 × 44 px. */
   --touch-target: 2.75rem;
+}
+
+/*
+ * Od tabletu se doplňkový text vrací k desktopovým velikostem – na širší
+ * obrazovce je text blíž a hustší rozvržení unese menší stupeň.
+ */
+@media (--tablet) {
+  :root {
+    --text-sm: 0.875rem;
+    --text-xs: 0.75rem;
+    --text-label: 0.75rem;
+  }
 }

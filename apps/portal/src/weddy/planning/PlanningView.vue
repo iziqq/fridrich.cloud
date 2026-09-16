@@ -8,6 +8,7 @@ import { currentLocale, translateMessage } from '@/i18n';
 import ErrorBlock from '@/components/product/ErrorBlock.vue';
 import LoadingBlock from '@/components/product/LoadingBlock.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
+import PaymentBadges from './PaymentBadges.vue';
 import { weddyPath } from '@/weddy/routes';
 import { useWeddingStore } from '@/weddy/wedding/wedding.store';
 import BundleSheet from './BundleSheet.vue';
@@ -89,6 +90,9 @@ function coveredSections(bundleId: string): string {
               <span class="text">
                 <span class="name">{{ bundle.name }}</span>
                 <span class="meta">{{ coveredSections(bundle.id) }}</span>
+                <span v-if="bundle.deposit || bundle.paid" class="payments">
+                  <PaymentBadges :deposit="bundle.deposit" :paid="bundle.paid" />
+                </span>
               </span>
 
               <span class="bundle-right">
@@ -167,7 +171,7 @@ function coveredSections(bundleId: string): string {
 .hint {
   margin: 0.15rem 0 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .add-bundle {
@@ -177,6 +181,11 @@ function coveredSections(bundleId: string): string {
 .bundle-list {
   display: grid;
   gap: 0.5rem;
+}
+
+.payments {
+  display: block;
+  margin-top: 0.3rem;
 }
 
 /*
@@ -255,7 +264,7 @@ function coveredSections(bundleId: string): string {
 .meta {
   display: block;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .total {

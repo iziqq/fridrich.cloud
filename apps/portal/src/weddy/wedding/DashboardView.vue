@@ -136,7 +136,7 @@ const showTitle = computed(() => weddings.summaries.length > 1);
 
 .hello {
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .head h1 {
@@ -150,7 +150,7 @@ const showTitle = computed(() => weddings.summaries.length > 1);
 }
 
 .sign-out {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .list {
@@ -190,7 +190,7 @@ const showTitle = computed(() => weddings.summaries.length > 1);
   border-top: 1px solid var(--color-border);
   width: 100%;
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
 }
@@ -216,7 +216,7 @@ const showTitle = computed(() => weddings.summaries.length > 1);
   border-radius: 999px;
   background: var(--rose-100);
   color: var(--rose-700);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
@@ -227,7 +227,7 @@ const showTitle = computed(() => weddings.summaries.length > 1);
 
 .date {
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .stats {
@@ -240,7 +240,7 @@ const showTitle = computed(() => weddings.summaries.length > 1);
 
 dt {
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;

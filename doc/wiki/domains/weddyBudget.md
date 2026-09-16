@@ -4,8 +4,9 @@ type: domain
 sources:
   - raw/iziweddySpec.md (ch. 5.5, 7.4)
   - raw/2026-09-16-planningBundles.md
+  - raw/2026-09-17-weddyPayments.md
   - code: packages/weddy-shared/src/budget.ts, apps/api/src/application/weddy/budget.ts, apps/portal/src/weddy/budget
-updated: 2026-09-16
+updated: 2026-09-17
 ---
 
 # `weddy / budget` – the budget
@@ -23,6 +24,8 @@ updated: 2026-09-16
 | `draft` | the same for `draft` items and bundles |
 | `itemsWithoutPrice` | items and bundles without a price – a warning that the total may be incomplete |
 | `bundleItems` | items whose price is carried by a bundle |
+| `paid` | money that has already left – full prices of paid things and paid deposits, **regardless of status** (a deposit paid on a draft still left the account) |
+| `toPay` | what is left to pay on **accepted** things with a price: `price − paidAmount`. Drafts do not count – three offers from photographers are options, not a debt |
 | `byCategory[section]` | the same for each of the 12 sections (the key is always present, even with zeros) |
 | `bundles[]` | each bundle with its price, status, the sections it covers and the number of items |
 
@@ -54,7 +57,9 @@ Because there is one calculation, the numbers in both places cannot disagree.
 
 ## Screen
 
-Total in large type, accepted/draft bar, the **Balíčky** (Bundles) block with a
+Total in large type, accepted/draft bar, a **payments card** with *Zaplaceno*
+(Paid), *Zbývá doplatit* (Left to pay) and a bar of the paid share, the
+**Balíčky** (Bundles) block with each bundle's payment chip under its name with a
 one-line explanation of why a bundle is not in the section breakdown, then the
 breakdown by section (only sections with a price, an item without one or an item
 in a bundle, each linking to the section), a warning about items without a

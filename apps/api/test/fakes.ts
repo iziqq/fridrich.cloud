@@ -2,6 +2,10 @@ import { LOGIN_CODE_LENGTH } from '@fridrich/shared';
 import type { WeddingInput } from '@fridrich/weddy-shared';
 import type { IdentityDeps } from '../src/application/identity/deps.js';
 import type { BudgyDeps } from '../src/application/budgy/deps.js';
+import {
+  recordExternalPayments,
+  releaseExternalPayments,
+} from '../src/application/budgy/externalPayments.js';
 import type { WeddyDeps } from '../src/application/weddy/deps.js';
 import type { EmailAddress } from '../src/domain/identity/EmailAddress.js';
 import type { EmailMessage, EmailSender } from '../src/domain/shared/EmailSender.js';
@@ -374,6 +378,12 @@ export class InMemoryBudgetEntryRepository implements BudgetEntryRepository {
       if (state.userId === userId) this.items.delete(id);
     }
   }
+
+  async listBySourceRef(refPrefix: string): Promise<BudgetEntry[]> {
+    return [...this.items.values()]
+      .filter((state) => state.source?.ref.startsWith(refPrefix))
+      .map((state) => BudgetEntry.fromState(state));
+  }
 }
 
 export class InMemoryWeddingInvitationRepository implements WeddingInvitationRepository {
@@ -465,6 +475,8 @@ export function identityTestDeps(): IdentityTestContext {
 }
 
 export interface WeddyTestContext extends WeddyDeps {
+  /** Rozpočty účtů, do kterých se propisují platby – napojené přes skutečný use-case. */
+  budgy: BudgyTestContext;
   weddings: InMemoryWeddingRepository;
   guests: InMemoryGuestRepository;
   items: InMemoryItemRepository;
@@ -484,7 +496,16 @@ export const testFingerprint: Fingerprint = {
 };
 
 export function weddyTestDeps(): WeddyTestContext {
+  // Stejné napojení jako v `container.ts`, jen nad pamětí – testuje se tak i propsání plateb.
+  const budgy = budgyTestDeps();
+
   return {
+    budgy,
+    ledger: {
+      record: (input) => recordExternalPayments(budgy, { app: 'weddy', ...input }),
+      release: (ref) => releaseExternalPayments(budgy, { ref }),
+      releaseAll: (refPrefix) => releaseExternalPayments(budgy, { refPrefix }),
+    },
     weddings: new InMemoryWeddingRepository(),
     guests: new InMemoryGuestRepository(),
     items: new InMemoryItemRepository(),

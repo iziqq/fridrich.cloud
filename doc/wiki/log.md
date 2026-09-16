@@ -718,3 +718,98 @@ language switch.
 - Touched pages: `domains/budgyBudget.md` (rewritten around the two screens),
   `domains/budgyEntries.md`, `domains/budgy.md`, `architecture/frontend.md`,
   index, `raw/README.md`.
+
+## [2026-09-17] change | Everything larger on a phone
+
+Owner: on a phone everything feels too small.
+
+- **Type scale** in `packages/design/src/primitives.css` is one step larger on
+  mobile and shrinks from `--tablet`: body 17 px, new `--text-sm` (15 → 14 px)
+  and `--text-xs` (13 → 12 px), `--text-label` 13 → 12 px. All 92 literal font
+  sizes below body size in the portal and both products were replaced by the
+  tokens.
+- IziBudgy: headline amounts a step larger on mobile; an amount longer than ten
+  characters (`1 375 000 Kč`) gets a smaller step so it stays inside half a
+  phone-wide card. The top-bar tabs and the back link now meet the 44 px touch
+  target.
+- **Bugs found on the way:**
+  - The portal hub scrolled sideways on a phone (396 px page on a 360 px
+    screen) – the decorative glow was wider than the page. `overflow-x: clip`.
+  - Guest statuses in IziWeddy were rose instead of their own colours: a
+    scoped `.badge` for the filter counter also matched the root of every
+    `StatusBadge`. With the larger font it clipped the text. Renamed to
+    `.filter-count`.
+- **Correction to earlier checks:** headless Chrome cannot make a window
+  narrower than 500 px, so every "verified at 360/390 px" in this log before
+  this entry was a 500 px layout cropped to 360. This time the screens were
+  checked with real device emulation over the DevTools protocol, measuring
+  `scrollWidth` against the viewport: the hub, `/o-mne`, both IziBudgy screens
+  and the guest list – all 360 = 360 after the fixes.
+- Touched page: `architecture/frontend.md` (type scale, the 500 px trap, the
+  scoped-class trap).
+
+## [2026-09-17] ingest | IziWeddy: deposits and payment state
+
+Source: [raw/2026-09-17-weddyPayments.md](../raw/2026-09-17-weddyPayments.md) –
+a deposit shown with a checkbox with its own paid/unpaid state, and a paid state
+for the whole item or bundle. Decided with the owner: the deposit **has an
+amount**, and the budget shows **paid / left to pay**.
+
+- Shared kernel: `DepositSchema`, `DepositInputSchema`, `deposit` and `paid` on
+  items and bundles, `paidAmount`; the deposit may not exceed the price
+  (`v.forward` to `deposit.amount`). `calculateBudget` gained `paid` (everything
+  that left, by any status) and `toPay` (accepted things only), also per
+  section and per bundle row.
+- Domain: items inside a bundle never get payments – the bundle is paid, as it
+  carries the price and the status.
+- Portal: `PaymentFields.vue` in the item and bundle forms, `PaymentBadges.vue`
+  on cards, the bundle detail and the budget; a payments card on the budget
+  screen; new `CheckboxField.vue` in the product kit (a 44 px row, own box).
+- A generic Valibot helper for the deposit check turned out brittle with the
+  library's types; the check is written out in both schemas instead, like the
+  name rule.
+- Tests: paid and left-to-pay totals, "paid" including the deposit without
+  overwriting it, no payments inside a bundle, deposit above price on the right
+  field (170 API tests pass).
+- Verified with real phone emulation at 390 px (section, form, budget): page
+  width equals the viewport.
+- Touched pages: `domains/weddyPlanning.md`, `domains/weddyBudget.md`, index,
+  `raw/README.md`.
+
+## [2026-09-17] ingest | Paid wedding payments flow into IziBudgy
+
+Source: [raw/2026-09-17-weddyPaymentsToBudgy.md](../raw/2026-09-17-weddyPaymentsToBudgy.md)
+– a paid deposit or payment with a price appears in Budgy and disappears when
+unmarked. Decided with the owner: always into the **plan admin's** budget, a new
+**Svatba** (Wedding) category, and deleting in Weddy **keeps** the expense as an
+ordinary one.
+
+- **Port `PaymentLedger`** owned by weddy (`record`, `release`, `releaseAll`),
+  implemented by budgy (`recordExternalPayments`, `releaseExternalPayments`),
+  wired only in `container.ts` – the same pattern as `UserDataEraser`.
+- Weddy sends the **whole current list** of paid parts after every save of an
+  item or bundle (`paidParts`: deposit / rest / full); budgy compares it with its
+  entries by reference and part – creates, rewrites the amount (keeping the
+  date) or deletes. Idempotent, so saving again repairs a failed sync.
+- Budget entries got an optional generic `source` (`app`, `ref`, `part`,
+  `path`). Such entries cannot be updated or deleted in Budgy (`entryManaged`);
+  deleting the item, bundle or plan releases them into ordinary expenses.
+- Entries are found by reference **across accounts**, because the admin may
+  have changed since an entry was written.
+- **Caught before shipping:** `…:item:i1` is a prefix of `…:item:i10`, so
+  releasing one item by prefix would have unlinked another's payments. Release
+  is exact for items and bundles, by prefix only for a deleted plan.
+- Portal: category colour for *Svatba* taken from the IziWeddy palette; synced
+  entries show their part and *Spravuje IziWeddy ↗* (Managed in IziWeddy)
+  instead of edit buttons; the Weddy payment block says where a paid payment
+  goes.
+- Privacy policy rows for IziWeddy (deposits and payment state) and IziBudgy
+  (payments copied from a plan the user administers) updated; the document
+  version stays `'2026-09-17'` – same day.
+- Tests: 9 new cases covering deposit, rest, full, price change keeping the
+  date, no price, manager marking into the admin's budget, deleting an item and
+  a plan, the managed guard, and the prefix trap (179 API tests pass).
+- Verified with real phone emulation at 390 px: synced entries in the budget,
+  page width equals the viewport.
+- Touched pages: `domains/weddyPlanning.md`, `domains/budgyEntries.md`,
+  `architecture/domains.md`, `CLAUDE.md` (rule 3), index, `raw/README.md`.

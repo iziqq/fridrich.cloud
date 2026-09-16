@@ -6,6 +6,10 @@ import type { IdentityDeps } from '../application/identity/deps.js';
 import type { WeddyDeps } from '../application/weddy/deps.js';
 import { claimWeddingInvitations } from '../application/weddy/access.js';
 import { eraseUserBudgyData } from '../application/budgy/entries.js';
+import {
+  recordExternalPayments,
+  releaseExternalPayments,
+} from '../application/budgy/externalPayments.js';
 import { eraseUserWeddyData } from '../application/weddy/wedding.js';
 import { fingerprint, tokenGenerator, uuidGenerator } from './crypto.js';
 import { createEmailSender } from './email/senders.js';
@@ -74,6 +78,12 @@ export function weddyDeps(): WeddyDeps {
     guests: guestCosmosRepository,
     items: planningItemCosmosRepository,
     bundles: planningBundleCosmosRepository,
+    // Uhrazené platby plánování jdou do rozpočtu – port weddy, implementace budgy.
+    ledger: {
+      record: (input) => recordExternalPayments(budgyDeps(), { app: 'weddy', ...input }),
+      release: (ref) => releaseExternalPayments(budgyDeps(), { ref }),
+      releaseAll: (refPrefix) => releaseExternalPayments(budgyDeps(), { refPrefix }),
+    },
     invitations: weddingInvitationCosmosRepository,
     directory: cosmosUserDirectory,
     email: createEmailSender(),

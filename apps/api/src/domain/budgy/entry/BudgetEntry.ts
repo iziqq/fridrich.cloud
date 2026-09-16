@@ -1,6 +1,7 @@
 import type {
   BudgetEntry as BudgetEntryData,
   BudgetEntryInput,
+  BudgetEntrySource,
   EntryKind,
   EntryRecurrence,
   ExpenseCategory,
@@ -19,6 +20,8 @@ interface EntryDetails {
   startsOn: Month | undefined;
   endsOn: Month | undefined;
   note: string | undefined;
+  /** Zápis spravovaný jinou aplikací – viz `BudgetEntrySourceSchema`. */
+  source: BudgetEntrySource | undefined;
 }
 
 /**
@@ -69,6 +72,7 @@ export class BudgetEntry {
         startsOn: state.startsOn,
         endsOn: state.endsOn,
         note: state.note,
+        source: state.source,
       },
       state.createdAt,
       state.updatedAt,
@@ -96,7 +100,83 @@ export class BudgetEntry {
       startsOn: once ? undefined : (entry.startsOn ?? currentMonth),
       endsOn: once ? undefined : entry.endsOn,
       note: entry.note,
+      source: undefined,
     };
+  }
+
+  /**
+   * Zápis platby z jiné aplikace – jednorázový výdaj s dnešním datem.
+   *
+   * Datum je den, kdy se platba označila za uhrazenou: přesnější údaj
+   * aplikace nemá a do měsíce, kdy se platilo, to v praxi sedí.
+   */
+  static createManaged(input: {
+    id: string;
+    userId: string;
+    name: string;
+    amount: number;
+    category: ExpenseCategory;
+    source: BudgetEntrySource;
+    clock: Clock;
+  }): BudgetEntry {
+    const now = input.clock.now().toISOString();
+
+    return new BudgetEntry(
+      input.id,
+      input.userId,
+      {
+        kind: 'expense',
+        recurrence: 'once',
+        name: input.name,
+        amount: input.amount,
+        category: input.category,
+        date: now.slice(0, 10),
+        startsOn: undefined,
+        endsOn: undefined,
+        note: undefined,
+        source: input.source,
+      },
+      now,
+      now,
+    );
+  }
+
+  get source(): BudgetEntrySource | undefined {
+    return this.details.source;
+  }
+
+  /** Spravovaný zápis se srovná s aplikací – částka a název, datum zůstává. */
+  syncManaged(input: { name: string; amount: number; path?: string }, clock: Clock): void {
+    const source = this.details.source;
+    if (!source) return;
+    if (
+      this.details.name === input.name &&
+      this.details.amount === input.amount &&
+      source.path === input.path
+    ) {
+      return;
+    }
+
+    this.details = {
+      ...this.details,
+      name: input.name,
+      amount: input.amount,
+      source: { ...source, ...(input.path ? { path: input.path } : {}) },
+    };
+    this.touch(clock);
+  }
+
+  /**
+   * Odpojí zápis od aplikace – věc, za kterou se platilo, zmizela.
+   *
+   * Peníze ale odešly, takže výdaj zůstává jako běžná položka rozpočtu,
+   * kterou už jde upravit i smazat ručně.
+   */
+  release(clock: Clock): void {
+    if (!this.details.source) return;
+
+    this.details = { ...this.details, source: undefined };
+    this.touch(clock);
   }
 
   get updatedAt(): string {
@@ -130,6 +210,7 @@ export class BudgetEntry {
     if (this.details.startsOn) state.startsOn = this.details.startsOn;
     if (this.details.endsOn) state.endsOn = this.details.endsOn;
     if (this.details.note) state.note = this.details.note;
+    if (this.details.source) state.source = this.details.source;
     return state;
   }
 

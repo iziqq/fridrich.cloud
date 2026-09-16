@@ -39,7 +39,7 @@ async function onSaved(wedding: Wedding): Promise<void> {
   display: inline-block;
   margin-bottom: var(--space-2);
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   text-decoration: none;
 }
 

@@ -91,7 +91,7 @@ input[aria-invalid='true'] {
 
 .hint {
   margin-top: 0.35rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--color-muted);
 }
 
@@ -102,6 +102,6 @@ input[aria-invalid='true'] {
 
 /* Hlášky jsou věty – čtou se v běžném písmu, ne ve verzálkách popisků. */
 .error {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 </style>

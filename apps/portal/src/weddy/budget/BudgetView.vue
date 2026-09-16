@@ -14,6 +14,7 @@ import { currentLocale, translateMessage } from '@/i18n';
 import ErrorBlock from '@/components/product/ErrorBlock.vue';
 import LoadingBlock from '@/components/product/LoadingBlock.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
+import PaymentBadges from '@/weddy/planning/PaymentBadges.vue';
 import { weddyPath } from '@/weddy/routes';
 import { getBudget } from './endpoints/getBudget.endpoint';
 
@@ -85,6 +86,12 @@ function coveredSections(categories: readonly PlanningCategory[]): string {
   return categories.map((category) => t(planningKeys.category[category])).join(' · ');
 }
 
+/** Kolik ze zaplaceného a zbývajícího už odešlo – pro pruh plateb. */
+const paidShare = computed(() => {
+  const whole = budget.value.paid + budget.value.toPay;
+  return whole > 0 ? `${Math.round((budget.value.paid / whole) * 100)}%` : '0%';
+});
+
 /** Podíl pro pruh – u nulového rozpočtu nemá smysl nic kreslit. */
 function share(amount: number): string {
   if (budget.value.total <= 0) return '0%';
@@ -119,6 +126,27 @@ function share(amount: number): string {
         </dl>
       </section>
 
+      <!--
+        Platby zvlášť od schváleno/návrh: to první říká, na čem jsme se
+        dohodli, tohle kolik peněz už odešlo a kolik ještě odejde.
+      -->
+      <section v-if="budget.paid > 0 || budget.toPay > 0" class="payments card">
+        <div class="payment-figures">
+          <div>
+            <p class="label">{{ t('weddy.budget.paid') }}</p>
+            <p class="payment-value paid">{{ formatCurrency(budget.paid, currentLocale) }}</p>
+          </div>
+          <div>
+            <p class="label">{{ t('weddy.budget.toPay') }}</p>
+            <p class="payment-value to-pay">{{ formatCurrency(budget.toPay, currentLocale) }}</p>
+          </div>
+        </div>
+        <div class="paid-bar" aria-hidden="true">
+          <span class="paid-fill" :style="{ width: paidShare }"></span>
+        </div>
+        <p class="payment-hint">{{ t('weddy.budget.toPayHint') }}</p>
+      </section>
+
       <p v-if="budget.itemsWithoutPrice > 0" class="notice">
         {{ t('weddy.budget.itemsWithoutPrice', budget.itemsWithoutPrice) }}
       </p>
@@ -136,6 +164,10 @@ function share(amount: number): string {
               <span class="name">
                 {{ bundle.name }}
                 <span class="detail covers">{{ coveredSections(bundle.categories) }}</span>
+                <!-- Pod názvem, ne vedle ceny – vedle by na telefonu zmáčkl název na tři řádky. -->
+                <span v-if="bundle.deposit || bundle.fullyPaid" class="bundle-payment">
+                  <PaymentBadges :deposit="bundle.deposit" :paid="bundle.fullyPaid" />
+                </span>
               </span>
               <span class="values">
                 <span class="sum">
@@ -181,10 +213,69 @@ function share(amount: number): string {
 </template>
 
 <style scoped>
+.payments {
+  margin-top: var(--space-2);
+}
+
+.payment-figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.payments .label {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* Ne `.amount` – to je patkový styl velkého součtu nahoře. */
+.payment-value {
+  margin: 0.15rem 0 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.paid {
+  color: var(--sage-500);
+}
+
+.to-pay {
+  color: var(--amber-500);
+}
+
+.paid-bar {
+  height: 0.5rem;
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--sand-100);
+}
+
+.paid-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--sage-500);
+  transition: width var(--dur-base) var(--ease);
+}
+
+.bundle-payment {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.payment-hint {
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+}
+
 .hint {
   margin: -0.25rem 0 var(--space-1);
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .covers {
@@ -199,7 +290,7 @@ function share(amount: number): string {
 .total .label {
   margin-inline: auto;
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -242,7 +333,7 @@ function share(amount: number): string {
   gap: 0.4rem;
   align-items: center;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .dot {
@@ -270,7 +361,7 @@ function share(amount: number): string {
   border-radius: var(--radius-sm);
   background: #fdf6e3;
   color: #8a6416;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 h2 {
@@ -325,6 +416,6 @@ h2 {
 .detail {
   display: block;
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 </style>

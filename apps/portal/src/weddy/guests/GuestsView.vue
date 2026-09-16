@@ -415,7 +415,7 @@ async function removeFamily(family: Family): Promise<void> {
           >
             <span aria-hidden="true">☰</span>
             {{ t('weddy.guests.filters.button') }}
-            <span v-if="activeFilters > 0" class="badge" aria-hidden="true">{{ activeFilters }}</span>
+            <span v-if="activeFilters > 0" class="filter-count" aria-hidden="true">{{ activeFilters }}</span>
           </button>
 
           <div
@@ -775,7 +775,7 @@ async function removeFamily(family: Family): Promise<void> {
 
 .stat .label {
   color: var(--color-muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-xs);
 }
 
 .split {
@@ -790,7 +790,7 @@ async function removeFamily(family: Family): Promise<void> {
 
 .split dt {
   color: var(--color-muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -817,16 +817,21 @@ async function removeFamily(family: Family): Promise<void> {
   gap: 0.4rem;
 }
 
-.badge {
+/*
+ * Počítadlo aktivních filtrů. Nesmí se jmenovat `.badge`: scoped styl se
+ * v Vue propisuje i na kořen dceřiné komponenty, takže by přebarvil
+ * `StatusBadge` u každého hosta na růžovo a usekl mu text pevnou výškou.
+ */
+.filter-count {
   display: grid;
   place-items: center;
   min-width: 1.25rem;
-  height: 1.25rem;
+  min-height: 1.25rem;
   padding-inline: 0.3rem;
   border-radius: 999px;
   background: var(--color-accent);
   color: var(--color-on-accent);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 /*
@@ -864,7 +869,7 @@ async function removeFamily(family: Family): Promise<void> {
 
 .clear {
   margin-top: var(--space-1);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 /* Ženich a nevěsta vedle sebe od tabletu; na mobilu pod sebou. */
@@ -894,7 +899,7 @@ async function removeFamily(family: Family): Promise<void> {
 .side-empty {
   margin-top: var(--space-1);
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 /* Rodina drží pohromadě vlastním rámečkem, ať je vidět, kam kdo patří. */
@@ -976,7 +981,7 @@ async function removeFamily(family: Family): Promise<void> {
 
 .members-field legend {
   padding-inline: 0.4rem;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1045,7 +1050,7 @@ async function removeFamily(family: Family): Promise<void> {
 
 .meta {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .controls {

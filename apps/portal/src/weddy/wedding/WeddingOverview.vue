@@ -141,7 +141,7 @@ h1 {
   justify-content: center;
   margin: var(--space-1) auto 0;
   color: var(--color-muted);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
 }
 
 .countdown {
@@ -149,7 +149,7 @@ h1 {
   border-radius: 999px;
   background: var(--rose-100);
   color: var(--rose-700);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
@@ -165,7 +165,7 @@ h1 {
 
 dt {
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -186,7 +186,7 @@ dd {
 
 .hint {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .bar {

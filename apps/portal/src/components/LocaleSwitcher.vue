@@ -51,7 +51,7 @@ function choose(locale: Locale): void {
   background: transparent;
   color: var(--color-muted);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   cursor: pointer;
   transition: color var(--dur-fast) var(--ease);

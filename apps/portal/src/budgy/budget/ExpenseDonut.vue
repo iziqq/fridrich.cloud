@@ -154,7 +154,7 @@ svg {
   align-items: baseline;
   padding: 0.35rem 0;
   border-bottom: 1px solid var(--color-border);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
 }
 
 .row:last-child {
@@ -176,7 +176,7 @@ svg {
 
 .share {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 

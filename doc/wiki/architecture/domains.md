@@ -85,7 +85,8 @@ in `apps/`, the database or the UI.
    be cut out without touching the others. What one domain needs from another
    goes through a **port wired in `infrastructure/container.ts`**: identity calls
    `UserDataEraser` and `UserRegistrationListener` (account deleted, account
-   created), weddy reads names and e-mails through `UserDirectory`. A cross-domain effect goes through a
+   created), weddy reads names and e-mails through `UserDirectory`, and weddy's paid
+   payments reach the budget through `PaymentLedger` (implemented by budgy). A cross-domain effect goes through a
    port owned by the triggering domain and wired in `infrastructure/container.ts` –
    account deletion calls `UserDataEraser`, implemented by `weddy`
    (`eraseUserWeddyData`) ([personalData.md](personalData.md#account-deletion-right-to-erasure)).

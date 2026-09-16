@@ -1,4 +1,5 @@
 import type {
+  Deposit,
   PlanningCategory,
   PlanningItem as PlanningItemData,
   PlanningItemInput,
@@ -15,6 +16,8 @@ interface ItemDetails {
   status: PlanningItemStatus;
   /** Balíček, který položku zahrnuje – pak platí jeho cena i stav. */
   bundleId: string | undefined;
+  deposit: Deposit | undefined;
+  paid: boolean;
 }
 
 /**
@@ -55,6 +58,8 @@ export class PlanningItem {
         price: state.price,
         status: state.status,
         bundleId: state.bundleId,
+        deposit: state.deposit,
+        paid: state.paid === true,
       },
       state.createdAt,
       state.updatedAt,
@@ -70,6 +75,15 @@ export class PlanningItem {
       price: item.price,
       status: item.status ?? 'draft',
       bundleId: item.bundleId,
+      /*
+       * Položka v balíčku se neplatí – platí se balíček. Záloha ani „zaplaceno"
+       * u ní proto nevzniknou, i kdyby je formulář poslal.
+       */
+      deposit:
+        item.bundleId || !item.deposit
+          ? undefined
+          : { amount: item.deposit.amount, paid: item.deposit.paid ?? false },
+      paid: !item.bundleId && item.paid === true,
     };
   }
 
@@ -126,6 +140,8 @@ export class PlanningItem {
     if (this.details.url) state.url = this.details.url;
     if (this.details.price !== undefined) state.price = this.details.price;
     if (this.details.bundleId) state.bundleId = this.details.bundleId;
+    if (this.details.deposit) state.deposit = this.details.deposit;
+    if (this.details.paid) state.paid = true;
     return state;
   }
 }

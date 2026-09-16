@@ -388,7 +388,7 @@ function formatDate(iso: string): string {
 .lead {
   margin-top: -0.35rem;
   color: var(--color-muted);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
 }
 
 .people {
@@ -420,7 +420,7 @@ function formatDate(iso: string): string {
 .detail {
   overflow: hidden;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
   text-overflow: ellipsis;
 }
 
@@ -438,7 +438,7 @@ function formatDate(iso: string): string {
 
 .role-fixed {
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -480,7 +480,7 @@ function formatDate(iso: string): string {
   gap: 0.35rem;
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
 }
 
 .hints dt {
@@ -500,7 +500,7 @@ function formatDate(iso: string): string {
 
 .saved {
   color: var(--color-success);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .general-error {

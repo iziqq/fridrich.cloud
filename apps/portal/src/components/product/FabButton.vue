@@ -26,7 +26,7 @@ defineEmits<{ click: [] }>();
   border-radius: 999px;
   background: var(--color-accent);
   color: var(--color-on-accent);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   box-shadow: var(--shadow-md);
   cursor: pointer;
