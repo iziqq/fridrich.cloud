@@ -40,6 +40,7 @@ const CONTAINER_DEFINITIONS: {
   },
   { id: CONTAINERS.guests, partitionKey: '/weddingId' },
   { id: CONTAINERS.planningItems, partitionKey: '/weddingId' },
+  { id: CONTAINERS.planningBundles, partitionKey: '/weddingId' },
 ];
 
 let databasePromise: Promise<Database> | undefined;

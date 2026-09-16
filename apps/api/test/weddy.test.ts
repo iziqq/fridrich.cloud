@@ -1,6 +1,17 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { calculateBudget, calculateGuestStats, groupIntoFamilies } from '@fridrich/weddy-shared';
+import { issuesToDetails } from '@fridrich/shared';
+import * as v from 'valibot';
+import {
+  PlanningItemInputSchema,
+  bundleCategories,
+  calculateBudget,
+  calculateGuestStats,
+  countDecidedSections,
+  groupIntoFamilies,
+  itemStatus,
+  itemTitle,
+} from '@fridrich/weddy-shared';
 import { getBudget } from '../src/application/weddy/budget.js';
 import {
   changeGuestStatus,
@@ -12,7 +23,14 @@ import {
   updateFamily,
   updateGuest,
 } from '../src/application/weddy/guests.js';
-import { createItem, listItems } from '../src/application/weddy/planning.js';
+import {
+  changeBundleStatus,
+  createBundle,
+  createItem,
+  deleteBundle,
+  listBundles,
+  listItems,
+} from '../src/application/weddy/planning.js';
 import {
   createWedding,
   deleteWedding,
@@ -260,9 +278,122 @@ describe('položky plánování a rozpočet', () => {
   });
 });
 
+describe('balíčky plánování', () => {
+  /** Nabídka zámku: jedna cena za obřad, veselku, jídlo i hudbu. */
+  async function withBundle(): Promise<{
+    deps: WeddyTestContext;
+    weddingId: string;
+    bundleId: string;
+  }> {
+    const { deps, weddingId } = await withWedding();
+    const bundle = await createBundle(
+      deps,
+      weddingId,
+      { name: 'Zámek – vše v jednom', price: 250000 },
+      OWNER,
+    );
+
+    await createItem(
+      deps,
+      weddingId,
+      { category: 'ceremonyVenue', name: 'Obřad v kapli', bundleId: bundle.id },
+      OWNER,
+    );
+    // Uvnitř balíčku se zadává jen sekce – název nese nabídka.
+    await createItem(deps, weddingId, { category: 'music', bundleId: bundle.id }, OWNER);
+
+    return { deps, weddingId, bundleId: bundle.id };
+  }
+
+  it('cena balíčku je v součtu jednou, položky v něm se nepřičítají', async () => {
+    const { deps, weddingId } = await withBundle();
+    await createItem(deps, weddingId, { category: 'flowers', name: 'Kytice', price: 15000 }, OWNER);
+
+    const budget = await getBudget(deps, weddingId, OWNER);
+
+    assert.equal(budget.total, 265000);
+    assert.equal(budget.draft, 265000);
+    assert.equal(budget.bundleItems, 2);
+    assert.equal(budget.byCategory.ceremonyVenue.total, 0);
+    assert.equal(budget.byCategory.ceremonyVenue.bundleItems, 1);
+    assert.equal(budget.byCategory.ceremonyVenue.itemsWithoutPrice, 0);
+    assert.equal(budget.bundles.length, 1);
+    assert.deepEqual(budget.bundles[0]?.categories, ['ceremonyVenue', 'music']);
+    assert.equal(budget.bundles[0]?.itemCount, 2);
+  });
+
+  it('schválení balíčku platí i pro jeho položky', async () => {
+    const { deps, weddingId, bundleId } = await withBundle();
+    await changeBundleStatus(deps, weddingId, bundleId, 'accepted', OWNER);
+
+    const [items, bundles] = await Promise.all([
+      listItems(deps, weddingId, OWNER),
+      listBundles(deps, weddingId, OWNER),
+    ]);
+
+    assert.equal(items[0]?.status, 'draft', 'vlastní stav položky zůstává uložený');
+    assert.equal(itemStatus(items[0]!, bundles), 'accepted');
+    assert.equal(countDecidedSections(items, bundles), 2);
+
+    const budget = await getBudget(deps, weddingId, OWNER);
+    assert.equal(budget.accepted, 250000);
+  });
+
+  it('položka v balíčku nepotřebuje název a vystupuje pod jménem nabídky', async () => {
+    const { deps, weddingId, bundleId } = await withBundle();
+
+    const [items, bundles] = await Promise.all([
+      listItems(deps, weddingId, OWNER),
+      listBundles(deps, weddingId, OWNER),
+    ]);
+    const entry = items.find((item) => item.category === 'music');
+
+    assert.equal(entry?.name, undefined);
+    assert.equal(itemTitle(entry!, bundles), 'Zámek – vše v jednom');
+  });
+
+  it('samostatná položka bez názvu je chyba pole name', () => {
+    const result = v.safeParse(PlanningItemInputSchema, { category: 'dress' });
+
+    assert.equal(result.success, false);
+    assert.deepEqual(issuesToDetails(result.issues ?? []), [
+      { field: 'name', message: 'weddyShared.planning.nameRequired' },
+    ]);
+  });
+
+  it('smazání balíčku položky zachová, jen je z něj vyřadí', async () => {
+    const { deps, weddingId, bundleId } = await withBundle();
+    await deleteBundle(deps, weddingId, bundleId, OWNER);
+
+    const items = await listItems(deps, weddingId, OWNER);
+
+    assert.equal(items.length, 2);
+    assert.equal(items[0]?.bundleId, undefined);
+    assert.equal(bundleCategories(bundleId, items).length, 0);
+    assert.equal((await listBundles(deps, weddingId, OWNER)).length, 0);
+  });
+
+  it('položku nelze přidat do balíčku jiné svatby', async () => {
+    const { deps, weddingId, bundleId } = await withBundle();
+    const other = await createWedding(deps, validWedding, 'other-user');
+
+    await assert.rejects(
+      () =>
+        createItem(
+          deps,
+          other.id,
+          { category: 'food', name: 'Menu', bundleId },
+          'other-user',
+        ),
+      (error: unknown) => isDomainError(error) && error.kind === 'notFound',
+    );
+  });
+});
+
 describe('výpočty sdílené s frontendem', () => {
   it('rozpočet prázdného seznamu je nulový', () => {
     const budget = calculateBudget([]);
+    assert.equal(budget.bundles.length, 0);
 
     assert.equal(budget.total, 0);
     assert.equal(budget.itemsWithoutPrice, 0);

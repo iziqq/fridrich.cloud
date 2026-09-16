@@ -122,11 +122,16 @@ export const weddyCs = {
     drafts: 'Návrhy',
     itemsWithoutPrice:
       '{n} položek nemá vyplněnou cenu, takže součet nemusí být úplný. | {n} položka nemá vyplněnou cenu, takže součet nemusí být úplný. | {n} položky nemají vyplněnou cenu, takže součet nemusí být úplný. | {n} položek nemá vyplněnou cenu, takže součet nemusí být úplný.',
+    bundles: 'Balíčky',
+    bundlesHint: 'Cena balíčku je v celkové částce, ale ne v rozpisu sekcí – jedna cena se mezi ně rozpočítat nedá.',
+    bundleCovers: 'Pokrývá {sections}',
+    bundleNoItems: 'Zatím bez položek',
     byCategory: 'Rozpis podle sekcí',
     empty: 'Zatím tu není žádná položka s cenou.',
     goToPlanning: 'Přejít na plánování',
     categoryAccepted: 'schváleno {amount}',
     withoutPrice: '{count} bez ceny',
+    inBundle: 'v balíčku',
   },
 };
 
@@ -244,10 +249,15 @@ export const weddyEn: Catalog<typeof weddyCs> = {
     drafts: 'Drafts',
     itemsWithoutPrice:
       '{n} items have no price, so the total may be incomplete. | {n} item has no price, so the total may be incomplete. | {n} items have no price, so the total may be incomplete.',
+    bundles: 'Bundles',
+    bundlesHint: 'A bundle price is part of the total, but not of the section breakdown – one price cannot be split between sections.',
+    bundleCovers: 'Covers {sections}',
+    bundleNoItems: 'No items yet',
     byCategory: 'Breakdown by section',
     empty: 'There are no items with a price yet.',
     goToPlanning: 'Go to planning',
     categoryAccepted: 'approved {amount}',
     withoutPrice: '{count} without price',
+    inBundle: 'in a bundle',
   },
 };

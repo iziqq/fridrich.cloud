@@ -20,6 +20,7 @@ import {
 import {
   cosmosUserDirectory,
   guestCosmosRepository,
+  planningBundleCosmosRepository,
   planningItemCosmosRepository,
   weddingCosmosRepository,
   weddingInvitationCosmosRepository,
@@ -65,6 +66,7 @@ export function weddyDeps(): WeddyDeps {
     weddings: weddingCosmosRepository,
     guests: guestCosmosRepository,
     items: planningItemCosmosRepository,
+    bundles: planningBundleCosmosRepository,
     invitations: weddingInvitationCosmosRepository,
     directory: cosmosUserDirectory,
     email: createEmailSender(),

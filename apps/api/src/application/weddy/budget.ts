@@ -15,7 +15,13 @@ export async function getBudget(
   userId: string,
 ): Promise<BudgetSummary> {
   const wedding = await loadWeddingFor(deps, weddingId, userId);
-  const items = await deps.items.list(wedding.id);
+  const [items, bundles] = await Promise.all([
+    deps.items.list(wedding.id),
+    deps.bundles.list(wedding.id),
+  ]);
 
-  return calculateBudget(items.map((item) => item.toState()));
+  return calculateBudget(
+    items.map((item) => item.toState()),
+    bundles.map((bundle) => bundle.toState()),
+  );
 }

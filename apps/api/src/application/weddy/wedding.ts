@@ -52,21 +52,23 @@ export async function listWeddings(deps: WeddyDeps, userId: string): Promise<Wed
 
   return Promise.all(
     weddings.map(async (wedding) => {
-      const [guests, items] = await Promise.all([
+      const [guests, items, bundles] = await Promise.all([
         deps.guests.list(wedding.id),
         deps.items.list(wedding.id),
+        deps.bundles.list(wedding.id),
       ]);
 
       const itemStates = items.map((item) => item.toState());
+      const bundleStates = bundles.map((bundle) => bundle.toState());
       const stats = calculateGuestStats(guests.map((guest) => guest.toState()));
-      const budget = calculateBudget(itemStates);
+      const budget = calculateBudget(itemStates, bundleStates);
 
       const summary: WeddingSummary = {
         ...wedding.toPublic(),
         guestCount: stats.total,
         acceptedGuestCount: stats.accepted,
         budgetTotal: budget.total,
-        decidedSectionCount: countDecidedSections(itemStates),
+        decidedSectionCount: countDecidedSections(itemStates, bundleStates),
         role: wedding.assertCanRead(userId),
       };
 
@@ -186,6 +188,7 @@ async function deleteWithContent(deps: WeddyDeps, wedding: Wedding): Promise<voi
   await Promise.all([
     deps.guests.deleteAllForWedding(wedding.id),
     deps.items.deleteAllForWedding(wedding.id),
+    deps.bundles.deleteAllForWedding(wedding.id),
     deps.invitations.deleteAllForWedding(wedding.id),
   ]);
 

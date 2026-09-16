@@ -63,6 +63,7 @@ Relative to `/izi-weddy`; links are built with `weddyPath()`.
 | `/weddings/:weddingId/couple` | Couple | wedding |
 | `/weddings/:weddingId/guests` | Guests | guests |
 | `/weddings/:weddingId/planning` | Section overview | planning |
+| `/weddings/:weddingId/planning/bundles/:bundleId` | Bundle detail – one offer and what it includes | planning |
 | `/weddings/:weddingId/planning/:category` | Section detail | planning |
 | `/weddings/:weddingId/budget` | Budget | budget |
 | `/weddings/:weddingId/settings` | Settings – wedding, access, deletion (admin only) | wedding + access |

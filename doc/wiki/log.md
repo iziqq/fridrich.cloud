@@ -492,3 +492,65 @@ delete should use our own modal.
   then removed.
 - Touched pages: `domains/weddy.md`, `domains/weddyGuests.md`,
   `architecture/frontend.md`.
+
+## [2026-09-16] ingest | Planning bundles: one offer, one price, several sections
+
+Source: [raw/2026-09-16-planningBundles.md](../raw/2026-09-16-planningBundles.md)
+– a venue offered the ceremony, the reception, food, drinks, flowers,
+decorations and the band for a single price, and the planner had nowhere to put
+that.
+
+Decided with the owner:
+
+- A **bundle** has a name, a link, one price and a status; items are added
+  inside it, each keeping its own section. The alternative (a bundle as a set of
+  ticked sections) was rejected – it cannot record *what* the music actually is.
+- The example mentions music, which had no section. A twelfth section `music`
+  (Hudba) was added between `decorations` and `suit`; the dashboard now counts
+  "decided X of 12".
+
+Implementation:
+
+- Shared kernel: `PlanningBundleSchema`, `PlanningBundleInputSchema`,
+  `PlanningItemSchema.bundleId`, `itemStatus`, `bundleCategories`;
+  `countDecidedSections(items, bundles)`.
+- Budget: `calculateBudget(items, bundles)` counts a bundle price once, ignores
+  the price of items inside it (`bundleItems` per section instead) and returns
+  `bundles[]` for the new block on the budget screen. The section breakdown
+  deliberately does not add up to the total – one price cannot be split between
+  sections without inventing numbers.
+- API: `PlanningBundle` aggregate, `PlanningBundleRepository`, container
+  `planningBundles` (PK `/weddingId`), five endpoints, cascade in
+  `deleteWedding`. Deleting a bundle **keeps its items** and only frees them.
+  An item may only join a bundle of the same wedding.
+- Portal: `PlanningBundleView.vue`, `BundleSheet.vue`, a Balíčky block on the
+  planning overview and on the budget screen, a bundle picker in the item form,
+  *v balíčku X* instead of a price in the section detail.
+- Tests: four new cases in `weddy.test.ts` (146 API tests pass).
+- Verified in headless Chrome at 360, 390 and 1024 px on a temporary preview
+  page, then removed.
+- Touched pages: `domains/weddyPlanning.md`, `domains/weddyBudget.md`,
+  `domains/weddy.md`, `raw/README.md`, index.
+
+## [2026-09-16] change | Inside a bundle only the section is entered
+
+Owner: when adding an item inside a bundle there is nothing to call it – the
+name and the link belong to the offer. Only the section should be there.
+
+- `PlanningItemSchema.name` is optional and `PlanningItemInputSchema` requires
+  it only when the item has no `bundleId` (`v.forward(v.check(…), ['name'])`, so
+  the error still lands on the field). New `itemTitle(item, bundles)` – a
+  nameless item is shown under its bundle's name.
+- Bundle detail: the form is a single section picker, offering only sections the
+  bundle does not have yet; the list is one row per section (*Co je v ceně*), in
+  enum order. An item moved in from a section keeps its name and link and both
+  are shown under the section.
+- Section detail: a bundle entry is titled with the bundle name and linked as
+  *z balíčku* (from the bundle); the "Bez odkazu" (no link) note is not shown for
+  it, because the link belongs to the offer.
+- Tests: an item with no name outside a bundle fails on the `name` field; an
+  entry inside a bundle needs none (148 API tests pass).
+- Section icons moved from `PlanningView.vue` to `planning/categoryIcons.ts` and
+  added to the list inside a bundle – the same section now looks the same in
+  both places.
+- Touched page: `domains/weddyPlanning.md`.

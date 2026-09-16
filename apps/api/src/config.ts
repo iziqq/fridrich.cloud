@@ -22,6 +22,7 @@ export const CONTAINERS = {
   weddingInvitations: 'weddingInvitations',
   guests: 'guests',
   planningItems: 'planningItems',
+  planningBundles: 'planningBundles',
 } as const;
 
 export type ContainerName = (typeof CONTAINERS)[keyof typeof CONTAINERS];

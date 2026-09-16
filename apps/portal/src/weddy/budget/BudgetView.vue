@@ -5,6 +5,7 @@ import {
   formatCurrency,
   planningKeys,
   type BudgetSummary,
+  type PlanningCategory,
 } from '@fridrich/weddy-shared';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -12,6 +13,7 @@ import { RouterLink, useRoute } from 'vue-router';
 import { currentLocale, translateMessage } from '@/i18n';
 import ErrorBlock from '@/weddy/components/ErrorBlock.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
+import StatusBadge from '@/weddy/components/StatusBadge.vue';
 import { weddyPath } from '@/weddy/routes';
 import { getBudget } from './endpoints/getBudget.endpoint';
 
@@ -50,9 +52,38 @@ const budget = computed(() => summary.value ?? calculateBudget([]));
 const usedCategories = computed(() =>
   PLANNING_CATEGORIES.filter((category) => {
     const row = budget.value.byCategory[category];
-    return row.total > 0 || row.itemsWithoutPrice > 0;
+    return row.total > 0 || row.itemsWithoutPrice > 0 || row.bundleItems > 0;
   }),
 );
+
+/**
+ * Popisek řádku sekce – schválená částka, položky bez ceny, položky v balíčku.
+ * Skládá se tady, aby mezi částmi nezůstala oddělovací tečka viset na začátku.
+ */
+function categoryDetail(category: PlanningCategory): string {
+  const row = budget.value.byCategory[category];
+  const parts: string[] = [];
+
+  if (row.accepted > 0) {
+    parts.push(
+      t('weddy.budget.categoryAccepted', {
+        amount: formatCurrency(row.accepted, currentLocale.value),
+      }),
+    );
+  }
+  if (row.itemsWithoutPrice > 0) {
+    parts.push(t('weddy.budget.withoutPrice', { count: row.itemsWithoutPrice }));
+  }
+  if (row.bundleItems > 0) parts.push(t('weddy.budget.inBundle'));
+
+  return parts.join(' · ');
+}
+
+/** Sekce, které balíček pokrývá, vypsané za sebou – „Místo obřadu · Jídlo". */
+function coveredSections(categories: readonly PlanningCategory[]): string {
+  if (categories.length === 0) return t('weddy.budget.bundleNoItems');
+  return categories.map((category) => t(planningKeys.category[category])).join(' · ');
+}
 
 /** Podíl pro pruh – u nulového rozpočtu nemá smysl nic kreslit. */
 function share(amount: number): string {
@@ -92,6 +123,35 @@ function share(amount: number): string {
         {{ t('weddy.budget.itemsWithoutPrice', budget.itemsWithoutPrice) }}
       </p>
 
+      <template v-if="budget.bundles.length > 0">
+        <h2>{{ t('weddy.budget.bundles') }}</h2>
+        <p class="hint">{{ t('weddy.budget.bundlesHint') }}</p>
+
+        <ul class="rows">
+          <li v-for="bundle in budget.bundles" :key="bundle.id" class="row card">
+            <RouterLink
+              :to="weddyPath(`/weddings/${weddingId}/planning/bundles/${bundle.id}`)"
+              class="link"
+            >
+              <span class="name">
+                {{ bundle.name }}
+                <span class="detail covers">{{ coveredSections(bundle.categories) }}</span>
+              </span>
+              <span class="values">
+                <span class="sum">
+                  {{
+                    bundle.price === undefined
+                      ? '—'
+                      : formatCurrency(bundle.price, currentLocale)
+                  }}
+                </span>
+                <StatusBadge kind="planning" :status="bundle.status" />
+              </span>
+            </RouterLink>
+          </li>
+        </ul>
+      </template>
+
       <h2>{{ t('weddy.budget.byCategory') }}</h2>
 
       <p v-if="usedCategories.length === 0" class="empty">
@@ -104,19 +164,14 @@ function share(amount: number): string {
           <RouterLink :to="weddyPath(`/weddings/${weddingId}/planning/${category}`)" class="link">
             <span class="name">{{ t(planningKeys.category[category]) }}</span>
             <span class="values">
-              <span class="sum">{{ formatCurrency(budget.byCategory[category].total, currentLocale) }}</span>
-              <span class="detail">
-                <template v-if="budget.byCategory[category].accepted > 0">
-                  {{
-                    t('weddy.budget.categoryAccepted', {
-                      amount: formatCurrency(budget.byCategory[category].accepted, currentLocale),
-                    })
-                  }}
-                </template>
-                <template v-if="budget.byCategory[category].itemsWithoutPrice > 0">
-                  · {{ t('weddy.budget.withoutPrice', { count: budget.byCategory[category].itemsWithoutPrice }) }}
-                </template>
+              <span class="sum">
+                {{
+                  budget.byCategory[category].total > 0
+                    ? formatCurrency(budget.byCategory[category].total, currentLocale)
+                    : '—'
+                }}
               </span>
+              <span class="detail">{{ categoryDetail(category) }}</span>
             </span>
           </RouterLink>
         </li>
@@ -126,6 +181,17 @@ function share(amount: number): string {
 </template>
 
 <style scoped>
+.hint {
+  margin: -0.25rem 0 var(--space-1);
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+.covers {
+  display: block;
+  margin-top: 0.15rem;
+}
+
 .total {
   text-align: center;
 }

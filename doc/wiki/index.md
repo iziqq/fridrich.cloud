@@ -37,8 +37,8 @@ Sources: [../raw/](../raw/README.md) · Change chronology: [log.md](log.md)
 | [domains/weddyWedding.md](domains/weddyWedding.md) | Plans and the couple: dashboard in three shapes, settings screen, field rules, 6 endpoints, code | 2026-09-16 |
 | [domains/weddyAccess.md](domains/weddyAccess.md) | Roles (admin / manager / viewer), where access is enforced, invitations by e-mail, 5 endpoints | 2026-09-16 |
 | [domains/weddyGuests.md](domains/weddyGuests.md) | Guests and families: enums, family rules, list with filter popover, statistics, 8 endpoints | 2026-09-16 |
-| [domains/weddyPlanning.md](domains/weddyPlanning.md) | 11 sections, items, prices, 5 endpoints | 2026-09-15 |
-| [domains/weddyBudget.md](domains/weddyBudget.md) | Budget from items: calculation, where it is computed, `getBudget` endpoint | 2026-09-15 |
+| [domains/weddyPlanning.md](domains/weddyPlanning.md) | 12 sections, items, bundles (one price for several sections), 10 endpoints | 2026-09-16 |
+| [domains/weddyBudget.md](domains/weddyBudget.md) | Budget from items and bundles: calculation, why a bundle is outside the section breakdown, `getBudget` endpoint | 2026-09-16 |
 | [domains/budgy.md](domains/budgy.md) | IziBudgy (TODO): rough core and questions before the specification | 2026-09-15 |
 | [domains/portal.md](domains/portal.md) | Portal: content, binding rules, Glass design (dark + orange) tokens and components, accessibility | 2026-09-15 |
 

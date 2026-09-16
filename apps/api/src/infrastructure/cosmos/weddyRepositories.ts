@@ -1,7 +1,13 @@
-import type { Guest as GuestData, PlanningItem as ItemData } from '@fridrich/weddy-shared';
+import type {
+  Guest as GuestData,
+  PlanningBundle as BundleData,
+  PlanningItem as ItemData,
+} from '@fridrich/weddy-shared';
 import { CONTAINERS } from '../../config.js';
 import { Guest } from '../../domain/weddy/guests/Guest.js';
 import type { GuestRepository } from '../../domain/weddy/guests/GuestRepository.js';
+import { PlanningBundle } from '../../domain/weddy/planning/PlanningBundle.js';
+import type { PlanningBundleRepository } from '../../domain/weddy/planning/PlanningBundleRepository.js';
 import { PlanningItem } from '../../domain/weddy/planning/PlanningItem.js';
 import type { PlanningItemRepository } from '../../domain/weddy/planning/PlanningItemRepository.js';
 import { Wedding, type StoredWeddingState } from '../../domain/weddy/wedding/Wedding.js';
@@ -165,6 +171,53 @@ export const planningItemCosmosRepository: PlanningItemRepository = {
 
   async deleteAllForWedding(weddingId) {
     const container = await getContainer(CONTAINERS.planningItems);
+    const { resources } = await container.items
+      .query<{ id: string }>({
+        query: 'SELECT c.id FROM c WHERE c.weddingId = @weddingId',
+        parameters: [{ name: '@weddingId', value: weddingId }],
+      })
+      .fetchAll();
+
+    await Promise.all(resources.map((row) => container.item(row.id, weddingId).delete()));
+  },
+};
+
+export const planningBundleCosmosRepository: PlanningBundleRepository = {
+  async findById(weddingId, bundleId) {
+    try {
+      const container = await getContainer(CONTAINERS.planningBundles);
+      const { resource } = await container.item(bundleId, weddingId).read<BundleData>();
+      return resource ? PlanningBundle.fromState(stripSystemFields(resource)) : undefined;
+    } catch (error) {
+      if (isNotFound(error)) return undefined;
+      throw error;
+    }
+  },
+
+  async list(weddingId) {
+    const container = await getContainer(CONTAINERS.planningBundles);
+    const { resources } = await container.items
+      .query<BundleData>({
+        query: 'SELECT * FROM c WHERE c.weddingId = @weddingId ORDER BY c.createdAt ASC',
+        parameters: [{ name: '@weddingId', value: weddingId }],
+      })
+      .fetchAll();
+
+    return resources.map((state) => PlanningBundle.fromState(stripSystemFields(state)));
+  },
+
+  async save(bundle) {
+    const container = await getContainer(CONTAINERS.planningBundles);
+    await container.items.upsert(bundle.toState());
+  },
+
+  async delete(weddingId, bundleId) {
+    const container = await getContainer(CONTAINERS.planningBundles);
+    await container.item(bundleId, weddingId).delete();
+  },
+
+  async deleteAllForWedding(weddingId) {
+    const container = await getContainer(CONTAINERS.planningBundles);
     const { resources } = await container.items
       .query<{ id: string }>({
         query: 'SELECT c.id FROM c WHERE c.weddingId = @weddingId',

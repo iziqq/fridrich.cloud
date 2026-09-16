@@ -50,6 +50,12 @@ export const weddyRoutes: RouteRecordRaw[] = [
             name: 'weddy-planning',
             component: () => import('./planning/PlanningView.vue'),
           },
+          // Balíček stojí nad sekcemi, proto vlastní cesta, ne `planning/:category`.
+          {
+            path: 'planning/bundles/:bundleId',
+            name: 'weddy-planning-bundle',
+            component: () => import('./planning/PlanningBundleView.vue'),
+          },
           {
             path: 'planning/:category',
             name: 'weddy-planning-category',

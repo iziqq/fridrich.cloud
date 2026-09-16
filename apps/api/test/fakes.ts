@@ -21,6 +21,8 @@ import type {
 } from '../src/domain/identity/ports.js';
 import { Guest } from '../src/domain/weddy/guests/Guest.js';
 import type { GuestFilter, GuestRepository } from '../src/domain/weddy/guests/GuestRepository.js';
+import { PlanningBundle } from '../src/domain/weddy/planning/PlanningBundle.js';
+import type { PlanningBundleRepository } from '../src/domain/weddy/planning/PlanningBundleRepository.js';
 import { PlanningItem } from '../src/domain/weddy/planning/PlanningItem.js';
 import type { PlanningItemRepository } from '../src/domain/weddy/planning/PlanningItemRepository.js';
 import { Wedding } from '../src/domain/weddy/wedding/Wedding.js';
@@ -312,6 +314,35 @@ export class InMemoryItemRepository implements PlanningItemRepository {
   }
 }
 
+export class InMemoryBundleRepository implements PlanningBundleRepository {
+  readonly items = new Map<string, ReturnType<PlanningBundle['toState']>>();
+
+  async findById(weddingId: string, bundleId: string): Promise<PlanningBundle | undefined> {
+    const state = this.items.get(bundleId);
+    return state && state.weddingId === weddingId ? PlanningBundle.fromState(state) : undefined;
+  }
+
+  async list(weddingId: string): Promise<PlanningBundle[]> {
+    return [...this.items.values()]
+      .filter((state) => state.weddingId === weddingId)
+      .map((state) => PlanningBundle.fromState(state));
+  }
+
+  async save(bundle: PlanningBundle): Promise<void> {
+    this.items.set(bundle.id, bundle.toState());
+  }
+
+  async delete(_weddingId: string, bundleId: string): Promise<void> {
+    this.items.delete(bundleId);
+  }
+
+  async deleteAllForWedding(weddingId: string): Promise<void> {
+    for (const [id, state] of this.items) {
+      if (state.weddingId === weddingId) this.items.delete(id);
+    }
+  }
+}
+
 export class InMemoryWeddingInvitationRepository implements WeddingInvitationRepository {
   readonly items = new Map<string, ReturnType<WeddingInvitation['toState']>>();
 
@@ -404,6 +435,7 @@ export interface WeddyTestContext extends WeddyDeps {
   weddings: InMemoryWeddingRepository;
   guests: InMemoryGuestRepository;
   items: InMemoryItemRepository;
+  bundles: InMemoryBundleRepository;
   invitations: InMemoryWeddingInvitationRepository;
   directory: FakeUserDirectory;
   email: CollectingEmailSender;
@@ -415,6 +447,7 @@ export function weddyTestDeps(): WeddyTestContext {
     weddings: new InMemoryWeddingRepository(),
     guests: new InMemoryGuestRepository(),
     items: new InMemoryItemRepository(),
+    bundles: new InMemoryBundleRepository(),
     invitations: new InMemoryWeddingInvitationRepository(),
     directory: new FakeUserDirectory(),
     email: new CollectingEmailSender(),

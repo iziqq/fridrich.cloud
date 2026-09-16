@@ -23,10 +23,15 @@ import { deleteGuestEndpoint } from './endpoints/weddy/guests/deleteGuest.endpoi
 import { listGuestsEndpoint } from './endpoints/weddy/guests/listGuests.endpoint.js';
 import { updateFamilyEndpoint } from './endpoints/weddy/guests/updateFamily.endpoint.js';
 import { updateGuestEndpoint } from './endpoints/weddy/guests/updateGuest.endpoint.js';
+import { changePlanningBundleStatusEndpoint } from './endpoints/weddy/planning/changePlanningBundleStatus.endpoint.js';
 import { changePlanningItemStatusEndpoint } from './endpoints/weddy/planning/changePlanningItemStatus.endpoint.js';
+import { createPlanningBundleEndpoint } from './endpoints/weddy/planning/createPlanningBundle.endpoint.js';
 import { createPlanningItemEndpoint } from './endpoints/weddy/planning/createPlanningItem.endpoint.js';
+import { deletePlanningBundleEndpoint } from './endpoints/weddy/planning/deletePlanningBundle.endpoint.js';
 import { deletePlanningItemEndpoint } from './endpoints/weddy/planning/deletePlanningItem.endpoint.js';
+import { listPlanningBundlesEndpoint } from './endpoints/weddy/planning/listPlanningBundles.endpoint.js';
 import { listPlanningItemsEndpoint } from './endpoints/weddy/planning/listPlanningItems.endpoint.js';
+import { updatePlanningBundleEndpoint } from './endpoints/weddy/planning/updatePlanningBundle.endpoint.js';
 import { updatePlanningItemEndpoint } from './endpoints/weddy/planning/updatePlanningItem.endpoint.js';
 import { createWeddingEndpoint } from './endpoints/weddy/wedding/createWedding.endpoint.js';
 import { deleteWeddingEndpoint } from './endpoints/weddy/wedding/deleteWedding.endpoint.js';
@@ -90,6 +95,11 @@ const personalDataEndpoints = [
   updatePlanningItemEndpoint,
   changePlanningItemStatusEndpoint,
   deletePlanningItemEndpoint,
+  listPlanningBundlesEndpoint,
+  createPlanningBundleEndpoint,
+  updatePlanningBundleEndpoint,
+  changePlanningBundleStatusEndpoint,
+  deletePlanningBundleEndpoint,
 
   // weddy / budget
   getBudgetEndpoint,

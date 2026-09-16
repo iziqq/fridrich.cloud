@@ -15,6 +15,7 @@ import FabButton from '@/weddy/components/FabButton.vue';
 import FormField from '@/weddy/components/FormField.vue';
 import LoadingBlock from '@/weddy/components/LoadingBlock.vue';
 import { askConfirm } from '@/weddy/components/confirm';
+import SelectField from '@/weddy/components/SelectField.vue';
 import StatusBadge from '@/weddy/components/StatusBadge.vue';
 import { weddyPath } from '@/weddy/routes';
 import type { CreatePlanningItemRequest } from './endpoints/createPlanningItem.endpoint';
@@ -65,11 +66,22 @@ function errorText(field: string): string | undefined {
   return key ? translateMessage(key) : undefined;
 }
 
-const form = reactive({ name: '', url: '', price: '', status: 'draft' });
+const form = reactive({ name: '', url: '', price: '', status: 'draft', bundleId: '' });
+
+/*
+ * Prázdná hodnota znamená „bez balíčku". Vlastní rozbalovátko pracuje s
+ * řetězci, takže se `undefined` překládá na prázdný řetězec a zpátky.
+ */
+const NO_BUNDLE = '';
+
+const bundleOptions = computed(() => [
+  { value: NO_BUNDLE, label: t('weddy.planning.bundles.form.noBundle') },
+  ...store.bundles.map((bundle) => ({ value: bundle.id, label: bundle.name })),
+]);
 
 function openCreate(): void {
   editing.value = null;
-  Object.assign(form, { name: '', url: '', price: '', status: 'draft' });
+  Object.assign(form, { name: '', url: '', price: '', status: 'draft', bundleId: NO_BUNDLE });
   formErrors.value = {};
   sheetOpen.value = true;
 }
@@ -81,6 +93,7 @@ function openEdit(item: PlanningItem): void {
     url: item.url ?? '',
     price: item.price === undefined ? '' : String(item.price),
     status: item.status,
+    bundleId: item.bundleId ?? NO_BUNDLE,
   });
   formErrors.value = {};
   sheetOpen.value = true;
@@ -92,12 +105,15 @@ async function submit(): Promise<void> {
   formErrors.value = {};
   saving.value = true;
 
+  /* Položka v balíčku nemá vlastní cenu – platí cena balíčku. */
+  const inBundle = form.bundleId !== NO_BUNDLE;
   const input = {
     category: category.value,
     name: form.name.trim(),
     url: form.url.trim() || undefined,
-    price: form.price.trim() === '' ? undefined : Number(form.price),
+    price: inBundle || form.price.trim() === '' ? undefined : Number(form.price),
     status: form.status,
+    bundleId: inBundle ? form.bundleId : undefined,
   } as CreatePlanningItemRequest;
 
   try {
@@ -120,7 +136,7 @@ async function submit(): Promise<void> {
 async function removeItem(item: PlanningItem): Promise<void> {
   const confirmed = await askConfirm({
     title: t('weddy.planning.category.deleteItem'),
-    message: t('weddy.planning.category.confirmDelete', { name: item.name }),
+    message: t('weddy.planning.category.confirmDelete', { name: store.titleOf(item) }),
     confirmLabel: t('weddy.planning.category.deleteItem'),
     danger: true,
   });
@@ -130,8 +146,15 @@ async function removeItem(item: PlanningItem): Promise<void> {
   if (editing.value?.id === item.id) sheetOpen.value = false;
 }
 
-/** Přepnutí návrh ↔ schváleno přímo ze seznamu. */
+/**
+ * Přepnutí návrh ↔ schváleno přímo ze seznamu.
+ *
+ * Položka v balíčku vlastní stav nemá – schvaluje se celá nabídka, takže se
+ * jen tiše nic nestane a tlačítko je stejně nepřístupné.
+ */
 async function toggleStatus(item: PlanningItem): Promise<void> {
+  if (item.bundleId) return;
+
   await store.setStatus(
     weddingId.value,
     item.id,
@@ -157,6 +180,10 @@ const statusOptions = computed(() => [
     <template v-else>
       <h2>{{ t(planningKeys.category[category]) }}</h2>
 
+      <p v-if="totals && totals.bundleItems > 0" class="summary">
+        {{ t('weddy.planning.category.summaryInBundles', { n: totals.bundleItems }) }}
+      </p>
+
       <p v-if="totals && totals.total > 0" class="summary">
         {{ t('weddy.planning.category.summaryTotal', { amount: money(totals.total) }) }}
         <span v-if="totals.accepted > 0">
@@ -180,14 +207,32 @@ const statusOptions = computed(() => [
       <ul v-else class="items">
         <li v-for="item in items" :key="item.id" class="item card">
           <div class="info">
-            <p class="name">{{ item.name }}</p>
+            <p class="name">{{ store.titleOf(item) }}</p>
             <p class="meta">
-              <a v-if="item.url" :href="item.url" target="_blank" rel="noopener noreferrer">
-                {{ t('weddy.planning.category.vendorLink') }}
-              </a>
-              <span v-else class="no-price">{{ t('weddy.planning.category.noLink') }}</span>
-              ·
-              <span v-if="item.price !== undefined">{{ money(item.price) }}</span>
+              <!-- „Bez odkazu" u položky z balíčku nic neříká – odkaz má nabídka. -->
+              <template v-if="item.url">
+                <a :href="item.url" target="_blank" rel="noopener noreferrer">
+                  {{ t('weddy.planning.category.vendorLink') }}
+                </a>
+                ·
+              </template>
+              <template v-else-if="!item.bundleId">
+                <span class="no-price">{{ t('weddy.planning.category.noLink') }}</span>
+                ·
+              </template>
+              <RouterLink
+                v-if="store.bundleOf(item)"
+                :to="weddyPath(`/weddings/${weddingId}/planning/bundles/${item.bundleId}`)"
+                class="bundle-link"
+              >
+                <!-- Když položka vlastní název nemá, nese ho už nadpis řádku. -->
+                {{
+                  item.name
+                    ? t('weddy.planning.category.inBundle', { name: store.bundleOf(item)?.name })
+                    : t('weddy.planning.category.fromBundle')
+                }}
+              </RouterLink>
+              <span v-else-if="item.price !== undefined">{{ money(item.price) }}</span>
               <span v-else class="no-price">{{ t('weddy.planning.category.noPrice') }}</span>
             </p>
           </div>
@@ -196,15 +241,17 @@ const statusOptions = computed(() => [
             <button
               type="button"
               class="status-button"
-              :disabled="!weddings.canEdit"
+              :disabled="!weddings.canEdit || item.bundleId !== undefined"
               :title="
-                item.status === 'accepted'
-                  ? t('weddy.planning.category.backToDraft')
-                  : t('weddy.planning.category.approve')
+                item.bundleId
+                  ? t('weddy.planning.bundles.itemNote')
+                  : item.status === 'accepted'
+                    ? t('weddy.planning.category.backToDraft')
+                    : t('weddy.planning.category.approve')
               "
               @click="toggleStatus(item)"
             >
-              <StatusBadge kind="planning" :status="item.status" />
+              <StatusBadge kind="planning" :status="store.statusOf(item)" />
             </button>
 
             <button
@@ -246,7 +293,7 @@ const statusOptions = computed(() => [
           <FormField
             v-model="form.name"
             :label="t('weddy.planning.category.form.name')"
-            required
+            :required="form.bundleId === ''"
             :error="errorText('name')"
           />
           <FormField
@@ -256,18 +303,29 @@ const statusOptions = computed(() => [
             :placeholder="t('weddy.planning.category.form.urlPlaceholder')"
             :error="errorText('url')"
           />
-          <FormField
-            v-model="form.price"
-            :label="t('weddy.planning.category.form.price')"
-            numeric
-            :hint="t('weddy.planning.category.form.priceHint')"
-            :error="errorText('price')"
+          <SelectField
+            v-if="store.bundles.length > 0"
+            v-model="form.bundleId"
+            :label="t('weddy.planning.bundles.form.bundle')"
+            :options="bundleOptions"
           />
-          <ChoiceField
-            v-model="form.status"
-            :label="t('weddy.planning.category.form.status')"
-            :options="statusOptions"
-          />
+
+          <!-- V balíčku je cena i stav společný, proto se tu nezadávají. -->
+          <template v-if="form.bundleId === ''">
+            <FormField
+              v-model="form.price"
+              :label="t('weddy.planning.category.form.price')"
+              numeric
+              :hint="t('weddy.planning.category.form.priceHint')"
+              :error="errorText('price')"
+            />
+            <ChoiceField
+              v-model="form.status"
+              :label="t('weddy.planning.category.form.status')"
+              :options="statusOptions"
+            />
+          </template>
+          <p v-else class="bundle-note">{{ t('weddy.planning.bundles.itemNote') }}</p>
 
           <p v-if="formErrors['form']" class="form-error" role="alert">{{ errorText('form') }}</p>
 
@@ -373,6 +431,21 @@ h2 {
 .sheet-form {
   display: grid;
   gap: var(--space-2);
+}
+
+.bundle-link {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.bundle-link:hover {
+  text-decoration: underline;
+}
+
+.bundle-note {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
 }
 
 .form-error {

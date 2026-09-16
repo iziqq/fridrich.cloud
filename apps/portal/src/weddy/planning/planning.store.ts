@@ -1,14 +1,35 @@
-import type { PlanningCategory, PlanningItem, PlanningItemStatus } from '@fridrich/weddy-shared';
-import { PLANNING_CATEGORIES, calculateBudget } from '@fridrich/weddy-shared';
+import type {
+  PlanningBundle,
+  PlanningCategory,
+  PlanningItem,
+  PlanningItemStatus,
+} from '@fridrich/weddy-shared';
+import {
+  PLANNING_CATEGORIES,
+  calculateBudget,
+  itemStatus,
+  itemTitle,
+} from '@fridrich/weddy-shared';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import { changePlanningBundleStatus } from './endpoints/changePlanningBundleStatus.endpoint';
 import { changePlanningItemStatus } from './endpoints/changePlanningItemStatus.endpoint';
+import {
+  createPlanningBundle,
+  type CreatePlanningBundleRequest,
+} from './endpoints/createPlanningBundle.endpoint';
 import {
   createPlanningItem,
   type CreatePlanningItemRequest,
 } from './endpoints/createPlanningItem.endpoint';
+import { deletePlanningBundle } from './endpoints/deletePlanningBundle.endpoint';
 import { deletePlanningItem } from './endpoints/deletePlanningItem.endpoint';
+import { listPlanningBundles } from './endpoints/listPlanningBundles.endpoint';
 import { listPlanningItems } from './endpoints/listPlanningItems.endpoint';
+import {
+  updatePlanningBundle,
+  type UpdatePlanningBundleRequest,
+} from './endpoints/updatePlanningBundle.endpoint';
 import {
   updatePlanningItem,
   type UpdatePlanningItemRequest,
@@ -19,11 +40,14 @@ export interface CategoryOverview {
   itemCount: number;
   acceptedCount: number;
   total: number;
+  /** Kolik položek sekce má zaplacených balíčkem – jejich cena je jinde. */
+  bundleItemCount: number;
 }
 
-/** Stav subdomény `planning` – položky všech sekcí jedné svatby. */
+/** Stav subdomény `planning` – položky a balíčky všech sekcí jedné svatby. */
 export const usePlanningStore = defineStore('planning', () => {
   const items = ref<PlanningItem[]>([]);
+  const bundles = ref<PlanningBundle[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const loadedWeddingId = ref<string | null>(null);
@@ -32,7 +56,29 @@ export const usePlanningStore = defineStore('planning', () => {
    * Součty sekcí se počítají tady stejnou funkcí jako na backendu, takže se
    * čísla nemůžou rozejít a přepočet po každé změně je okamžitý.
    */
-  const budget = computed(() => calculateBudget(items.value));
+  const budget = computed(() => calculateBudget(items.value, bundles.value));
+
+  /** Stav položky v balíčku je stav balíčku – nabídka se schvaluje jako celek. */
+  function statusOf(item: PlanningItem): PlanningItemStatus {
+    return itemStatus(item, bundles.value);
+  }
+
+  /** Položka založená uvnitř balíčku svůj název nemá – vystupuje pod jeho jménem. */
+  function titleOf(item: PlanningItem): string {
+    return itemTitle(item, bundles.value);
+  }
+
+  function bundleById(bundleId: string): PlanningBundle | undefined {
+    return bundles.value.find((bundle) => bundle.id === bundleId);
+  }
+
+  function bundleOf(item: PlanningItem): PlanningBundle | undefined {
+    return item.bundleId ? bundleById(item.bundleId) : undefined;
+  }
+
+  function itemsInBundle(bundleId: string): PlanningItem[] {
+    return items.value.filter((item) => item.bundleId === bundleId);
+  }
 
   const overview = computed<CategoryOverview[]>(() =>
     PLANNING_CATEGORIES.map((category) => {
@@ -40,8 +86,9 @@ export const usePlanningStore = defineStore('planning', () => {
       return {
         category,
         itemCount: categoryItems.length,
-        acceptedCount: categoryItems.filter((item) => item.status === 'accepted').length,
+        acceptedCount: categoryItems.filter((item) => statusOf(item) === 'accepted').length,
         total: budget.value.byCategory[category].total,
+        bundleItemCount: budget.value.byCategory[category].bundleItems,
       };
     }),
   );
@@ -56,7 +103,13 @@ export const usePlanningStore = defineStore('planning', () => {
     loading.value = true;
     error.value = null;
     try {
-      items.value = await listPlanningItems(weddingId);
+      // Rozpočet i stavy položek závisí na balíčcích, takže se načítá obojí najednou.
+      const [loadedItems, loadedBundles] = await Promise.all([
+        listPlanningItems(weddingId),
+        listPlanningBundles(weddingId),
+      ]);
+      items.value = loadedItems;
+      bundles.value = loadedBundles;
       loadedWeddingId.value = weddingId;
     } catch (cause) {
       // Klíč hlášky z API – přeloží ho obrazovka (`translateMessage`).
@@ -102,17 +155,75 @@ export const usePlanningStore = defineStore('planning', () => {
     items.value = items.value.filter((item) => item.id !== itemId);
   }
 
+  /* --- Balíčky --- */
+
+  async function addBundle(
+    weddingId: string,
+    request: CreatePlanningBundleRequest,
+  ): Promise<PlanningBundle> {
+    const bundle = await createPlanningBundle(weddingId, request);
+    bundles.value = [...bundles.value, bundle];
+    return bundle;
+  }
+
+  async function editBundle(
+    weddingId: string,
+    bundleId: string,
+    request: UpdatePlanningBundleRequest,
+  ): Promise<void> {
+    const bundle = await updatePlanningBundle(weddingId, bundleId, request);
+    bundles.value = bundles.value.map((existing) => (existing.id === bundleId ? bundle : existing));
+  }
+
+  async function setBundleStatus(
+    weddingId: string,
+    bundleId: string,
+    status: PlanningItemStatus,
+  ): Promise<void> {
+    const previous = bundles.value;
+    bundles.value = bundles.value.map((bundle) =>
+      bundle.id === bundleId ? { ...bundle, status } : bundle,
+    );
+
+    try {
+      const updated = await changePlanningBundleStatus(weddingId, bundleId, { status });
+      bundles.value = bundles.value.map((bundle) => (bundle.id === bundleId ? updated : bundle));
+    } catch (cause) {
+      bundles.value = previous;
+      throw cause;
+    }
+  }
+
+  /** Smazání balíčku položky nemaže – API je z něj jen vyřadí. */
+  async function removeBundle(weddingId: string, bundleId: string): Promise<void> {
+    await deletePlanningBundle(weddingId, bundleId);
+    bundles.value = bundles.value.filter((bundle) => bundle.id !== bundleId);
+    items.value = items.value.map((item) =>
+      item.bundleId === bundleId ? { ...item, bundleId: undefined } : item,
+    );
+  }
+
   return {
     items,
+    bundles,
     loading,
     error,
     budget,
     overview,
     byCategory,
+    statusOf,
+    titleOf,
+    bundleById,
+    bundleOf,
+    itemsInBundle,
     load,
     create,
     update,
     setStatus,
     remove,
+    addBundle,
+    editBundle,
+    setBundleStatus,
+    removeBundle,
   };
 });
