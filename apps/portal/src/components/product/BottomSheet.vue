@@ -113,7 +113,7 @@ function onKeydown(event: KeyboardEvent): void {
 .backdrop {
   position: absolute;
   inset: 0;
-  background: rgb(43 36 48 / 0.22);
+  background: var(--color-backdrop);
   animation: fade var(--dur-base) var(--ease);
 }
 

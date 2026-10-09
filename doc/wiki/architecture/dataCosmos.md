@@ -4,7 +4,7 @@ type: concept
 sources:
   - code: apps/api/src/config.ts, apps/api/src/infrastructure/cosmos
   - history: doc/architecture.md ch. 7 (commit 8db5e0a)
-updated: 2026-09-17
+updated: 2026-10-09
 ---
 
 # Data in Cosmos DB
@@ -29,6 +29,7 @@ updated: 2026-09-17
 | `planningItems` | `/weddingId` | weddy / planning | the budget is not stored, it is calculated |
 | `planningBundles` | `/weddingId` | weddy / planning | one offer for one price; the item holds the `bundleId`, the bundle holds no list |
 | `budgetEntries` | `/userId` | budgy / entries | income and expenses of one account; the month is not a record, it is derived from the range or the date |
+| `maptapScores` | `/userId` | maptap / scores | one result per player and day; the board is read whole, so `listAll` is a cross-partition query – a few hundred documents a year make that cheaper than a second access pattern |
 
 Names are held by `CONTAINERS` in `apps/api/src/config.ts`. Containers and the
 database are created on first use (`createIfNotExists`); temporary data is

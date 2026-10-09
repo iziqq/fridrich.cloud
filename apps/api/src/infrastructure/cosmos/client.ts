@@ -43,6 +43,8 @@ const CONTAINER_DEFINITIONS: {
   { id: CONTAINERS.planningBundles, partitionKey: '/weddingId' },
   // Rozpočet patří jednomu účtu – čte se vždy „všechno moje".
   { id: CONTAINERS.budgetEntries, partitionKey: '/userId' },
+  // Výsledky patří hráči, ale tabule se čte celá – viz dataCosmos.md.
+  { id: CONTAINERS.maptapScores, partitionKey: '/userId' },
 ];
 
 let databasePromise: Promise<Database> | undefined;

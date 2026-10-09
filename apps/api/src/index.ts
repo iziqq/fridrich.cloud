@@ -27,6 +27,9 @@ import { createBudgetEntryEndpoint } from './endpoints/budgy/entries/createBudge
 import { deleteBudgetEntryEndpoint } from './endpoints/budgy/entries/deleteBudgetEntry.endpoint.js';
 import { listBudgetEntriesEndpoint } from './endpoints/budgy/entries/listBudgetEntries.endpoint.js';
 import { updateBudgetEntryEndpoint } from './endpoints/budgy/entries/updateBudgetEntry.endpoint.js';
+import { createMapTapScoreEndpoint } from './endpoints/maptap/scores/createMapTapScore.endpoint.js';
+import { deleteMapTapScoreEndpoint } from './endpoints/maptap/scores/deleteMapTapScore.endpoint.js';
+import { getMapTapBoardEndpoint } from './endpoints/maptap/scores/getMapTapBoard.endpoint.js';
 import { changePlanningBundleStatusEndpoint } from './endpoints/weddy/planning/changePlanningBundleStatus.endpoint.js';
 import { changePlanningItemStatusEndpoint } from './endpoints/weddy/planning/changePlanningItemStatus.endpoint.js';
 import { createPlanningBundleEndpoint } from './endpoints/weddy/planning/createPlanningBundle.endpoint.js';
@@ -113,6 +116,11 @@ const personalDataEndpoints = [
   createBudgetEntryEndpoint,
   updateBudgetEntryEndpoint,
   deleteBudgetEntryEndpoint,
+
+  // maptap / scores – tabule ukazuje jména hráčů jeden druhému
+  getMapTapBoardEndpoint,
+  createMapTapScoreEndpoint,
+  deleteMapTapScoreEndpoint,
 ];
 
 registerEndpoints([

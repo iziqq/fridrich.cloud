@@ -9,15 +9,15 @@ knowledge lives in the wiki – this file is the **schema**.
 `www.fridrich.cloud` – a presentation portal and products under it, in one
 npm-workspaces monorepo:
 
-- **Frontend** – `apps/portal`: one Vue 3 app (Composition API, `<script setup lang="ts">`, Vite, Pinia, Vue Router). The home page is a **hub of the applications**; products (IziWeddy, IziBudgy) are route subtrees listed in `content/apps.ts`.
+- **Frontend** – `apps/portal`: one Vue 3 app (Composition API, `<script setup lang="ts">`, Vite, Pinia, Vue Router). The home page is a **hub of the applications**; products (IziWeddy, IziBudgy) are route subtrees listed in `content/apps.ts`. An internal product may deliberately stay out of that registry (MapTap at `/maptap`) – it is still behind `requiresAuth` and `access: 'user'`.
 - **Backend** – `apps/api`: one Azure Functions app (Node.js, programming model v4, HTTP triggers only), TypeScript.
 - **Database** – Azure Cosmos DB (NoSQL API).
-- **Shared kernel** – `packages/shared`, `packages/weddy-shared`, `packages/budgy-shared`: Valibot schemas, enums, pure calculations used by both apps.
+- **Shared kernel** – `packages/shared`, `packages/weddy-shared`, `packages/budgy-shared`, `packages/maptap-shared`: Valibot schemas, enums, pure calculations used by both apps.
 - **Types and validation** – [Valibot](https://valibot.dev) everywhere.
 
 Both backend and frontend are organised **by domain**, with the same domain
 names on both sides. Current domains: `identity`, `contact`,
-`weddy/{wedding,guests,planning,budget}`, `budgy/{entries,budget}`.
+`weddy/{wedding,guests,planning,budget}`, `budgy/{entries,budget}`, `maptap/{scores}`.
 
 ---
 
@@ -112,7 +112,7 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 
 1. **Organise by domain, not by technical layer.** A (sub)domain has the same name in `packages/*-shared`, `apps/api` and `apps/portal`.
 2. **Business logic always lives in the domain** – domain objects and domain functions in `apps/api/src/domain`, pure shared rules and calculations in `packages/*-shared`. Never in endpoint files, Vue components or stores. Access checks belong there too: an IziWeddy plan is guarded by the aggregate (`Wedding.assertCanRead/assertCanEdit/assertCanManageSettings` through `loadWeddingFor`), and the frontend only hides what the API would refuse.
-3. **Domains do not call each other.** They share only the user identity (`userId`). Subdomains of `weddy` may depend on the root `wedding` (access check via `loadWeddingFor`). A cross-domain effect goes through a port of the triggering domain wired in `infrastructure/container.ts` – account deletion calls `UserDataEraser`, registration calls `UserRegistrationListener`, weddy reads accounts through its own `UserDirectory` port, and weddy's paid payments reach IziBudgy through its `PaymentLedger` port.
+3. **Domains do not call each other.** They share only the user identity (`userId`). Subdomains of `weddy` may depend on the root `wedding` (access check via `loadWeddingFor`). A cross-domain effect goes through a port of the triggering domain wired in `infrastructure/container.ts` – account deletion calls `UserDataEraser`, registration calls `UserRegistrationListener`, weddy reads accounts through its own `UserDirectory` port, maptap reads player names through its own `PlayerDirectory`, and weddy's paid payments reach IziBudgy through its `PaymentLedger` port. **A port asks for the least it needs** – `PlayerDirectory` returns no e-mail, so one cannot leak onto the leaderboard later.
 4. **Composition over inheritance** – no abstract base classes between domain objects.
 
 ### Endpoints – one file per endpoint
@@ -146,7 +146,7 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 20. `view → store → endpoint file → api/http.ts`. A view may call an endpoint without a store when the result is not shared (e.g. registration, budget).
 21. Pinia store (`<subdomain>.store.ts`) only for state shared across components/screens.
 22. Use shared-kernel calculations (`calculateBudget`, `groupIntoFamilies`) instead of re-implementing them in components.
-23. Product styles only under the product class (`.weddy`, `.budgy`) – nothing on `:root`, no bare element selectors. Every product screen has exactly one `main#obsah`. Components shared by the products live in `apps/portal/src/components/product/` and may use **semantic tokens only**, never a palette shade (`--rose-400`); see `doc/wiki/architecture/frontend.md#product-ui-kit`.
+23. Product styles only under the product class (`.weddy`, `.budgy`, `.maptap`) – nothing on `:root`, no bare element selectors. Every product screen has exactly one `main#obsah`. Components shared by the products live in `apps/portal/src/components/product/` and may use **semantic tokens only**, never a palette shade (`--rose-400`); see `doc/wiki/architecture/frontend.md#product-ui-kit`.
 24. **Everything on the frontend is responsive** – every view and component (portal and products) must work on mobile, tablet and notebook. Styles are mobile-first: base CSS is the mobile layout, wider layouts are added with the **named breakpoints** defined once in `packages/design/src/breakpoints.css` (`@custom-media`, compiled by PostCSS in `apps/portal/postcss.config.js`):
 
     | Device | Width | Media query |
@@ -181,7 +181,7 @@ Details: `doc/wiki/architecture/domains.md`, `endpoints.md`, `valibot.md`,
 ## Commands
 
 ```bash
-npm install                                  # dependencies + build of packages/shared and packages/weddy-shared
+npm install                                  # dependencies + build of the shared packages
 npm run dev:portal                           # Vite on :5173 (proxies /api to :7071)
 npm run dev:api                              # build API + func start on :7071
 npm run typecheck                            # tsc / vue-tsc in all workspaces

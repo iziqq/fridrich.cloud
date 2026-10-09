@@ -4,7 +4,7 @@ type: concept
 sources:
   - raw/2026-09-15-domainArchitecture.md
   - code: apps/api/src, apps/portal/src, packages/*-shared
-updated: 2026-09-16
+updated: 2026-10-09
 ---
 
 # Domain architecture
@@ -21,7 +21,8 @@ updated: 2026-09-16
 | `identity` | – | Registration, passwordless login, sessions | `/api/auth/*` |
 | `contact` | – | Portal contact form | `/api/contact` |
 | `weddy` | `wedding`, `guests`, `planning`, `budget` | IziWeddy wedding planner | `/api/weddy/*` |
-| `budgy` | *(TODO)* | IziBudgy household budget | `/api/budgy/*` |
+| `budgy` | `entries`, `budget` | IziBudgy household budget | `/api/budgy/*` |
+| `maptap` | `scores` | Internal MapTap leaderboard | `/api/maptap/*` |
 
 The portal (presentation website) is not a business domain – it is content and
 look, see [domains/portal.md](../domains/portal.md).
@@ -85,7 +86,9 @@ in `apps/`, the database or the UI.
    be cut out without touching the others. What one domain needs from another
    goes through a **port wired in `infrastructure/container.ts`**: identity calls
    `UserDataEraser` and `UserRegistrationListener` (account deleted, account
-   created), weddy reads names and e-mails through `UserDirectory`, and weddy's paid
+   created), weddy reads names and e-mails through `UserDirectory`, maptap reads player names
+   through its own `PlayerDirectory` (names only – an e-mail has nothing to do on a
+   leaderboard), and weddy's paid
    payments reach the budget through `PaymentLedger` (implemented by budgy). A cross-domain effect goes through a
    port owned by the triggering domain and wired in `infrastructure/container.ts` –
    account deletion calls `UserDataEraser`, implemented by `weddy`

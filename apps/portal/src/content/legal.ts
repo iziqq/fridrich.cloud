@@ -52,7 +52,7 @@ const invitationRetention = `${WEDDING_INVITATION_RETENTION_DAYS} dní`;
 export const privacyPolicy: LegalDocument = {
   label: 'Ochrana osobních údajů',
   title: 'Zásady ochrany osobních údajů',
-  lead: `Tyto zásady vysvětlují, jaké osobní údaje zpracovávám, když používáte web ${site.domain}, kontaktní formulář, uživatelský účet nebo aplikace IziWeddy a IziBudgy, proč to dělám, jak dlouho údaje uchovávám a jaká máte práva.`,
+  lead: `Tyto zásady vysvětlují, jaké osobní údaje zpracovávám, když používáte web ${site.domain}, kontaktní formulář, uživatelský účet nebo aplikace IziWeddy, IziBudgy a MapTap, proč to dělám, jak dlouho údaje uchovávám a jaká máte práva.`,
   version: PRIVACY_POLICY_VERSION,
   sections: [
     {
@@ -106,6 +106,12 @@ export const privacyPolicy: LegalDocument = {
               'položky rozpočtu domácnosti – název, částka, kategorie, datum nebo platnost od–do a poznámka; příjmy, výdaje i investice; u správce plánování v IziWeddy také uhrazené zálohy a platby z plánování (název položky nebo balíčku, částka, datum)',
               'Poskytování aplikace podle obchodních podmínek – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Rozpočet vidí jen jeho vlastník; nesdílí se s nikým dalším. Platby z IziWeddy se do něj propisují, aby měl správce svatby výdaje na jednom místě.',
               'Do smazání položky nebo účtu, včetně automatického smazání neaktivního účtu.',
+            ],
+            [
+              'Tabule MapTap',
+              'jméno z účtu, den hry, body za jednotlivá kola a celkový výsledek',
+              'Provoz interní tabule výsledků – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Vaše jméno a výsledky vidí ostatní přihlášení uživatelé, kteří tabuli používají; e-mail se na ní nezobrazuje. Výsledek na tabuli je jen ten, který tam sami vložíte.',
+              'Do smazání výsledku nebo účtu, včetně automatického smazání neaktivního účtu.',
             ],
             [
               'Sdílení plánování v IziWeddy',
@@ -279,6 +285,7 @@ export const termsOfService: LegalDocument = {
             `Uživatelský účet – jeden účet pro všechny aplikace na ${site.domain}.`,
             'IziWeddy – plánovač svatby: snoubenci, hosté, přípravy a rozpočet.',
             'IziBudgy – rozpočet domácnosti: příjmy, pravidelné a jednorázové výdaje, přehled po měsících.',
+            'MapTap – interní tabule výsledků hry maptap.gg: vložené výsledky vidí ostatní přihlášení uživatelé.',
           ],
         },
         {

@@ -813,3 +813,85 @@ ordinary one.
   page width equals the viewport.
 - Touched pages: `domains/weddyPlanning.md`, `domains/budgyEntries.md`,
   `architecture/domains.md`, `CLAUDE.md` (rule 3), index, `raw/README.md`.
+
+## [2026-10-09] ingest | MapTap leaderboard – a new internal app
+
+- Source: [raw/2026-10-09-maptapLeaderboard.md](../raw/2026-10-09-maptapLeaderboard.md)
+  – a leaderboard for the daily game at maptap.gg, at `/maptap`, signed-in
+  users only, **no link on the portal**, a score entered as the game's share
+  text.
+- New domain `maptap` with one subdomain `scores`: shared kernel
+  `packages/maptap-shared`, `domain/maptap/score`, `application/maptap`,
+  `endpoints/maptap/scores`, `apps/portal/src/maptap`, container `maptapScores`
+  (PK `/userId`).
+- **Nothing is filled in.** The pasted text is read by `parseScoreText`, which
+  removes each recognised part before looking for the next, so the day number
+  and the final score cannot be counted as rounds. A round must carry a badge;
+  without that rule every number in the text would be one.
+- `Final score` is **read, not computed** – 660 ≠ 94+91+80+88+17, so the rounds
+  are not points.
+- The share text carries **no year**: the day resolves to the most recent such
+  date that is not in the future, in the domain (the clock lives there), not in
+  the schema.
+- Emoji are **drawn by us from the badge name**, never echoed from the paste;
+  an unknown shortcode is kept as a sanitised name so a new emoji upstream
+  cannot break pasting. Emoji pasted as characters map back to their names.
+- The request body stays the **text**: `ScoreTextInputSchema` for the form and
+  `callEndpoint`, `ScoreInputSchema` (same schema plus the parse) for the API –
+  otherwise `callEndpoint` would send numbers the browser computed.
+- Standings rank by **average, not total**: a total ranks diligence and a
+  newcomer could never catch up. Games, wins and best sit next to it.
+- Cross-domain: names come through maptap's own `PlayerDirectory` port
+  (**display name only** – an e-mail has nothing to do on a leaderboard),
+  wired in `container.ts`; `eraseUserMapTapData` registered as a third
+  `UserDataEraser`.
+- One result per player and day, immutable; you delete your own and paste
+  again. A stranger's result answers `notFound`, not `forbidden`.
+- Personal data: first product that shows **one user's name to another**.
+  Endpoints in `personalDataEndpoints`, routes in `personalDataRoutes`, new
+  privacy-policy row *Tabule MapTap*, listed in the terms; both
+  `PRIVACY_POLICY_VERSION` and `TERMS_VERSION` bumped to `'2026-10-09'`.
+- **Being unlisted is not the protection** – `requiresAuth` and
+  `access: 'user'` are. Who counts as "internal" is still "anyone signed in";
+  recorded as an open point.
+- Tests: 12 new cases (parsing the real example, one message per failure
+  reason, unknown emoji, year inference, duplicate day, a stranger's delete,
+  erasure, tie ranks, days, standings) – 191 API tests pass.
+- Verified in the browser against a stubbed API (production Cosmos DB is what
+  local development points at, so nothing was written to it) at 360, 768 and
+  1024 px, in Czech and English: no horizontal overflow at any width.
+- Touched pages: new `domains/maptap.md`, `domains/maptapScores.md`;
+  `architecture/domains.md`, `dataCosmos.md`, `personalData.md`, `frontend.md`,
+  `domains/portal.md`, `overview.md`, index, `raw/README.md`, `CLAUDE.md`.
+
+## [2026-10-09] change | MapTap takes the portal's look
+
+- The owner asked for "a similar graphic style to the portal", so the paper-map
+  light palette written a few hours earlier is gone. `maptap.css` now defines
+  **no colours**: it inherits the Glass theme (dark background, orange glows,
+  matte glass, pill buttons) the way the portal uses it.
+- What is left in the product stylesheet are the tokens the shared kit expects
+  but the portal theme never needed (`--color-surface-alt`,
+  `--color-accent-muted`, `--color-accent-wash`, `--clay-500`, the shadows),
+  an **opaque** `--color-surface` so sheets and inputs do not read through,
+  and the glass recipe on `.card`.
+- The wrapper has **no background on purpose** – the glows live on
+  `body::before`, so an opaque `.maptap` would hide them and every glass card
+  would be a grey rectangle.
+- The top bar became a floating glass panel with its own inset, the portal's
+  signature element; `sticky` sits on the wrapper, so the bar still takes space
+  in the flow and nothing starts hidden under it.
+- **Two shared components were still carrying fixed colours** and only a dark
+  theme revealed it:
+  - the `BottomSheet` / `ConfirmDialog` backdrop was `rgb(43 36 48 / 0.22)` –
+    invisible over a dark page. Now `--color-backdrop`; the light themes keep
+    the old value, MapTap raises it to 60 % black.
+  - `ErrorBlock` was a hard-coded pink box. Now mixed from `--color-danger` and
+    `--color-surface`. **Caught by measuring:** plain `--color-danger` on the
+    light wash is 3.75 : 1, below AA; pulling the text 20 % towards
+    `--color-text` gives 4.9 : 1 on light and 6.1 : 1 on dark.
+- Verified against a stubbed API at 390 and 1024 px: day, standings, the paste
+  sheet, the empty state and the error state on dark, and the IziBudgy error
+  state on light to confirm the shared-component change did not move it.
+- Touched pages: `domains/maptap.md` (Look), `architecture/frontend.md`
+  (product UI kit, themes that inherit the portal).

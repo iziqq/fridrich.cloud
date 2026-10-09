@@ -27,6 +27,13 @@ import type {
 import { Guest } from '../src/domain/weddy/guests/Guest.js';
 import type { GuestFilter, GuestRepository } from '../src/domain/weddy/guests/GuestRepository.js';
 import { BudgetEntry } from '../src/domain/budgy/entry/BudgetEntry.js';
+import type { MapTapDeps } from '../src/application/maptap/deps.js';
+import { MapTapScore } from '../src/domain/maptap/score/MapTapScore.js';
+import type { MapTapScoreRepository } from '../src/domain/maptap/score/MapTapScoreRepository.js';
+import type {
+  MapTapPlayer,
+  PlayerDirectory,
+} from '../src/domain/maptap/score/PlayerDirectory.js';
 import type { BudgetEntryRepository } from '../src/domain/budgy/entry/BudgetEntryRepository.js';
 import { PlanningBundle } from '../src/domain/weddy/planning/PlanningBundle.js';
 import type { PlanningBundleRepository } from '../src/domain/weddy/planning/PlanningBundleRepository.js';
@@ -439,6 +446,53 @@ export class FakeUserDirectory implements UserDirectory {
   }
 }
 
+export class InMemoryMapTapScoreRepository implements MapTapScoreRepository {
+  readonly items = new Map<string, ReturnType<MapTapScore['toState']>>();
+
+  async findById(userId: string, scoreId: string): Promise<MapTapScore | undefined> {
+    const state = this.items.get(scoreId);
+    return state && state.userId === userId ? MapTapScore.fromState(state) : undefined;
+  }
+
+  async findForDay(userId: string, playedOn: string): Promise<MapTapScore | undefined> {
+    const found = [...this.items.values()].find(
+      (state) => state.userId === userId && state.playedOn === playedOn,
+    );
+    return found ? MapTapScore.fromState(found) : undefined;
+  }
+
+  async listAll(): Promise<MapTapScore[]> {
+    return [...this.items.values()].map((state) => MapTapScore.fromState(state));
+  }
+
+  async save(score: MapTapScore): Promise<void> {
+    this.items.set(score.id, score.toState());
+  }
+
+  async delete(_userId: string, scoreId: string): Promise<void> {
+    this.items.delete(scoreId);
+  }
+
+  async deleteAllForUser(userId: string): Promise<void> {
+    for (const [id, state] of this.items) {
+      if (state.userId === userId) this.items.delete(id);
+    }
+  }
+}
+
+export class FakePlayerDirectory implements PlayerDirectory {
+  readonly players = new Map<string, MapTapPlayer>();
+
+  add(player: MapTapPlayer): MapTapPlayer {
+    this.players.set(player.id, player);
+    return player;
+  }
+
+  async findByIds(ids: readonly string[]): Promise<MapTapPlayer[]> {
+    return ids.map((id) => this.players.get(id)).filter((player) => player !== undefined);
+  }
+}
+
 /* --- Sestavení závislostí pro testy --- */
 
 export interface IdentityTestContext extends IdentityDeps {
@@ -538,5 +592,25 @@ export function budgyTestDeps(): BudgyTestContext {
     entries: new InMemoryBudgetEntryRepository(),
     ids: new SequentialIds(),
     clock: new FixedClock(new Date('2026-10-15T09:00:00.000Z')),
+  };
+}
+
+export interface MapTapTestContext extends MapTapDeps {
+  scores: InMemoryMapTapScoreRepository;
+  players: FakePlayerDirectory;
+  clock: FixedClock;
+}
+
+/** Závislosti domény maptap pro test – hodiny stojí 9. října 2026, tedy v den z příkladu. */
+export function maptapTestDeps(): MapTapTestContext {
+  const players = new FakePlayerDirectory();
+  players.add({ id: 'user-1', displayName: 'Libor' });
+  players.add({ id: 'user-2', displayName: 'Eva' });
+
+  return {
+    scores: new InMemoryMapTapScoreRepository(),
+    players,
+    ids: new SequentialIds(),
+    clock: new FixedClock(new Date('2026-10-09T18:00:00.000Z')),
   };
 }

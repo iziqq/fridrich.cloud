@@ -2,6 +2,7 @@ import { PERSONAL_DATA_COLLECTION_ENABLED } from '@fridrich/shared';
 import type { RouteRecordRaw } from 'vue-router';
 import AppsView from '@/views/AppsView.vue';
 import { budgyRoutes } from '@/budgy/routes';
+import { maptapRoutes } from '@/maptap/routes';
 import { weddyRoutes } from '@/weddy/routes';
 
 declare module 'vue-router' {
@@ -17,7 +18,7 @@ declare module 'vue-router' {
 
 /**
  * Obrazovky, které od návštěvníka berou osobní údaje – registrace, přihlášení,
- * účet, celé IziWeddy a IziBudgy (rozpočet domácnosti je citlivý údaj). Bez zásad ochrany osobních údajů se vůbec nezaregistrují,
+ * účet, celé IziWeddy, IziBudgy (rozpočet domácnosti je citlivý údaj) i interní tabuli MapTapu. Bez zásad ochrany osobních údajů se vůbec nezaregistrují,
  * takže přímá adresa skončí na 404 (viz `PERSONAL_DATA_COLLECTION_ENABLED`).
  */
 const personalDataRoutes: RouteRecordRaw[] = [
@@ -47,6 +48,8 @@ const personalDataRoutes: RouteRecordRaw[] = [
   // Produkty jsou části portálu s vlastním vzhledem, ne samostatné aplikace.
   ...weddyRoutes,
   ...budgyRoutes,
+  // Interní tabule MapTapu – v rozcestníku není, ale jména hráčů jsou osobní údaj.
+  ...maptapRoutes,
 ];
 
 /** Routy zvlášť od routeru, ať jdou vyzkoušet i bez prohlížeče. */

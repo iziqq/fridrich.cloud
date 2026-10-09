@@ -1,0 +1,117 @@
+/*
+ * Téma MapTapu – vzhled portálu.
+ *
+ * Na rozdíl od IziWeddy a IziBudgy si tabule **vlastní paletu nedělá**: je to
+ * interní nástroj uvnitř portálu, ne produkt s vlastní značkou, takže bere
+ * téma Glass tak, jak je (`packages/design/src/theme-glass.css`) – tmavé
+ * pozadí s oranžovými zářemi a nad ním matné sklo.
+ *
+ * Co tady tedy zbývá, jsou jen dvě věci:
+ *   1. tokeny, které sdílené prvky (`styles/product.css`) potřebují, ale téma
+ *      portálu je nezná, protože je vymyslela světlá témata produktů;
+ *   2. skleněný vzhled karet a pilulková tlačítka, kterými se portál pozná.
+ *
+ * Pořadí je schválně: `product.css` se importuje nahoře, takže pravidla pod
+ * ním přebíjejí stejně specifická bez nutnosti stupňovat selektory.
+ */
+@import '../styles/product.css';
+
+.maptap {
+  /* --- Tokeny, které téma portálu nemá a sdílené prvky je čekají --- */
+
+  /*
+   * Plocha je neprůhledná, ne sklo.
+   *
+   * Sdílený `--color-surface` téma portálu drží jako bílou na 5 %, což je
+   * správně pro kartu nad září, ale ne pro vyjížděcí panel nebo pole
+   * formuláře – ty by přes sebe nechaly číst celou stránku. Sklo proto dole
+   * dostane výslovně jen `.card`.
+   */
+  --color-surface: #16161b;
+  --color-surface-alt: var(--color-surface-strong);
+  /* Sklo karet – průsvitná bílá, barvu jí dává záře pod stránkou. */
+  --color-surface-glass: rgb(255 255 255 / 0.05);
+
+  /* Odstíny přízvuku, na které sahají sdílené prvky. */
+  --color-accent-muted: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  --color-accent-wash: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  /* `.btn-danger` ve sdíleném listu sahá po paletové barvě světlých témat. */
+  --clay-500: var(--color-danger);
+
+  --shadow-sm: var(--shadow-glass);
+  --shadow-md: 0 18px 40px -24px rgb(0 0 0 / 0.9);
+  --shadow-lg: 0 -24px 60px -24px rgb(0 0 0 / 0.9);
+
+  /* Ztmavení pod překryvem – na tmavé stránce musí být silnější než na světlé. */
+  --color-backdrop: rgb(0 0 0 / 0.6);
+
+  /* Stupně vítězů. Proti tmavému podkladu musí být světlejší než na papíře. */
+  --color-rank-1: #e3b94f;
+  --color-rank-2: #b9c3ce;
+  --color-rank-3: #cf8a52;
+
+  min-height: 100dvh;
+  /*
+   * Bez vlastního podkladu: pod stránkou leží oranžové záře portálu
+   * (`body::before`) a sklo nad nimi má co rozostřit. Neprůhledná plocha
+   * tady by je zakryla a z karet by byly šedé obdélníky.
+   */
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+/* --- Sklo --- */
+
+/*
+ * Karta je skleněná plocha, stejná jako na portálu (`effects.css`).
+ * Třídu `.glass` sem vzít nejde – kreslí ji sdílený `product.css` z tokenů –
+ * takže se tu opakuje její recept.
+ */
+.maptap .card {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+}
+
+/* Bez podpory rozostření by průsvitná karta splynula s pozadím. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .maptap .card {
+    background: var(--color-surface);
+  }
+}
+
+/* Kdo si vyžádal méně průhlednosti, dostane plnou plochu bez rozostření. */
+@media (prefers-reduced-transparency: reduce) {
+  .maptap .card {
+    background: var(--color-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* --- Tlačítka --- */
+
+/* Portál má tlačítka jako pilulky; sdílený list je kreslí hranatější. */
+.maptap .btn {
+  border-radius: var(--radius-pill);
+}
+
+.maptap .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 10px 30px -12px var(--color-accent-glow);
+}
+
+/* --- Drobnosti --- */
+
+/*
+ * Body patří pod sebe.
+ *
+ * Proporcionální číslice mají každou jinak širokou, takže by se sloupec
+ * výsledků v tabulce viditelně třásl.
+ */
+.maptap .score {
+  font-variant-numeric: tabular-nums;
+}
+
+.maptap .page {
+  padding-block: var(--space-2) var(--space-6);
+}

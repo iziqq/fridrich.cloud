@@ -2,10 +2,12 @@ import { getConfig } from '../config.js';
 import { systemClock } from '../domain/shared/Clock.js';
 import type { BudgyDeps } from '../application/budgy/deps.js';
 import type { ContactDeps } from '../application/contact/submitContactMessage.js';
+import type { MapTapDeps } from '../application/maptap/deps.js';
 import type { IdentityDeps } from '../application/identity/deps.js';
 import type { WeddyDeps } from '../application/weddy/deps.js';
 import { claimWeddingInvitations } from '../application/weddy/access.js';
 import { eraseUserBudgyData } from '../application/budgy/entries.js';
+import { eraseUserMapTapData } from '../application/maptap/scores.js';
 import {
   recordExternalPayments,
   releaseExternalPayments,
@@ -20,6 +22,10 @@ import {
   userCosmosRepository,
 } from './cosmos/identityRepositories.js';
 import { budgetEntryCosmosRepository } from './cosmos/budgyRepositories.js';
+import {
+  cosmosPlayerDirectory,
+  maptapScoreCosmosRepository,
+} from './cosmos/maptapRepositories.js';
 import {
   contactMessageCosmosRepository,
   cosmosRateLimiter,
@@ -44,6 +50,7 @@ import {
 let identity: IdentityDeps | undefined;
 let weddy: WeddyDeps | undefined;
 let budgy: BudgyDeps | undefined;
+let maptap: MapTapDeps | undefined;
 let contact: ContactDeps | undefined;
 
 export function identityDeps(): IdentityDeps {
@@ -62,6 +69,7 @@ export function identityDeps(): IdentityDeps {
     userDataErasers: [
       { eraseUserData: (user) => eraseUserWeddyData(weddyDeps(), user) },
       { eraseUserData: (user) => eraseUserBudgyData(budgyDeps(), user) },
+      { eraseUserData: (user) => eraseUserMapTapData(maptapDeps(), user) },
     ],
     // Pozvánka do plánování čeká u e-mailu; po registraci se promění v přístup.
     userRegistrationListeners: [
@@ -104,6 +112,18 @@ export function budgyDeps(): BudgyDeps {
   };
 
   return budgy;
+}
+
+export function maptapDeps(): MapTapDeps {
+  maptap ??= {
+    scores: maptapScoreCosmosRepository,
+    // Jména hráčů si maptap bere přes vlastní port, ne z domény identity.
+    players: cosmosPlayerDirectory,
+    ids: uuidGenerator,
+    clock: systemClock,
+  };
+
+  return maptap;
 }
 
 export function contactDeps(): ContactDeps {

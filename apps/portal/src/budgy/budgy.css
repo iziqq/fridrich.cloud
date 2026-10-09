@@ -59,6 +59,8 @@ body:has(.budgy) {
   --color-danger: var(--clay-500);
   --color-success: var(--teal-600);
   --color-on-accent: #ffffff;
+  /* Ztmavení stránky pod vyjetým panelem a dotazem – jen tak, aby pozadí zůstalo vidět. */
+  --color-backdrop: rgb(43 36 48 / 0.22);
 
   /* Příjem, výdaj a investice mají svou barvu všude stejnou – v číslech, pruzích i grafu. */
   --color-income: var(--teal-600);

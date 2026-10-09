@@ -67,6 +67,8 @@ body:has(.weddy) {
   --color-danger: var(--clay-500);
   --color-success: var(--sage-500);
   --color-on-accent: #ffffff;
+  /* Ztmavení stránky pod vyjetým panelem a dotazem – jen tak, aby pozadí zůstalo vidět. */
+  --color-backdrop: rgb(43 36 48 / 0.22);
 
   --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;

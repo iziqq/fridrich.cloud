@@ -23,6 +23,7 @@
     "@fridrich/shared": "*",
     "@fridrich/weddy-shared": "*",
     "@fridrich/budgy-shared": "*",
+    "@fridrich/maptap-shared": "*",
     "nodemailer": "^10.0.3",
     "valibot": "^1.5.0"
   },

@@ -6,7 +6,7 @@ sources:
   - raw/2026-09-15-glassDesign.md
   - raw/2026-09-17-portalAsAppHub.md
   - code: apps/portal/src/{components,sections,content,views}, packages/design
-updated: 2026-09-17
+updated: 2026-10-09
 ---
 
 # Portal `www.fridrich.cloud`
@@ -63,6 +63,11 @@ An app requiring an account loses its `path` when `PERSONAL_DATA_COLLECTION_ENAB
 is off, because its routes are not registered at all. **Adding another
 application** is a route subtree, an `app.ts`, two catalog entries and one line
 in the registry.
+
+> ℹ️ **An app can deliberately stay out of the registry.** The MapTap
+> leaderboard ([maptap.md](maptap.md)) is internal, so it has no `app.ts` and
+> no tile – you reach it by typing `/maptap`. Being unlisted is not what
+> protects it; `requiresAuth` and `access: 'user'` are.
 
 ### Sections of the `/o-mne` page
 

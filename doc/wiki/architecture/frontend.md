@@ -7,7 +7,7 @@ sources:
   - raw/2026-09-15-responsiveFrontend.md
   - raw/portalSpec.md (navigation, services grid), raw/iziweddySpec.md (ch. 6.3)
   - code: packages/design/src/breakpoints.css, apps/portal/postcss.config.js
-updated: 2026-09-17
+updated: 2026-10-09
 ---
 
 # Frontend – `apps/portal`
@@ -201,9 +201,19 @@ Current use:
 > Tokens on `:root` would override the portal palette on the whole website.
 > Everything goes under `.weddy`.
 
+> ℹ️ **A product may also just keep the portal's theme.** IziWeddy and IziBudgy
+> are products with a look of their own, so they redefine the whole palette.
+> MapTap is an internal tool inside the portal, so `maptap.css` defines no
+> palette at all – it inherits Glass and adds only the tokens the shared kit
+> expects but the portal theme never needed (`--color-surface-alt`,
+> `--color-accent-muted`, `--color-accent-wash`, `--clay-500`, the shadows)
+> plus the glass treatment of `.card`. Such a theme must **not** paint its own
+> background: the orange glows live on `body::before`, and an opaque wrapper
+> over them turns every glass card into a grey rectangle.
+
 ### Product UI kit
 
-Both products (IziWeddy, IziBudgy) share one set of components in
+All three products (IziWeddy, IziBudgy, MapTap) share one set of components in
 `components/product/` – `BottomSheet`, `ConfirmDialog` (+ `confirm.ts`),
 `FormField`, `SelectField`, `ChoiceField`, `EmptyState`, `ErrorBlock`,
 `LoadingBlock`, `FabButton` – and one stylesheet, `styles/product.css`, with
@@ -212,11 +222,23 @@ class `.product`, which every product wrapper carries next to its own
 (`<div class="weddy product">`).
 
 **A shared component may only reach for semantic tokens** (`--color-accent`,
-`--color-accent-strong`, `--color-accent-wash`, `--color-surface-alt`…), never
-for a palette shade such as `--rose-400`. A product theme defines the tokens;
-that is the whole difference between them. The kit used to live under `weddy/`
-and reached straight into the rose palette, so the first budgy screens came out
-pink.
+`--color-accent-strong`, `--color-accent-wash`, `--color-surface-alt`,
+`--color-backdrop`…), never for a palette shade such as `--rose-400`. A product
+theme defines the tokens; that is the whole difference between them. The kit
+used to live under `weddy/` and reached straight into the rose palette, so the
+first budgy screens came out pink.
+
+Two components were still carrying fixed colours and only a **dark** theme
+showed it:
+
+- the backdrop of `BottomSheet` and `ConfirmDialog` was a fixed `rgb(43 36 48 / 0.22)`
+  – fine over a white screen, invisible over a black one. It is now
+  `--color-backdrop`, which the light themes keep at the old value and MapTap
+  raises to 60 % black.
+- `ErrorBlock` was a hard-coded pink box. It now mixes its own surface from
+  `--color-danger` and `--color-surface`. The text is **not** plain
+  `--color-danger`: on the light wash that is 3.75 : 1, below AA. Pulling it
+  20 % towards `--color-text` gives 4.9 : 1 on light and 6.1 : 1 on dark.
 
 `StatusBadge` stayed in `weddy/components/` – its statuses (`guest`,
 `planning`) belong to that product.
@@ -257,11 +279,12 @@ inputs, textareas and buttons.
 | `/ochrana-osobnich-udaju`, `/obchodni-podminky` | Privacy policy and terms (`LegalView`, always registered) |
 | `/izi-weddy/*` | IziWeddy – routes in [weddy.md](../domains/weddy.md#routes) |
 | `/izi-budgy`, `/izi-budgy/mesic` | IziBudgy – the overview and one month ([budgyBudget.md](../domains/budgyBudget.md)) |
+| `/maptap`, `/maptap/poradi` | MapTap – the day and the standings ([maptapScores.md](../domains/maptapScores.md)); internal, no link from the hub |
 | `/api/*` | API (the Vite dev server proxies it to `:7071`) |
 
 Routes and anchors are Czech because they are part of the public website.
 
-> ℹ️ Identity routes, `/izi-weddy/*` and `/izi-budgy/*` are in `personalDataRoutes` and are
+> ℹ️ Identity routes, `/izi-weddy/*`, `/izi-budgy/*` and `/maptap/*` are in `personalDataRoutes` and are
 > registered only when `PERSONAL_DATA_COLLECTION_ENABLED` is on (currently on);
 > with the switch off they return the 404 page ([personalData.md](personalData.md)).
 

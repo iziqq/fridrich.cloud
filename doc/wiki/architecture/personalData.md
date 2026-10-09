@@ -5,7 +5,7 @@ sources:
   - raw/2026-09-15-gdprNoDataCollection.md
   - raw/2026-09-15-legalDocumentsAndRetention.md
   - code: packages/shared/src/privacy.ts, apps/portal/src/content/legal.ts, apps/api/src/application/identity/account.ts, apps/api/src/application/weddy/access.ts, .github/workflows/data-retention.yml
-updated: 2026-09-17
+updated: 2026-10-09
 ---
 
 # Personal data (GDPR)
@@ -28,6 +28,7 @@ updated: 2026-09-17
 | IziWeddy | couple: first and last name only; guests (**third parties**): name, side, age group, status, family, note; items: name, URL, price, status | `weddings`, `guests`, `planningItems` | until the wedding or the account is deleted | `apps/portal/src/weddy`, `/api/weddy/*` |
 | IziWeddy sharing | e-mail of an invited person (**a third party who may have no account**) plus its fingerprint for the lookup, and the role; for members the list of user ids and their roles | `weddingInvitations`, `members` on the wedding | unaccepted invitation **30 days** (container TTL), then automatic deletion; membership until access is removed or the plan/account is deleted | `application/weddy/access.ts`, `/api/weddy/weddings/{weddingId}/access` |
 | IziBudgy | household budget entries: name, amount, category, date or validity range, note – income and expenses | `budgetEntries` | until the entry or the account is deleted | `apps/portal/src/budgy`, `/api/budgy/*` |
+| MapTap | **display name shown to other players**, day played, round scores and the final score | `maptapScores` | until the result or the account is deleted | `apps/portal/src/maptap`, `/api/maptap/*` |
 | System e-mails | recipient address, content | Gmail sent mail | manual, within a year | `application/identity/emails.ts` |
 | Session cookie | `fc_session` – random token | browser | 30 days or logout | `http/cookies.ts` |
 | Language choice | `localStorage.fc_locale` – `cs`/`en`, never sent to the server | browser | until site data is cleared | `i18n/index.ts` |
@@ -60,11 +61,16 @@ secret pepper), not in the clear – which ones and why is in
   `INACTIVE_ACCOUNT_RETENTION_DAYS`, `INACTIVE_ACCOUNT_WARNING_DAYS`,
   `WEDDING_INVITATION_RETENTION_DAYS`), which the API uses too –
   the documents cannot promise a period the code does not enforce.
-- **Last change:** IziBudgy added the policy row *Aplikace IziBudgy* (the
-  IziBudgy application), listed the product in the lead and in the terms, and
-  `PRIVACY_POLICY_VERSION` was bumped to `'2026-09-17'`. A household budget says
-  a lot about a person, so the product is inside the switch from the first
-  commit – no screen of it exists without the policy.
+- **Last change:** the MapTap leaderboard added the policy row *Tabule MapTap*
+  (the MapTap board), was listed in the lead and in the terms, and both
+  `PRIVACY_POLICY_VERSION` and `TERMS_VERSION` were bumped to `'2026-10-09'`.
+  It is the first product that shows **one user's name to another**, which the
+  policy has to say out loud; everything else on the site keeps an account's
+  data with that account.
+- Earlier: IziBudgy added the policy row *Aplikace IziBudgy* (the IziBudgy
+  application) and `PRIVACY_POLICY_VERSION` was bumped to `'2026-09-17'`. A
+  household budget says a lot about a person, so the product is inside the
+  switch from the first commit – no screen of it exists without the policy.
 
 > ⚠️ The documents are a template written by the agent from the actual code and
 > data flows, **not legal advice**. A lawyer's review is recommended before relying on them.
@@ -107,6 +113,7 @@ sequenceDiagram
     participant A as deleteAccount (identity)
     participant W as eraseUserWeddyData (weddy)
     participant B as eraseUserBudgyData (budgy)
+    participant M as eraseUserMapTapData (maptap)
     U->>U: "Smazat účet" → confirm step
     U->>API: auth.closeAccount()
     API->>A: user.id
@@ -114,6 +121,8 @@ sequenceDiagram
     W->>W: sole-member plans: delete guests, items, invitations, plan<br/>shared plans: leave (admin → longest-serving manager, else viewer)<br/>invitations sent to that e-mail: delete
     A->>B: via UserDataEraser port ({ id })
     B->>B: delete every budget entry of the account
+    A->>M: via UserDataEraser port ({ id })
+    M->>M: delete every MapTap result of the account
     A->>A: delete sessions, login codes, tokens, then the user
     A-->>U: 204 + cleared cookie, confirmation e-mail
 ```
@@ -195,5 +204,5 @@ Rules:
 
 ## Related
 
-- [identity](../domains/identity.md) · [contact](../domains/contact.md) · [weddy](../domains/weddy.md) · [budgy](../domains/budgy.md) · [Portal](../domains/portal.md)
+- [identity](../domains/identity.md) · [contact](../domains/contact.md) · [weddy](../domains/weddy.md) · [budgy](../domains/budgy.md) · [maptap](../domains/maptap.md) · [Portal](../domains/portal.md)
 - [Endpoints](endpoints.md) · [Data in Cosmos DB](dataCosmos.md) · [Deployment](../operations/deployment.md) · [Decisions](../decisions.md)

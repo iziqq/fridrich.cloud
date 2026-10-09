@@ -24,6 +24,7 @@ export const CONTAINERS = {
   planningItems: 'planningItems',
   planningBundles: 'planningBundles',
   budgetEntries: 'budgetEntries',
+  maptapScores: 'maptapScores',
 } as const;
 
 export type ContainerName = (typeof CONTAINERS)[keyof typeof CONTAINERS];
