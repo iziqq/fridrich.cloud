@@ -3,23 +3,12 @@ import { CONTAINERS } from '../../config.js';
 import { MapTapScore } from '../../domain/maptap/score/MapTapScore.js';
 import type { MapTapScoreRepository } from '../../domain/maptap/score/MapTapScoreRepository.js';
 import type { PlayerDirectory } from '../../domain/maptap/score/PlayerDirectory.js';
-import { getContainer, isNotFound, stripSystemFields } from './client.js';
+import { getContainer, stripSystemFields } from './client.js';
 import { userCosmosRepository } from './identityRepositories.js';
 
 /** Implementace portů modulu maptap nad Cosmos DB. */
 
 export const maptapScoreCosmosRepository: MapTapScoreRepository = {
-  async findById(userId, scoreId) {
-    try {
-      const container = await getContainer(CONTAINERS.maptapScores);
-      const { resource } = await container.item(scoreId, userId).read<ScoreData>();
-      return resource ? MapTapScore.fromState(stripSystemFields(resource)) : undefined;
-    } catch (error) {
-      if (isNotFound(error)) return undefined;
-      throw error;
-    }
-  },
-
   async findForDay(userId, playedOn) {
     const container = await getContainer(CONTAINERS.maptapScores);
     const { resources } = await container.items
@@ -49,11 +38,6 @@ export const maptapScoreCosmosRepository: MapTapScoreRepository = {
   async save(score) {
     const container = await getContainer(CONTAINERS.maptapScores);
     await container.items.upsert(score.toDocument());
-  },
-
-  async delete(userId, scoreId) {
-    const container = await getContainer(CONTAINERS.maptapScores);
-    await container.item(scoreId, userId).delete();
   },
 
   async deleteAllForUser(userId) {

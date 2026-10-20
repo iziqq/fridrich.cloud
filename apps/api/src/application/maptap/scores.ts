@@ -60,17 +60,6 @@ export async function addScore(
   return score.toState();
 }
 
-export async function removeScore(
-  deps: MapTapDeps,
-  scoreId: string,
-  userId: string,
-): Promise<void> {
-  const score = await deps.scores.findById(userId, scoreId);
-  if (!score) throw DomainError.notFound(scoresKeys.scoreNotFound);
-
-  await deps.scores.delete(score.userId, score.id);
-}
-
 /**
  * Smazání účtu – port `UserDataEraser` (CLAUDE.md, pravidlo 27).
  *

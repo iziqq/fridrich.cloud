@@ -7,7 +7,6 @@ import {
   createMapTapScore,
   type CreateMapTapScoreRequest,
 } from './endpoints/createMapTapScore.endpoint';
-import { deleteMapTapScore } from './endpoints/deleteMapTapScore.endpoint';
 import { getMapTapBoard } from './endpoints/getMapTapBoard.endpoint';
 
 /** Dnešek jako `RRRR-MM-DD` podle místního času, ne UTC. */
@@ -28,6 +27,8 @@ export const useBoardStore = defineStore('maptap-board', () => {
 
   const board = ref<MapTapBoard>({ players: [], scores: [] });
   const day = ref<string>(today());
+  /* Dnešek pro pás roku – ať se „dnes“ nepočítá na dvou místech jinak. */
+  const currentDay = ref<string>(today());
   const loading = ref(false);
   const error = ref<string | null>(null);
   const loaded = ref(false);
@@ -103,17 +104,10 @@ export const useBoardStore = defineStore('maptap-board', () => {
     day.value = score.playedOn;
   }
 
-  async function remove(scoreId: string): Promise<void> {
-    await deleteMapTapScore(scoreId);
-    board.value = {
-      ...board.value,
-      scores: board.value.scores.filter((score) => score.id !== scoreId),
-    };
-  }
-
   return {
     board,
     day,
+    currentDay,
     days,
     loading,
     error,
@@ -127,6 +121,5 @@ export const useBoardStore = defineStore('maptap-board', () => {
     goToToday,
     load,
     add,
-    remove,
   };
 });

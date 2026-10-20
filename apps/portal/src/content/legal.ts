@@ -111,7 +111,7 @@ export const privacyPolicy: LegalDocument = {
               'Tabule MapTap',
               'jméno z účtu, den hry, body za jednotlivá kola a celkový výsledek',
               'Provoz interní tabule výsledků – plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR). Vaše jméno a výsledky vidí ostatní přihlášení uživatelé, kteří tabuli používají; e-mail se na ní nezobrazuje. Výsledek na tabuli je jen ten, který tam sami vložíte.',
-              'Do smazání výsledku nebo účtu, včetně automatického smazání neaktivního účtu.',
+              'Do smazání účtu, včetně automatického smazání neaktivního účtu. Jednotlivý výsledek z tabule odstranit nejde – tabule má ukazovat, jak hra dopadla.',
             ],
             [
               'Sdílení plánování v IziWeddy',

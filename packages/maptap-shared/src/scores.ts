@@ -29,7 +29,6 @@ const cs = {
   dateMissing: 'Ve vloženém textu nevidím datum – zkopírujte i první řádek s „www.maptap.gg“',
   roundsMissing: 'Ve vloženém textu nevidím body za jednotlivá kola',
   finalMissing: 'Ve vloženém textu chybí řádek „Final score“',
-  scoreNotFound: 'Výsledek neexistuje',
   scoreExists: 'Výsledek z tohohle dne už máte zadaný',
   /* Popisky odznaků u kol – samotný smajlík čtečka nepřečte. */
   badge: {
@@ -47,7 +46,6 @@ const en: Catalog<typeof cs> = {
   dateMissing: 'I cannot see a date in the pasted text – copy the first line with "www.maptap.gg" as well',
   roundsMissing: 'I cannot see the points for the individual rounds in the pasted text',
   finalMissing: 'The "Final score" line is missing from the pasted text',
-  scoreNotFound: 'The result does not exist',
   scoreExists: 'You already have a result for this day',
   badge: {
     sports_medal: 'medal',
@@ -147,6 +145,19 @@ export type ScoreParseResult =
   | { ok: true; score: ParsedScore }
   | { ok: false; reason: ScoreParseFailure };
 
+/**
+ * Hláška ke každému důvodu, proč text nešel přečíst.
+ *
+ * Jedno místo pro schéma i pro formulář: ten ukazuje chybu rovnou u textu
+ * vzatého ze schránky, aniž by čekal na odpověď API, a nesmí přitom tvrdit
+ * něco jiného než schéma.
+ */
+export const SCORE_PARSE_MESSAGES: Record<ScoreParseFailure, string> = {
+  date: scoresKeys.dateMissing,
+  final: scoresKeys.finalMissing,
+  rounds: scoresKeys.roundsMissing,
+};
+
 const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 /** Den, který v kalendáři existuje; únor se bere s přestupným dnem. */
@@ -221,6 +232,13 @@ export function resolvePlayedOn(score: ParsedScore, today: string): string {
   return isoDate(thisYear, score.month, score.day);
 }
 
+/** Posun o `delta` dní – `shiftDay('2026-01-01', -1)` je `'2025-12-31'`. */
+export function shiftDay(day: string, delta: number): string {
+  const date = new Date(`${day}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + delta);
+  return date.toISOString().slice(0, 10);
+}
+
 /* --- Schémata --- */
 
 export const ScoreRoundSchema = v.object({
@@ -254,15 +272,15 @@ export const ScoreTextInputSchema = v.pipe(
     text: requiredText(scoresKeys.textRequired, SCORE_TEXT_MAX, scoresKeys.textTooLong),
   }),
   v.forward(
-    v.check((input) => failureOf(input.text) !== 'date', scoresKeys.dateMissing),
+    v.check((input) => failureOf(input.text) !== 'date', SCORE_PARSE_MESSAGES.date),
     ['text'],
   ),
   v.forward(
-    v.check((input) => failureOf(input.text) !== 'final', scoresKeys.finalMissing),
+    v.check((input) => failureOf(input.text) !== 'final', SCORE_PARSE_MESSAGES.final),
     ['text'],
   ),
   v.forward(
-    v.check((input) => failureOf(input.text) !== 'rounds', scoresKeys.roundsMissing),
+    v.check((input) => failureOf(input.text) !== 'rounds', SCORE_PARSE_MESSAGES.rounds),
     ['text'],
   ),
 );

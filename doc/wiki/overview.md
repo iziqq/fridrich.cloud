@@ -24,7 +24,7 @@ updated: 2026-10-09
 | **Legal** | `/ochrana-osobnich-udaju`, `/obchodni-podminky` | Privacy policy and terms | ✅ done |
 | **IziBudgy** | `/izi-budgy` | Household budget | 🚧 first version – income, recurring and one-off expenses, charts |
 | **MapTap** | `/maptap` | Internal leaderboard for the daily game at maptap.gg – **deliberately not listed on the hub** | 🚧 first version – paste a result, day ranking, standings |
-| **API** | `/api` | `identity`, `contact`, `weddy`, `budgy`, `maptap` – 46 endpoints | ✅ done |
+| **API** | `/api` | `identity`, `contact`, `weddy`, `budgy`, `maptap` – 45 endpoints | ✅ done |
 | **Retention scheduler** | GitHub Actions | Daily deletion of inactive accounts | ✅ done – needs `MAINTENANCE_TOKEN` set up |
 
 > ℹ️ Personal data is collected under the privacy policy; contact messages expire

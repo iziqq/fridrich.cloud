@@ -8,21 +8,19 @@ import {
   parseScoreText,
   playedDays,
   scoresKeys,
+  shiftDay,
   standings,
+  yearByPlayer,
   type ScoreInput,
 } from '@fridrich/maptap-shared';
 import * as v from 'valibot';
-import {
-  addScore,
-  eraseUserMapTapData,
-  getBoard,
-  removeScore,
-} from '../src/application/maptap/scores.js';
+import { addScore, eraseUserMapTapData, getBoard } from '../src/application/maptap/scores.js';
 import { isDomainError } from '../src/domain/shared/DomainError.js';
 import { maptapTestDeps, type MapTapTestContext } from './fakes.js';
 
 const LIBOR = 'user-1';
 const EVA = 'user-2';
+const TOMAS = 'user-3';
 
 /** Text, jaký MapTap nabízí ke sdílení. */
 function paste(day: string, rounds: string, finalScore: number): string {
@@ -121,18 +119,17 @@ describe('uložení výsledku', () => {
     assert.equal((await getBoard(deps)).scores.length, 2);
   });
 
-  it('cizí výsledek smazat nejde a tváří se, že není', async () => {
-    const deps = maptapTestDeps();
-    const score = await addScore(deps, asInput(EXAMPLE), LIBOR);
+  it('mazání jednoho výsledku neexistuje ani jako use-case', async () => {
+    /*
+     * Hlídka rozhodnutí, ne chování: tabule ukazuje, co hra dala. Kdyby šel
+     * výsledek smazat, dal by se nepovedený den tiše zahodit a součet
+     * nejlepších her by přestal něco znamenat. Kdo to sem vrátí, ať u toho
+     * projde i zásady ochrany osobních údajů – lhůta se o mazání opírá.
+     */
+    const useCases = await import('../src/application/maptap/scores.js');
 
-    await assert.rejects(
-      () => removeScore(deps, score.id, EVA),
-      (error: unknown) => isDomainError(error) && error.kind === 'notFound',
-    );
-    assert.equal((await getBoard(deps)).scores.length, 1);
-
-    await removeScore(deps, score.id, LIBOR);
-    assert.equal((await getBoard(deps)).scores.length, 0, 'svůj smazat jde');
+    assert.equal('removeScore' in useCases, false);
+    assert.equal('eraseUserMapTapData' in useCases, true, 'rušení účtu výsledky odnést musí');
   });
 
   it('smazání účtu odnese i výsledky hráče', async () => {
@@ -184,29 +181,163 @@ describe('tabule', () => {
     assert.equal(latestDay(board), '2026-10-09');
   });
 
-  it('celkové pořadí vede průměr, ne nahrané hodiny', async () => {
-    const board = await getBoard(await withScores());
-    const table = standings(board);
-
-    assert.deepEqual(
-      table.map((row) => [row.rank, row.player.name, row.average, row.games, row.wins]),
-      [
-        // Eva má míň her, ale lepší průměr – a vyhrála dva dny (9. 10. remízou).
-        [1, 'Eva', 680, 2, 2],
-        [2, 'Libor', 530, 2, 2],
-      ],
-    );
-    assert.equal(table[0]?.best, 700);
-    assert.equal(table[1]?.total, 1060);
-  });
-
   it('hráč bez výsledků se v tabulce neukazuje', async () => {
     const deps = maptapTestDeps();
     await addScore(deps, asInput(EXAMPLE), LIBOR);
+    const table = standings(await getBoard(deps));
 
     assert.deepEqual(
-      standings(await getBoard(deps)).map((row) => row.player.name),
+      table.ranked.map((row) => row.player.name),
       ['Libor'],
     );
+    assert.deepEqual(table.occasional, []);
+  });
+});
+
+/**
+ * Odehraná sezona tří hráčů.
+ *
+ * Libor hrál čtyřikrát a jednou mu to nevyšlo, Eva třikrát vyrovnaně, Tomáš
+ * jednou a hned nejlíp ze všech. Průměr her na hráče vychází na tři.
+ */
+async function withSeason(): Promise<MapTapTestContext> {
+  const deps = maptapTestDeps();
+  const day = (date: string, final: number) => paste(date, `${final}:crown:`, final);
+
+  for (const [date, final] of [
+    ['October 9', 500],
+    ['October 8', 500],
+    ['October 7', 500],
+    ['October 6', 100],
+  ] as const) {
+    await addScore(deps, asInput(day(date, final)), LIBOR);
+  }
+  for (const [date, final] of [
+    ['October 9', 600],
+    ['October 8', 450],
+    ['October 7', 400],
+  ] as const) {
+    await addScore(deps, asInput(day(date, final)), EVA);
+  }
+  await addScore(deps, asInput(day('October 9', 900)), TOMAS);
+
+  return deps;
+}
+
+describe('celkové pořadí', () => {
+  it('sčítá tolik nejlepších her, kolik jich na hráče v průměru připadá', async () => {
+    const table = standings(await getBoard(await withSeason()));
+
+    // Osm her na tři hráče je 2,67 – zaokrouhleno tři.
+    assert.equal(table.counted, 3);
+  });
+
+  it('řadí součet nejlepších her, ne průměr', async () => {
+    const table = standings(await getBoard(await withSeason()));
+
+    assert.deepEqual(
+      table.ranked.map((row) => [row.rank, row.player.name, row.score]),
+      [
+        [1, 'Libor', 1500],
+        [2, 'Eva', 1450],
+      ],
+    );
+
+    const [libor, eva] = table.ranked;
+    assert.ok(
+      (eva?.average ?? 0) > (libor?.average ?? 0),
+      'Eva má lepší průměr, a přesto je druhá – průměr pořadí neurčuje',
+    );
+  });
+
+  it('nejhorší den se do součtu nepočítá', async () => {
+    const table = standings(await getBoard(await withSeason()));
+    const libor = table.ranked.find((row) => row.player.name === 'Libor');
+
+    assert.equal(libor?.games, 4);
+    assert.equal(libor?.total, 1600, 'dohromady nahrál 1600');
+    assert.equal(libor?.score, 1500, 'do pořadí jdou jen tři nejlepší');
+  });
+
+  it('kdo tolik her nemá, stojí pod čarou a bez pořadí', async () => {
+    const table = standings(await getBoard(await withSeason()));
+
+    assert.deepEqual(
+      table.occasional.map((row) => [row.player.name, row.games, row.rank]),
+      [['Tomáš', 1, undefined]],
+    );
+    // A to i když má ze všech nejlepší průměr – z jedné hry se měřit nedá.
+    assert.equal(table.occasional[0]?.average, 900);
+    assert.ok(table.ranked.every((row) => row.average < 900));
+  });
+
+  it('stejný součet znamená stejné pořadí', async () => {
+    const deps = maptapTestDeps();
+    await addScore(deps, asInput(paste('October 9', '50:crown:', 500)), LIBOR);
+    await addScore(deps, asInput(paste('October 9', '50:crown:', 500)), EVA);
+
+    const table = standings(await getBoard(deps));
+
+    assert.equal(table.counted, 1);
+    assert.deepEqual(
+      table.ranked.map((row) => row.rank),
+      [1, 1],
+    );
+  });
+});
+
+describe('pás roku', () => {
+  it('má pevnou délku a končí dneškem', async () => {
+    const year = yearByPlayer(await getBoard(await withSeason()), '2026-10-09').get(LIBOR) ?? [];
+
+    assert.equal(year.length, 365);
+    assert.equal(year.at(-1)?.day, '2026-10-09');
+    assert.equal(year[0]?.day, shiftDay('2026-10-09', -364), 'první den je o rok zpátky');
+  });
+
+  it('u odehraného dne nese pořadí, body i počet hráčů', async () => {
+    const year = yearByPlayer(await getBoard(await withSeason()), '2026-10-09').get(LIBOR) ?? [];
+    const today = year.find((entry) => entry.day === '2026-10-09');
+
+    // Toho dne hráli tři a Libor byl s 500 body poslední.
+    assert.deepEqual(today, { day: '2026-10-09', players: 3, rank: 3, score: 500 });
+  });
+
+  it('den bez vlastního výsledku pořadí nemá, i když ostatní hráli', async () => {
+    const board = await getBoard(await withSeason());
+    const mine = yearByPlayer(board, '2026-10-09')
+      .get(EVA)
+      ?.find((entry) => entry.day === '2026-10-06');
+
+    // 6. 10. hrál jen Libor – Eva ten den pořadí nemá, ale je vidět, že se hrálo.
+    assert.equal(mine?.rank, undefined);
+    assert.equal(mine?.score, undefined);
+    assert.equal(mine?.players, 1);
+  });
+
+  it('den, kdy se nehrálo, zůstává v pásu prázdný', async () => {
+    const year = yearByPlayer(await getBoard(await withSeason()), '2026-10-09').get(LIBOR) ?? [];
+    const quiet = year.find((entry) => entry.day === '2026-10-05');
+
+    assert.deepEqual(quiet, { day: '2026-10-05', players: 0 });
+  });
+
+  it('pás dostane každý hráč, i ten pod čarou', async () => {
+    const years = yearByPlayer(await getBoard(await withSeason()), '2026-10-09');
+
+    assert.deepEqual([...years.keys()].sort(), [LIBOR, EVA, TOMAS].sort());
+    assert.ok([...years.values()].every((year) => year.length === 365));
+  });
+
+  it('remíza drží stejné pořadí jako denní tabulka', async () => {
+    const deps = maptapTestDeps();
+    await addScore(deps, asInput(paste('October 9', '50:crown:', 500)), LIBOR);
+    await addScore(deps, asInput(paste('October 9', '50:crown:', 500)), EVA);
+
+    const board = await getBoard(deps);
+    const day = yearByPlayer(board, '2026-10-09').get(EVA)?.at(-1);
+
+    assert.equal(day?.rank, 1, 'stejné body znamenají stejné pořadí');
+    assert.equal(day?.players, 2);
   });
 });

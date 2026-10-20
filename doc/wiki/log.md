@@ -895,3 +895,114 @@ ordinary one.
   state on light to confirm the shared-component change did not move it.
 - Touched pages: `domains/maptap.md` (Look), `architecture/frontend.md`
   (product UI kit, themes that inherit the portal).
+
+## [2026-10-20] change | MapTap: ranking by the sum of the best games, regulars split off
+
+- Owner's request: split regular players from occasional ones by the **average
+  number of games per player**, divide them visually with a 2.5 px orange
+  divider, and rank by the **sum of each player's best `average` games**.
+- `standings()` now returns `{ counted, ranked, occasional }` instead of a flat
+  array. `counted` is the rounded average games per player (at least 1); the
+  ranking score is the sum of the `counted` best results.
+- **Why it is better than what it replaced:** everyone is measured over the
+  same number of games, so a single lucky day no longer carries a player the
+  way a plain average did, and a regular's weakest days drop out instead of
+  dragging them down. The yardstick grows with how much the group plays
+  instead of being a constant someone picked.
+- Players below `counted` games get **no rank** – their sum is short by
+  definition and among the others it would read as a weak performance even if
+  they are the best player there.
+- **Caught while looking at it:** for those players the headline label still
+  said *součet 3 nejlepších* (top 3 total) although they had two games. Below
+  the line the number is by definition the sum of everything, so the label is
+  now *součet všeho* (all games total).
+- The stats row swapped *Celkem* (total) for *Průměr* (average): the headline is
+  a sum now, so a second sum next to it said little, while the average shows
+  how the best-of total was reached.
+- Tests: the old average test is gone, five new ones cover `counted`, ranking
+  by the sum and not the average, dropping the worst day, the split with no
+  rank, and a tie – 195 API tests pass.
+- Verified against a stubbed API at 360, 390 and 1024 px, Czech and English,
+  with four players at 4 / 3 / 2 / 1 games (average 2.5 → counted 3).
+- Touched pages: `domains/maptapScores.md` (the ranking, who is left out),
+  index.
+
+## [2026-10-20] change | MapTap: a result comes from the clipboard, and it is final
+
+- Owner's request: take the daily score **straight from the clipboard** instead
+  of waiting for a paste into a modal followed by Save, and **drop deleting**
+  daily results.
+- `DayView.vue` now has one button that reads `navigator.clipboard.readText()`,
+  parses it and saves. The clipboard may only be read **after a click and in a
+  secure context**, never on its own, so "automatically" can only mean one tap
+  – no browser allows less, and it should not.
+- `ScoreSheet.vue` stays as the **fallback**, because without it anyone whose
+  browser refuses the clipboard could not enter a result at all. It takes the
+  text with it (`initialText`) and a line saying why it opened (`notice`), and
+  shows the parse error immediately instead of waiting for Save.
+- The three outcomes are deliberately not treated alike: a refused clipboard or
+  unreadable text opens the form, while a refusal from the API (a result for
+  that day already exists) is only a message – the text was fine, so a form
+  would not help.
+- `SCORE_PARSE_MESSAGES` moved into the shared kernel so the form and the
+  Valibot schema cannot give different reasons for the same text.
+- **Delete is gone end to end**: the endpoint, the use case, the repository's
+  `findById`/`delete` and the store action. `deleteAllForUser` stays – account
+  deletion must still take the results. `ConfirmDialog` left `MapTapShell.vue`
+  with its last caller, and `scoreNotFound` left the catalogs.
+- The trade-off is recorded rather than hidden: **a result pasted by mistake
+  cannot be taken back**, and removing one is now a manual database operation.
+  If that bites, the gentler fix is a short window in which the author may
+  delete their own result, not bringing delete back for good.
+- Privacy policy: the MapTap retention row changed from "until the result or
+  the account is deleted" to "until the account is deleted", with a sentence
+  saying a single result cannot be removed; `PRIVACY_POLICY_VERSION` bumped to
+  `'2026-10-20'`.
+- Verification: the refused-clipboard path was checked against the **real**
+  browser behaviour (headless Chrome denies `readText()` even with
+  `Browser.grantPermissions`, which is itself the case being tested); the happy
+  path and the unreadable-text path were checked with `readText` stubbed, at
+  390 px in Czech and English. 195 API tests pass.
+- Touched pages: `domains/maptapScores.md` (how a result gets in, a result is
+  final, endpoints), `domains/maptap.md` (decision, open point),
+  `architecture/personalData.md`, `overview.md` (45 endpoints), index.
+
+## [2026-10-20] change | MapTap: a year strip in every player's card
+
+- Owner's request: a GitHub-style graph of **365 squares**, coloured by the
+  **rank that day**, with a sensible hover and a click that opens that day.
+  Follow-up during the work: put the strip **inside the player's card**, with
+  the four figures pulled together beside it and the strip wrapping underneath
+  on a narrow screen.
+- `yearByPlayer(board, today, days)` in the shared kernel returns a fixed-length
+  strip for **every player in one pass** – the screen draws one per card, and
+  asking per player would walk every result as many times as there are players.
+  Ranks come from `dayBoard`, so the tie rule cannot drift from the rest.
+- Every day is in the strip, including the empty ones: the grid is laid out by
+  weeks, so a fixed length is what makes the gaps visible.
+- Colour steps are spread wide (20 / 42 / 68 / 100 % accent). With a handful of
+  players almost every played day is coloured and closer shades blurred into
+  one surface – the first version did exactly that and had to be redone.
+- The tooltip says the rank **out of how many**: first out of two is not first
+  out of five. It is rendered outside the scrolling area so it is not clipped,
+  and is pushed back inside near the edges.
+- The strip is **one tab stop** with arrow keys inside (left/right a week,
+  up/down a day); 365 tab stops in a row would be a trap. Verified by driving
+  the real browser and reading back `document.activeElement`.
+- The rank colours moved to `maptap.css`, because the legend – drawn once at
+  the top of the screen rather than in every card – needs the same scale.
+- **Knowingly broken rule:** the squares are 10 px, far below the 44 px touch
+  target. A year of days cannot be drawn at touch size; it is acceptable
+  because the same navigation exists full-size on the Day screen and the strip
+  works from the keyboard. Recorded in `frontend.md` and `maptapScores.md`.
+- **Caught in testing:** a grid column does not shrink below its content, so
+  the strip pushed the whole page into a horizontal scrollbar on a phone
+  (685 px wide viewport content at 390 px). Fixed with `minmax(0, …)` on the
+  column and `min-width: 0` on the strip.
+- Also fixed in passing: the day heading capitalised the Czech month
+  ("17. Října"), which `text-transform: capitalize` did to every label.
+- Tests: 6 new cases for the strip (fixed length, rank/points/players on a
+  played day, no rank when the player sat it out, an empty day, a strip for
+  every player, ties) – 201 API tests pass.
+- Touched pages: `domains/maptapScores.md` (the year strip),
+  `architecture/frontend.md` (the touch-target exception), index.

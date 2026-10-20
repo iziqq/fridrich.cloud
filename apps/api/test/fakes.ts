@@ -449,11 +449,6 @@ export class FakeUserDirectory implements UserDirectory {
 export class InMemoryMapTapScoreRepository implements MapTapScoreRepository {
   readonly items = new Map<string, ReturnType<MapTapScore['toState']>>();
 
-  async findById(userId: string, scoreId: string): Promise<MapTapScore | undefined> {
-    const state = this.items.get(scoreId);
-    return state && state.userId === userId ? MapTapScore.fromState(state) : undefined;
-  }
-
   async findForDay(userId: string, playedOn: string): Promise<MapTapScore | undefined> {
     const found = [...this.items.values()].find(
       (state) => state.userId === userId && state.playedOn === playedOn,
@@ -467,10 +462,6 @@ export class InMemoryMapTapScoreRepository implements MapTapScoreRepository {
 
   async save(score: MapTapScore): Promise<void> {
     this.items.set(score.id, score.toState());
-  }
-
-  async delete(_userId: string, scoreId: string): Promise<void> {
-    this.items.delete(scoreId);
   }
 
   async deleteAllForUser(userId: string): Promise<void> {
@@ -606,6 +597,7 @@ export function maptapTestDeps(): MapTapTestContext {
   const players = new FakePlayerDirectory();
   players.add({ id: 'user-1', displayName: 'Libor' });
   players.add({ id: 'user-2', displayName: 'Eva' });
+  players.add({ id: 'user-3', displayName: 'Tomáš' });
 
   return {
     scores: new InMemoryMapTapScoreRepository(),

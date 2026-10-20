@@ -4,7 +4,7 @@ type: domain
 sources:
   - raw/2026-10-09-maptapLeaderboard.md
   - code: packages/maptap-shared/src, apps/api/src/domain/maptap, apps/portal/src/maptap/scores
-updated: 2026-10-09
+updated: 2026-10-20
 ---
 
 # `maptap / scores` – pasted results and the ranking
@@ -69,10 +69,38 @@ known emoji map back to their names.
 | `finalScore` | as written in the text |
 | `createdAt` | when it was pasted |
 
-A result is **immutable**: there is no update use case. Correcting it means
-deleting it and pasting again, and a player can only delete their own – a
-stranger's result answers `notFound`, not `forbidden`, so trying ids tells
-nobody what exists.
+## How a result gets in
+
+The player taps one button and the text is taken **straight from the
+clipboard** – they already have it there from the game, so retyping it into a
+form and pressing Save were two steps for nothing.
+
+Reading the clipboard is only allowed **after a click and in a secure
+context**, never on its own, so the whole thing hangs on a button; no browser
+lets a page read the clipboard by itself, and that is a good thing.
+
+When it does not work, `ScoreSheet.vue` opens as a **fallback**:
+
+| Case | What happens |
+|---|---|
+| the browser refuses the clipboard (permission denied, no API) | the manual form opens with a line saying why – otherwise such a player could never enter a result at all |
+| the clipboard holds something unreadable | the manual form opens **with that text in it** and shows the reason right away, without waiting for Save |
+| the API refuses the result (a result for that day already exists) | just a message under the button – the text was fine, so a form would not help |
+
+The form validates with `SCORE_PARSE_MESSAGES`, the same map the schema uses,
+so the message shown before saving cannot contradict the one the API returns.
+
+## A result is final
+
+There is no update and **no delete**: once a result is on the board, it stays.
+A leaderboard is supposed to show what the game produced, and a number the
+player can edit or quietly drop is not a result but a claim – with the sum of
+the best games it would be enough to delete the weak days.
+
+The consequence is deliberate and worth knowing: **a result pasted by mistake
+cannot be taken back** from the app. Only deleting the whole account removes
+results (`deleteAllForUser`, used by `UserDataEraser`); anything else is a
+manual operation on the database.
 
 ## The ranking
 
@@ -83,16 +111,78 @@ and in the browser.
 | Function | What it gives |
 |---|---|
 | `dayBoard(board, day)` | the day's ranking by final score; **equal scores share a rank** (1, 1, 3) – a tie is not worth breaking by who pasted first |
-| `standings(board)` | per player: games, average, best, total and **wins** (days where they had the top score; in a tie everyone wins) |
+| `standings(board)` | `{ counted, ranked, occasional }` – see below; each row carries games, score, average, best, total and **wins** (days where they had the top score; in a tie everyone wins) |
 | `playedDays(board)` | days with at least one result, newest first |
 
-**The standings rank by average, not by total.** A total is a ranking of
-diligence – whoever has played longest leads and a newcomer can never catch
-up. The games column sits next to it, so a high average from one game is
-visible for what it is.
+### The ranking: the sum of the best `counted` games
+
+`counted` is the **average number of games per player**, rounded, at least 1.
+A player's ranking score is the sum of their `counted` best results.
+
+- **Everybody is measured over the same number of games**, so one lucky day
+  cannot carry anyone, and the weakest days drop out instead of dragging a
+  regular player down.
+- The yardstick is **not an arbitrary constant**: it grows with how much the
+  group actually plays.
+- It replaced a plain average, which rewarded playing once and well. A total
+  of everything was never an option either – that is a ranking of diligence,
+  where whoever started first leads and a newcomer can never catch up.
+- Equal sums share a rank (1, 1, 3), as in the day board.
+
+### Who is left out
+
+A player with **fewer than `counted` games** is not ranked. Their sum is short
+by definition, so among the others it would read as a weak performance even if
+they are the best player on the board. `standings` therefore returns them
+separately in `occasional`, sorted the same way but **without a `rank`**.
+
+The screen puts them under a 2.5 px orange divider with a line saying why, and
+labels their headline number *součet všeho* (all games total) rather than
+*součet 3 nejlepších* (top 3 total) – for them the two are the same number and
+the second label would claim games they have not played.
 
 A result whose player is unknown (an account deleted between the two queries)
 is left out rather than shown as a nameless row.
+
+## The year strip
+
+Every player's card in *Pořadí* (Standings) carries a strip of the **last 365
+days** – one square per day, columns are weeks, rows are weekdays starting on
+Monday (the site is Czech). It is the GitHub contribution graph with a
+different meaning: the colour is **the rank that day**, not a count.
+
+| Square | Meaning |
+|---|---|
+| full accent | 1st that day |
+| 68 % / 42 % / 20 % accent | 2nd / 3rd / 4th and below |
+| grey | the player has no result that day |
+
+The steps are spread wide on purpose: with a handful of players almost every
+played day is coloured, and neighbouring shades would blur into one surface.
+
+- **Hover or focus shows a tooltip** – the date, the rank *out of how many*
+  and the points. The "out of how many" matters: first out of two is not first
+  out of five. The tooltip lives outside the scrolling area, so it is not
+  clipped, and it is pushed back inside near the edges.
+- **Clicking a square opens that day** in the *Den* (Day) tab. Days when
+  nobody played are inert – there is nothing to show.
+- **The whole strip is one tab stop** and arrows move inside it (left/right by
+  a week, up/down by a day). 365 tab stops in a row would be a trap.
+- `yearByPlayer` computes **every player at once**, because the screen draws a
+  strip per player; asking per player would walk all the results as many times
+  as there are players.
+
+Two things are deliberate and worth knowing:
+
+- **The squares are 10 px, far below the 44 px touch target** that
+  [frontend.md](../architecture/frontend.md#responsive-layout-and-breakpoints)
+  requires. A year of days cannot be drawn at a touch size, and GitHub has the
+  same problem. It is acceptable here because the strip is a *shortcut*: the
+  same navigation exists on the Day screen as full-size `‹ ›` buttons, and the
+  keyboard path above works without a pointer.
+- One strip is 365 buttons, so the screen renders **365 × players**. At a
+  handful of players that is fine; past roughly twenty it would be worth
+  drawing the squares as one SVG instead.
 
 ## Endpoints
 
@@ -100,7 +190,6 @@ is left out rather than shown as a nameless row.
 |---|---|---|
 | `getMapTapBoard` | `GET /api/maptap/board` | → `{ players, scores }` – everything |
 | `createMapTapScore` | `POST /api/maptap/scores` | `{ text }` → `201 MapTapScore` |
-| `deleteMapTapScore` | `DELETE /api/maptap/scores/{scoreId}` | → `204` |
 
 The board is **one request for everything**: switching the day or the tab then
 costs nothing and the two tables cannot disagree. A few people playing once a
@@ -116,11 +205,11 @@ Without that split the browser would be the one deciding what 660 means.
 
 | Layer | File |
 |---|---|
-| Shared kernel | `packages/maptap-shared/src/scores.ts` (parsing, schemas, badges), `leaderboard.ts` (`dayBoard`, `standings`, `playedDays`) |
+| Shared kernel | `packages/maptap-shared/src/scores.ts` (parsing, schemas, badges), `leaderboard.ts` (`dayBoard`, `standings`, `playedDays`, `yearByPlayer`) |
 | Domain | `apps/api/src/domain/maptap/score/MapTapScore.ts`, `MapTapScoreRepository.ts`, `PlayerDirectory.ts` |
 | Use cases | `apps/api/src/application/maptap/scores.ts` – `getBoard`, `addScore`, `removeScore`, `eraseUserMapTapData` |
 | Endpoints | `apps/api/src/endpoints/maptap/scores/`, `apps/portal/src/maptap/scores/endpoints/` |
-| UI | `DayView.vue`, `StandingsView.vue`, `ScoreSheet.vue` (paste + preview), `RoundBadges.vue` |
+| UI | `DayView.vue` (the clipboard button), `StandingsView.vue`, `YearGraph.vue` (the year strip), `ScoreSheet.vue` (the manual fallback), `RoundBadges.vue` |
 | Storage | container `maptapScores`, PK `/userId` |
 
 The day resolution lives in the **domain**, not the schema: the share text has

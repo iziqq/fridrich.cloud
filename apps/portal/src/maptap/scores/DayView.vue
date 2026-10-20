@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { parseScoreText } from '@fridrich/maptap-shared';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { askConfirm } from '@/components/product/confirm';
+import { ApiError } from '@/api/http';
 import EmptyState from '@/components/product/EmptyState.vue';
 import ErrorBlock from '@/components/product/ErrorBlock.vue';
 import LoadingBlock from '@/components/product/LoadingBlock.vue';
@@ -25,6 +26,10 @@ const { t } = useI18n();
 onMounted(() => store.load());
 
 const sheetOpen = ref(false);
+const sheetText = ref('');
+const sheetNotice = ref('');
+const pasting = ref(false);
+const pasteError = ref<string | null>(null);
 
 const dayLabel = computed(() => {
   if (store.isToday) return t('maptap.day.today');
@@ -36,16 +41,52 @@ const dayLabel = computed(() => {
   }).format(new Date(`${store.day}T00:00:00.000Z`));
 });
 
-async function removeOwn(scoreId: string): Promise<void> {
-  const confirmed = await askConfirm({
-    title: t('maptap.score.deleteTitle'),
-    message: t('maptap.score.confirmDelete'),
-    confirmLabel: t('maptap.score.delete'),
-    danger: true,
-  });
-  if (!confirmed) return;
+function openSheet(text: string, notice: string): void {
+  sheetText.value = text;
+  sheetNotice.value = notice;
+  sheetOpen.value = true;
+}
 
-  await store.remove(scoreId);
+/** Schránka bez vyhazování výjimek – zakázané čtení se chová jako prázdná. */
+async function clipboardText(): Promise<string | undefined> {
+  try {
+    return await navigator.clipboard?.readText();
+  } catch {
+    // Prohlížeč čtení nepovolil; proč, se nedozvíme a ani to nepotřebujeme.
+    return undefined;
+  }
+}
+
+/**
+ * Vložení výsledku jedním ťuknutím.
+ *
+ * Text se vezme rovnou ze schránky a hned uloží – hráč ho tam má z hry, takže
+ * přepisovat ho do formuláře a pak mačkat Uložit byly dva kroky navíc. Číst
+ * schránku smíme jen po kliknutí a jen v zabezpečeném kontextu, nikdy sama od
+ * sebe; proto to visí na tlačítku (doc/wiki/domains/maptapScores.md).
+ *
+ * Když to nevyjde, otevře se ruční formulář – jinak by hráč v prohlížeči,
+ * který ke schránce nepustí, neměl výsledek jak zadat. Odmítnutí od API je
+ * jiný případ: text byl v pořádku, takže formulář nepomůže a stačí hláška.
+ */
+async function pasteResult(): Promise<void> {
+  pasting.value = true;
+  pasteError.value = null;
+
+  try {
+    const text = await clipboardText();
+    if (text === undefined) return openSheet('', t('maptap.form.clipboardBlocked'));
+    if (!parseScoreText(text).ok) return openSheet(text, '');
+
+    await store.add({ text });
+  } catch (cause) {
+    pasteError.value =
+      cause instanceof ApiError
+        ? (cause.details[0]?.message ?? cause.message)
+        : 'maptap.form.saveFailed';
+  } finally {
+    pasting.value = false;
+  }
 }
 </script>
 
@@ -90,8 +131,14 @@ async function removeOwn(scoreId: string): Promise<void> {
         :description="t('maptap.empty.description')"
       >
         <!-- Hlavní akce patří sem, dokud není co ukázat – ne do rohu obrazovky. -->
-        <button v-if="store.isToday" type="button" class="btn btn-primary" @click="sheetOpen = true">
-          + {{ t('maptap.score.add') }}
+        <button
+          v-if="store.isToday"
+          type="button"
+          class="btn btn-primary"
+          :disabled="pasting"
+          @click="pasteResult()"
+        >
+          {{ pasting ? t('maptap.score.pasting') : t('maptap.score.paste') }}
         </button>
       </EmptyState>
 
@@ -116,29 +163,22 @@ async function removeOwn(scoreId: string): Promise<void> {
             </div>
 
             <p class="final score">{{ row.score.finalScore }}</p>
-
-            <button
-              v-if="row.score.userId === auth.user?.id"
-              type="button"
-              class="remove"
-              :aria-label="t('maptap.score.delete')"
-              @click="removeOwn(row.score.id)"
-            >
-              ✕
-            </button>
           </li>
         </ol>
 
         <!-- Vkládá se jen k dnešku; starší den už se nedá dohrát. -->
         <p v-if="store.isToday && !store.myScore" class="add">
-          <button type="button" class="btn btn-primary" @click="sheetOpen = true">
-            + {{ t('maptap.score.add') }}
+          <button type="button" class="btn btn-primary" :disabled="pasting" @click="pasteResult()">
+            {{ pasting ? t('maptap.score.pasting') : t('maptap.score.paste') }}
           </button>
         </p>
       </template>
     </template>
 
-    <ScoreSheet v-model:open="sheetOpen" />
+    <!-- Hláška od API: text ze schránky byl v pořádku, jen ho server odmítl. -->
+    <p v-if="pasteError" class="paste-error" role="alert">{{ translateMessage(pasteError) }}</p>
+
+    <ScoreSheet v-model:open="sheetOpen" :initial-text="sheetText" :notice="sheetNotice" />
   </div>
 </template>
 
@@ -161,7 +201,6 @@ async function removeOwn(scoreId: string): Promise<void> {
 .day-switch h1 {
   margin: 0;
   font-size: 1.5rem;
-  text-transform: capitalize;
 }
 
 .nav {
@@ -200,9 +239,8 @@ async function removeOwn(scoreId: string): Promise<void> {
 
 .row {
   display: grid;
-  /* Pořadí, hráč, body a (jen u svého výsledku) křížek – vždy na jednom řádku. */
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  gap: 0.35rem var(--space-1);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.35rem var(--space-2);
   align-items: center;
 }
 
@@ -252,23 +290,13 @@ async function removeOwn(scoreId: string): Promise<void> {
   font-weight: 600;
 }
 
-.remove {
-  justify-self: end;
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-}
-
-.remove:hover {
-  background: var(--color-surface-alt);
-  color: var(--color-danger);
-}
-
 .add {
   margin: var(--space-2) 0 0;
+}
+
+.paste-error {
+  margin: var(--space-2) 0 0;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
 }
 </style>

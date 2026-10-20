@@ -7,7 +7,7 @@ sources:
   - raw/2026-09-15-responsiveFrontend.md
   - raw/portalSpec.md (navigation, services grid), raw/iziweddySpec.md (ch. 6.3)
   - code: packages/design/src/breakpoints.css, apps/portal/postcss.config.js
-updated: 2026-10-09
+updated: 2026-10-20
 ---
 
 # Frontend – `apps/portal`
@@ -200,6 +200,11 @@ Current use:
 > ⚠️ **Nothing on `:root` and no bare element selectors in a product theme.**
 > Tokens on `:root` would override the portal palette on the whole website.
 > Everything goes under `.weddy`.
+
+> ℹ️ **The one place touch targets are knowingly broken** is MapTap's year
+> strip – 365 days cannot be drawn at 44 px. It is allowed there because it
+> duplicates navigation that exists at full size elsewhere, and it is reachable
+> from the keyboard ([maptapScores.md](../domains/maptapScores.md#the-year-strip)).
 
 > ℹ️ **A product may also just keep the portal's theme.** IziWeddy and IziBudgy
 > are products with a look of their own, so they redefine the whole palette.

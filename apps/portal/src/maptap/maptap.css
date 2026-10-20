@@ -100,6 +100,34 @@
   box-shadow: 0 10px 30px -12px var(--color-accent-glow);
 }
 
+/* --- Stupně pořadí v pásu roku --- */
+
+/*
+ * Barvy bydlí tady, ne ve scoped stylu pásu: stejnou škálu kreslí i legenda,
+ * která stojí jinde na obrazovce, a dvě kopie odstínů by se časem rozešly.
+ * Rozestup je schválně velký – při čtyřech hráčích je obarvený skoro každý
+ * odehraný den a blízké odstíny by splynuly v jednolitou plochu.
+ */
+.maptap .lvl-0 {
+  background: var(--color-surface-alt);
+}
+
+.maptap .lvl-1 {
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.maptap .lvl-2 {
+  background: color-mix(in srgb, var(--color-accent) 42%, transparent);
+}
+
+.maptap .lvl-3 {
+  background: color-mix(in srgb, var(--color-accent) 68%, transparent);
+}
+
+.maptap .lvl-4 {
+  background: var(--color-accent);
+}
+
 /* --- Drobnosti --- */
 
 /*

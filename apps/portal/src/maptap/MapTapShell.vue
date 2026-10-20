@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { RouterView } from 'vue-router';
-import ConfirmDialog from '@/components/product/ConfirmDialog.vue';
 import { useProductTheme } from '@/components/product/theme';
 import './maptap.css';
 
@@ -22,8 +21,5 @@ useProductTheme('maptap');
     <!-- Obal portálu je pryč, takže si skip link drží tabule sama. -->
     <a class="skip-link" href="#obsah">{{ t('app.skipToContent') }}</a>
     <RouterView />
-
-    <!-- Dotaz na nevratnou akci kreslíme sami; visí jednou pro celou tabuli. -->
-    <ConfirmDialog />
   </div>
 </template>

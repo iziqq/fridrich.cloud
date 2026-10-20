@@ -2,7 +2,6 @@ import type { MapTapScore } from './MapTapScore.js';
 
 /** Port pro ukládání výsledků. Implementace nad Cosmos DB je v `infrastructure/cosmos`. */
 export interface MapTapScoreRepository {
-  findById(userId: string, scoreId: string): Promise<MapTapScore | undefined>;
   /** Výsledek hráče z daného dne – podle něj se pozná druhé vložení téhož dne. */
   findForDay(userId: string, playedOn: string): Promise<MapTapScore | undefined>;
   /**
@@ -14,6 +13,6 @@ export interface MapTapScoreRepository {
    */
   listAll(): Promise<MapTapScore[]>;
   save(score: MapTapScore): Promise<void>;
-  delete(userId: string, scoreId: string): Promise<void>;
+  /** Jen při rušení účtu – jednotlivý výsledek z tabule zmizet nemůže. */
   deleteAllForUser(userId: string): Promise<void>;
 }

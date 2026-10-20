@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { parseScoreText, resolvePlayedOn, type ParsedScore } from '@fridrich/maptap-shared';
+import {
+  SCORE_PARSE_MESSAGES,
+  parseScoreText,
+  resolvePlayedOn,
+  type ParsedScore,
+} from '@fridrich/maptap-shared';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError } from '@/api/http';
@@ -10,12 +15,17 @@ import RoundBadges from './RoundBadges.vue';
 import { useBoardStore } from './board.store';
 
 /**
- * Vložení výsledku.
+ * Vložení výsledku ručně – **záložní cesta**.
  *
- * Nic se nevyplňuje – hráč sem vysype text, který MapTap nabízí ke sdílení.
- * Náhled pod polem ukazuje, co z něj aplikace přečetla, takže je ještě před
- * uložením vidět, jestli se zkopírovalo všechno.
+ * Normálně se výsledek bere rovnou ze schránky a formulář se vůbec neukáže
+ * (`DayView.vue`). Otevře se, až když to nevyjde: prohlížeč ke schránce
+ * nepustí, nebo v ní není nic, co by šlo přečíst. Proto umí dostat text
+ * s sebou (`initialText`) i větu, proč se objevil (`notice`).
+ *
+ * Náhled pod polem ukazuje, co z textu aplikace přečetla, takže je ještě
+ * před uložením vidět, jestli se zkopírovalo všechno.
  */
+const props = defineProps<{ initialText?: string; notice?: string }>();
 const open = defineModel<boolean>('open', { required: true });
 
 const store = useBoardStore();
@@ -27,8 +37,18 @@ const saving = ref(false);
 
 watch(open, (isOpen) => {
   if (!isOpen) return;
-  text.value = '';
+  text.value = props.initialText ?? '';
   errors.value = {};
+
+  /*
+   * Text ze schránky, který nedává smysl, se nemá tvářit v pořádku: chyba
+   * patří k poli hned, ne až po stisku Uložit. Hlášku bere ze stejné mapy
+   * jako schéma, takže si formulář a API nemůžou protiřečit.
+   */
+  const parsed = parseScoreText(text.value);
+  if (text.value.trim() !== '' && !parsed.ok) {
+    errors.value = { text: SCORE_PARSE_MESSAGES[parsed.reason] };
+  }
 });
 
 /** Co se z vloženého textu podařilo přečíst; `undefined`, dokud nedává smysl. */
@@ -76,6 +96,8 @@ async function submit(): Promise<void> {
 <template>
   <BottomSheet v-model:open="open" :title="t('maptap.form.title')">
     <form class="sheet-form" novalidate @submit.prevent="submit">
+      <p v-if="notice" class="notice">{{ notice }}</p>
+
       <FormField
         v-model="text"
         :label="t('maptap.form.text')"
@@ -139,6 +161,12 @@ async function submit(): Promise<void> {
 .final strong {
   color: var(--color-accent);
   font-size: 1.25rem;
+}
+
+.notice {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
 }
 
 .form-error {

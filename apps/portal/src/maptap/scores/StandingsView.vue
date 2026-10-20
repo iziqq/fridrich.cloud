@@ -1,91 +1,172 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { yearByPlayer } from '@fridrich/maptap-shared';
+import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import EmptyState from '@/components/product/EmptyState.vue';
 import ErrorBlock from '@/components/product/ErrorBlock.vue';
 import LoadingBlock from '@/components/product/LoadingBlock.vue';
 import { currentLocale, translateMessage } from '@/i18n';
 import { useAuthStore } from '@/identity/auth.store';
+import { maptapPath } from '../routes';
+import YearGraph from './YearGraph.vue';
 import { useBoardStore } from './board.store';
 
 /**
  * Celkové pořadí.
  *
- * Řadí **průměr**, ne součet – jinak by vedl ten, kdo hraje nejdéle, a nový
- * hráč by neměl co dohánět. Počet her a vyhrané dny jsou vedle, takže je
- * vidět, z kolika her průměr je (doc/wiki/domains/maptapScores.md).
+ * Řadí **součet nejlepších her** – tolika, kolik se tu na hráče v průměru
+ * odehraje. Kdo tolik her ještě nemá, stojí pod oranžovou čarou: jeho součet
+ * je z podstaty kratší, takže by mezi ostatními vypadal jako slabý výkon
+ * (doc/wiki/domains/maptapScores.md).
  *
  * Tabulka se na mobilu nekreslí jako tabulka: pět sloupců se na 360 px
  * nevejde, takže je z každého hráče karta (CLAUDE.md, pravidlo 24).
  */
 const store = useBoardStore();
 const auth = useAuthStore();
+const router = useRouter();
 const { t } = useI18n();
 
 onMounted(() => store.load());
 
+/** Posledních 365 dní pro každého hráče – jedním průchodem pro celou tabuli. */
+const years = computed(() => yearByPlayer(store.board, store.currentDay));
+
+/** Kliknutí do pásu přepne na ten den v záložce Den. */
+async function openDay(day: string): Promise<void> {
+  store.day = day;
+  await router.push(maptapPath());
+}
+
 function number(value: number): string {
   return new Intl.NumberFormat(currentLocale.value, { maximumFractionDigits: 1 }).format(value);
 }
+
+/*
+ * Obě skupiny se kreslí stejným řádkem, jen je mezi nimi čára – proto jeden
+ * `v-for` přes skupiny místo dvou opsaných seznamů.
+ */
+const groups = computed(() =>
+  [
+    { key: 'ranked', rows: store.table.ranked },
+    { key: 'occasional', rows: store.table.occasional },
+  ].filter((group) => group.rows.length > 0),
+);
+
+const occasionalNote = computed(() =>
+  t('maptap.standings.occasionalNote', {
+    games: t('maptap.standings.gameCount', store.table.counted),
+  }),
+);
 </script>
 
 <template>
   <div>
     <header class="head">
       <h1>{{ t('maptap.standings.title') }}</h1>
-      <p class="hint">{{ t('maptap.standings.hint') }}</p>
+      <p v-if="groups.length > 0" class="hint">
+        {{ t('maptap.standings.hint', { count: store.table.counted }) }}
+      </p>
+      <p v-if="groups.length > 0" class="hint">{{ t('maptap.year.hint') }}</p>
+
+      <!-- Legenda pásu stojí jednou nahoře; u každého hráče by jen překážela. -->
+      <ul v-if="groups.length > 0" class="legend" :aria-label="t('maptap.year.legend')">
+        <li><span class="swatch lvl-4"></span>{{ t('maptap.year.legendFirst') }}</li>
+        <li><span class="swatch lvl-3"></span>{{ t('maptap.year.legendSecond') }}</li>
+        <li><span class="swatch lvl-2"></span>{{ t('maptap.year.legendThird') }}</li>
+        <li><span class="swatch lvl-1"></span>{{ t('maptap.year.legendRest') }}</li>
+        <li><span class="swatch lvl-0"></span>{{ t('maptap.year.legendNone') }}</li>
+      </ul>
     </header>
 
     <LoadingBlock v-if="store.loading && store.board.scores.length === 0" />
     <ErrorBlock v-else-if="store.error" :message="translateMessage(store.error)" />
 
     <EmptyState
-      v-else-if="store.table.length === 0"
+      v-else-if="groups.length === 0"
       icon="🏅"
       :title="t('maptap.standings.emptyTitle')"
       :description="t('maptap.standings.emptyDescription')"
     />
 
-    <ol v-else class="rows">
-      <li
-        v-for="row in store.table"
-        :key="row.player.id"
-        class="row card"
-        :class="{ mine: row.player.id === auth.user?.id }"
-      >
-        <div class="who">
-          <p class="rank" :class="`rank-${row.rank}`" aria-hidden="true">{{ row.rank }}</p>
-          <p class="name">
-            {{ row.player.name }}
-            <span class="visually-hidden">{{ t('maptap.day.rank', { rank: row.rank }) }}</span>
-          </p>
-          <p class="average">
-            <span class="score">{{ number(row.average) }}</span>
-            <!-- Co to velké číslo je: podle něj se řadí, takže nesmí být hádanka. -->
-            <span class="unit">{{ t('maptap.standings.average') }}</span>
-          </p>
+    <template v-else>
+      <template v-for="group in groups" :key="group.key">
+        <!-- Čára dělí ty, kdo hrají pravidelně, od zbytku. -->
+        <div v-if="group.key === 'occasional'" class="break">
+          <hr class="split" />
+          <p class="note">{{ occasionalNote }}</p>
         </div>
 
-        <dl class="stats">
-          <div>
-            <dt>{{ t('maptap.standings.games') }}</dt>
-            <dd class="score">{{ row.games }}</dd>
-          </div>
-          <div>
-            <dt>{{ t('maptap.standings.wins') }}</dt>
-            <dd class="score">{{ row.wins }}</dd>
-          </div>
-          <div>
-            <dt>{{ t('maptap.standings.best') }}</dt>
-            <dd class="score">{{ row.best }}</dd>
-          </div>
-          <div>
-            <dt>{{ t('maptap.standings.total') }}</dt>
-            <dd class="score">{{ number(row.total) }}</dd>
-          </div>
-        </dl>
-      </li>
-    </ol>
+        <ol class="rows">
+          <li
+            v-for="row in group.rows"
+            :key="row.player.id"
+            class="row card"
+            :class="{ mine: row.player.id === auth.user?.id }"
+          >
+            <div class="who">
+              <p class="rank" :class="row.rank ? `rank-${row.rank}` : ''" aria-hidden="true">
+                {{ row.rank ?? '–' }}
+              </p>
+              <p class="name">
+                {{ row.player.name }}
+                <span class="visually-hidden">
+                  {{
+                    row.rank
+                      ? t('maptap.day.rank', { rank: row.rank })
+                      : t('maptap.standings.unranked')
+                  }}
+                </span>
+              </p>
+              <p class="headline">
+                <span class="score">{{ number(row.score) }}</span>
+                <!--
+                  Co to velké číslo je: podle něj se řadí, takže nesmí být hádanka.
+                  Pod čarou je to z podstaty součet všech her, ne nejlepších –
+                  tolik jich hráč ještě nemá, a popisek by tvrdil něco jiného.
+                -->
+                <span class="unit">
+                  {{
+                    row.rank
+                      ? t('maptap.standings.scoreLabel', store.table.counted)
+                      : t('maptap.standings.allLabel')
+                  }}
+                </span>
+              </p>
+            </div>
+
+            <!-- Čísla pohromadě vlevo, rok vedle nich; na úzké obrazovce pod nimi. -->
+            <div class="detail">
+              <dl class="stats">
+                <div>
+                  <dt>{{ t('maptap.standings.games') }}</dt>
+                  <dd class="score">{{ row.games }}</dd>
+                </div>
+                <div>
+                  <dt>{{ t('maptap.standings.wins') }}</dt>
+                  <dd class="score">{{ row.wins }}</dd>
+                </div>
+                <div>
+                  <dt>{{ t('maptap.standings.best') }}</dt>
+                  <dd class="score">{{ row.best }}</dd>
+                </div>
+                <div>
+                  <dt>{{ t('maptap.standings.average') }}</dt>
+                  <dd class="score">{{ number(row.average) }}</dd>
+                </div>
+              </dl>
+
+              <YearGraph
+                :days="years.get(row.player.id) ?? []"
+                :label="t('maptap.year.label', { name: row.player.name })"
+                @select="openDay"
+              />
+            </div>
+          </li>
+        </ol>
+      </template>
+    </template>
   </div>
 </template>
 
@@ -105,15 +186,62 @@ function number(value: number): string {
   font-size: var(--text-sm);
 }
 
+/* --- Legenda pásu --- */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  margin-top: var(--space-1);
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+}
+
+.legend li {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* --- Řádky --- */
+
+/*
+ * Karty se tu šířku nedrží zkrátka: vedle čísel stojí rok po dnech, a ten
+ * potřebuje přes 600 px, aby se nemusel posouvat. Jméno a výsledek proto
+ * drží pohromadě `.who` níž.
+ */
 .rows {
   display: grid;
   gap: var(--space-1);
-  /*
-   * Na širokém okně se řádek nesmí roztáhnout přes celou obrazovku – jméno
-   * vlevo a výsledek u pravého okraje by se četly jako dvě různé věci.
-   */
-  max-width: 46rem;
 }
+
+/* --- Čára mezi pravidelnými hráči a zbytkem --- */
+
+.break {
+  margin-block: var(--space-3) var(--space-2);
+}
+
+.split {
+  height: 2.5px;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+
+.note {
+  margin: 0.5rem 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* --- Řádek hráče --- */
 
 .row {
   display: grid;
@@ -159,7 +287,7 @@ function number(value: number): string {
   overflow-wrap: anywhere;
 }
 
-.average {
+.headline {
   display: grid;
   justify-items: end;
   margin: 0;
@@ -169,19 +297,43 @@ function number(value: number): string {
   line-height: 1.1;
 }
 
-.average .unit {
+.headline .unit {
   color: var(--color-muted);
   font-size: var(--text-xs);
   font-weight: 400;
 }
 
-.stats {
+/*
+ * Spodek karty: čísla a vedle nich rok. Na úzké obrazovce jsou pod sebou,
+ * od notebooku vedle sebe – pás je široký a vedle čtyř čísel se jinam nevejde.
+ */
+.detail {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.25rem var(--space-1);
-  margin: 0;
+  /*
+   * `minmax(0, …)` je tu povinné, ne kosmetické: sloupec mřížky se sám od
+   * sebe nezúží pod obsah, takže by široký pás roztáhl kartu a s ní celou
+   * stránku do vodorovného posuvníku.
+   */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
   padding-top: var(--space-1);
   border-top: 1px solid var(--color-border);
+}
+
+@media (--notebook) {
+  .detail {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* Čtyři čísla u sebe, ne roztažená přes celou kartu. */
+.stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 0.25rem var(--space-2);
+  margin: 0;
 }
 
 .stats dt {

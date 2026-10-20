@@ -20,7 +20,7 @@ export const PERSONAL_DATA_COLLECTION_ENABLED: boolean = true;
 export const TERMS_VERSION = '2026-10-09';
 
 /** Verze zásad ochrany osobních údajů. */
-export const PRIVACY_POLICY_VERSION = '2026-10-09';
+export const PRIVACY_POLICY_VERSION = '2026-10-20';
 
 /** Zpráva z kontaktního formuláře se smaže tolik dní po přijetí (TTL v databázi). */
 export const CONTACT_MESSAGE_RETENTION_DAYS = 365;

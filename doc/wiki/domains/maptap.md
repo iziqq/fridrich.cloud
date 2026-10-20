@@ -4,7 +4,7 @@ type: domain
 sources:
   - raw/2026-10-09-maptapLeaderboard.md
   - code: packages/maptap-shared, apps/api/src/domain/maptap, apps/portal/src/maptap
-updated: 2026-10-09
+updated: 2026-10-20
 ---
 
 # `maptap` domain – the MapTap leaderboard
@@ -39,7 +39,7 @@ not an aggregate of its own.
 | Where is it listed? | **Nowhere** | The owner asked for an internal app, so it has no row in `content/apps.ts` and no link anywhere in the portal. |
 | Is being unlisted the protection? | **No** | The route carries `requiresAuth` and every endpoint is `access: 'user'`. Not being listed only keeps it out of the way; the API is what refuses. |
 | What does the user fill in? | **Nothing** | They paste the text the game offers for sharing. Re-typing five round scores would be slower and would let anyone round the numbers up by accident. |
-| Can a result be edited? | **No, only deleted and pasted again** | A leaderboard should show what the game produced. An editable number is not a result, it is a claim. |
+| Can a result be changed? | **No – it cannot be edited or deleted** | A leaderboard should show what the game produced. A number the player can edit, or quietly drop when the day went badly, is not a result but a claim. |
 
 ## Personal data
 
@@ -85,9 +85,11 @@ would turn into grey rectangles.
   named group, the smallest step is an allowlist of account ids in the
   application settings, checked in the use cases – no new domain concept
   needed. Not built, because it was not asked for.
-- **One result per player per day** is enforced, but nothing stops someone
-  from deleting a result and pasting a better one. Between colleagues that is
-  a social problem, not a technical one.
+- **A result pasted by mistake cannot be taken back.** That is the price of
+  results being final; removing one means a manual operation on the database.
+  If it turns out to happen, the gentler fix is a short window (say an hour)
+  in which the author may delete their own result, not bringing delete back
+  for good.
 
 ## Related
 
