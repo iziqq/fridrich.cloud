@@ -1030,3 +1030,34 @@ ordinary one.
 - No wiki page changed – the behaviour described in
   `domains/maptapScores.md#the-year-strip` is the same, only its placement in
   the card moved.
+
+## [2026-10-20] change | MapTap: the whole emoji ladder, read from the game
+
+- Owner's request: take the icons the game actually uses from maptap.gg and
+  put them all into `BADGE_EMOJI`.
+- Read from the source (`js/jjbasics.js` → `emojiScoring`, `js/ui.js` →
+  `getEmojiData`): **48 rungs, 47 distinct icons** (😁 is in twice), worst to
+  best, plus 🤯 for a 0 km hit and for rounds whose tier cannot be computed.
+  `BADGE_EMOJI` now carries all of them in that order.
+- The game shares **real emoji**, not shortcodes – `:crown:` in the owner's
+  original example came from the text passing through Slack or Discord. Those
+  name the same icon differently, so `BADGE_ALIASES` folds `medal`,
+  `medal_sports` → `sports_medal` and a handful more onto one name, applied at
+  parse time so stored badges stay consistent.
+- **Two things the source revealed that the parser got wrong**, both fixed:
+  - the setting *Show country flags in share* puts the flag **before** the
+    score (`🇺🇸83`) instead of a grade after it. The old pattern required
+    number-then-badge, so anyone with that setting on could not paste at all.
+    `ROUND_RE` now reads both orders and also matches regional-indicator
+    pairs; a flag is not a grade, so the round keeps its points and no badge.
+  - `Final score: 660 Antipode!` – the word is appended on antipode days and
+    is now covered by a test.
+- Player-map and Best Of results have **no date line** (the first line is the
+  map's title), so they are refused. Correct: the board is a board of days.
+- The per-badge translated labels are gone. The emoji says exactly what the
+  number beside it says, so it is `aria-hidden` now; naming 48 rungs in two
+  languages would have been text that tells nobody anything. The game's own
+  name shows on hover.
+- Tests: 4 new cases (the ladder across its range, alias folding, the flag
+  mode, the Antipode suffix) – 205 API tests pass.
+- Touched pages: `domains/maptapScores.md` (badges, how the text is read).

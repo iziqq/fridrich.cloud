@@ -1,32 +1,29 @@
 <script setup lang="ts">
-import { BADGE_EMOJI, isRoundBadge, scoresKeys, type ScoreRound } from '@fridrich/maptap-shared';
-import { useI18n } from 'vue-i18n';
+import { BADGE_EMOJI, isRoundBadge, type ScoreRound } from '@fridrich/maptap-shared';
 
 /**
  * Kola jednoho výsledku – body a odznak, který k nim hra přidala.
  *
  * Smajlík kreslíme my podle názvu odznaku, nevypisujeme nic z vloženého
- * textu. Neznámý odznak (MapTap si přidá nový) zůstane jen jako popisek
- * k číslu – výsledek se kvůli němu nemá rozbít.
+ * textu. Neznámý odznak (MapTap si přidá nový, nebo přišla vlajka z režimu
+ * se zapnutými vlajkami) zůstane jen jako číslo – výsledek se kvůli němu
+ * nemá rozbít.
+ *
+ * Smajlík je **ozdoba**: říká přesně totéž co číslo vedle něj, jen barevně.
+ * Proto je pro čtečku skrytý a nemá překládaný popisek – žebříček má
+ * 48 stupňů a vymýšlet k nim 48 českých a anglických jmen by byl text, který
+ * nikomu nic nepřidá. Myší se ukáže jméno, pod kterým ho zná hra.
  */
 defineProps<{ rounds: readonly ScoreRound[] }>();
-
-const { t } = useI18n();
-
-function label(round: ScoreRound): string | undefined {
-  if (!round.badge) return undefined;
-  return isRoundBadge(round.badge) ? t(scoresKeys.badge[round.badge]) : round.badge;
-}
 </script>
 
 <template>
   <ul class="rounds">
-    <li v-for="(round, index) in rounds" :key="index" class="round" :title="label(round)">
+    <li v-for="(round, index) in rounds" :key="index" class="round" :title="round.badge">
       <span class="score">{{ round.score }}</span>
-      <span v-if="round.badge && isRoundBadge(round.badge)" class="badge" aria-hidden="true">
+      <span v-if="isRoundBadge(round.badge)" class="badge" aria-hidden="true">
         {{ BADGE_EMOJI[round.badge] }}
       </span>
-      <span v-if="label(round)" class="visually-hidden">{{ label(round) }}</span>
     </li>
   </ul>
 </template>

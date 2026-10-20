@@ -80,6 +80,51 @@ describe('vložený výsledek z MapTapu', () => {
       ['brand_new_emoji', 'sports_medal'],
     );
   });
+
+  it('zná celý žebříček smajlíků, kterým hra známkuje kolo', () => {
+    // Od nejhoršího po nejlepší, jak je hra sdílí (maptap.gg, js/jjbasics.js).
+    const parsed = parseScoreText(paste('October 9', '0💀 13❄ 50🙂 88🎉 100🎯', 251));
+
+    assert.ok(parsed.ok);
+    assert.deepEqual(
+      parsed.score.rounds.map((round) => round.badge),
+      ['skull', 'snowflake', 'slightly_smiling_face', 'tada', 'dart'],
+    );
+  });
+
+  it('jiné jméno téhož smajlíku se srovná na jedno', () => {
+    const parsed = parseScoreText(paste('October 9', '94:medal: 12:hugs:', 106));
+
+    assert.ok(parsed.ok);
+    assert.deepEqual(
+      parsed.score.rounds.map((round) => round.badge),
+      ['sports_medal', 'hugging_face'],
+    );
+  });
+
+  it('přečte i sdílení s vlajkami, kde smajlík stojí před body', () => {
+    /*
+     * Hra umí nastavení „Show country flags in share": místo známky dá před
+     * body vlajku země. Vlajka není stupeň hodnocení, takže kolo zůstane bez
+     * odznaku – ale body se přečíst musí, jinak by takový hráč nemohl vložit
+     * výsledek vůbec.
+     */
+    const parsed = parseScoreText(paste('October 9', '🇺🇸83 🇫🇷91 🌐40 🇨🇿100 🇩🇪77', 512));
+
+    assert.ok(parsed.ok);
+    assert.deepEqual(
+      parsed.score.rounds.map((round) => round.score),
+      [83, 91, 40, 100, 77],
+    );
+    assert.ok(parsed.score.rounds.every((round) => round.badge === undefined));
+  });
+
+  it('„Antipode!" za celkovým výsledkem nevadí', () => {
+    const parsed = parseScoreText('MapTap July 9\n94:crown:\nFinal score: 660 Antipode!');
+
+    assert.ok(parsed.ok);
+    assert.equal(parsed.score.finalScore, 660);
+  });
 });
 
 describe('uložení výsledku', () => {

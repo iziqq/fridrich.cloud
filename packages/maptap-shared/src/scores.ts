@@ -30,14 +30,6 @@ const cs = {
   roundsMissing: 'Ve vloženém textu nevidím body za jednotlivá kola',
   finalMissing: 'Ve vloženém textu chybí řádek „Final score“',
   scoreExists: 'Výsledek z tohohle dne už máte zadaný',
-  /* Popisky odznaků u kol – samotný smajlík čtečka nepřečte. */
-  badge: {
-    sports_medal: 'medaile',
-    crown: 'koruna',
-    clap: 'potlesk',
-    tada: 'oslava',
-    dizzy_face: 'úplně vedle',
-  },
 };
 
 const en: Catalog<typeof cs> = {
@@ -47,13 +39,6 @@ const en: Catalog<typeof cs> = {
   roundsMissing: 'I cannot see the points for the individual rounds in the pasted text',
   finalMissing: 'The "Final score" line is missing from the pasted text',
   scoreExists: 'You already have a result for this day',
-  badge: {
-    sports_medal: 'medal',
-    crown: 'crown',
-    clap: 'applause',
-    tada: 'celebration',
-    dizzy_face: 'way off',
-  },
 };
 
 /** Hlášky a popisky subdomény `scores` – jmenný prostor `maptapShared.scores`. */
@@ -63,32 +48,103 @@ export const scoresKeys = messageKeys(cs, 'maptapShared.scores');
 /* --- Odznaky kol --- */
 
 /**
- * Odznaky, které u kol známe.
+ * Žebříček smajlíků, kterým MapTap známkuje kolo – od nejhoršího k nejlepšímu.
  *
- * Seznam je jen pro vzhled a popisek – neznámý odznak se uloží tak, jak
- * přišel, a jen se nevykreslí smajlíkem. Kdyby MapTap zítra přidal nový,
- * vložení výsledku kvůli tomu nesmí selhat.
+ * Opsaný z `emojiScoring` v `js/jjbasics.js` na maptap.gg (48 stupňů, 😁 je
+ * tam dvakrát). Hra sdílí **skutečné smajlíky**, ne zkratky; zkratky
+ * (`:crown:`) vzniknou až tím, že text projde Slackem nebo Discordem.
+ * Pořadí je zachované schválně: jednou se podle něj může dát poznat, jak
+ * dobré kolo bylo, i bez čísla.
+ *
+ * `exploding_head` (🤯) ve škále není – hra ho dává za trefu na nulu
+ * kilometrů a za kola, u kterých stupeň nedopočítá.
  */
-export const ROUND_BADGES = ['sports_medal', 'crown', 'clap', 'tada', 'dizzy_face'] as const;
-export type RoundBadge = (typeof ROUND_BADGES)[number];
-
-/** Smajlík pro odznak – text přilepený ke kolu kreslíme my, ne vložený text. */
-export const BADGE_EMOJI: Record<RoundBadge, string> = {
-  sports_medal: '🏅',
-  crown: '👑',
-  clap: '👏',
-  tada: '🎉',
+export const BADGE_EMOJI = {
+  skull: '💀',
+  face_vomiting: '🤮',
+  alien: '👽',
+  ghost: '👻',
+  sob: '😭',
+  scream: '😱',
+  nauseated_face: '🤢',
+  stuck_out_tongue_closed_eyes: '😝',
   dizzy_face: '😵',
+  face_with_symbols_on_mouth: '🤬',
+  pleading_face: '🥺',
+  ice_cube: '🧊',
+  unamused: '😒',
+  snowflake: '❄',
+  disappointed_relieved: '😥',
+  see_no_evil: '🙈',
+  sleepy: '😪',
+  sleeping: '😴',
+  cold_face: '🥶',
+  no_mouth: '😶',
+  confused: '😕',
+  disappointed: '😞',
+  fearful: '😨',
+  worried: '😟',
+  face_with_peeking_eye: '🫣',
+  pensive: '😔',
+  shushing_face: '🤫',
+  face_with_raised_eyebrow: '🤨',
+  expressionless: '😑',
+  neutral_face: '😐',
+  face_with_open_eyes_and_hand_over_mouth: '🫢',
+  upside_down_face: '🙃',
+  slightly_smiling_face: '🙂',
+  grin: '😁',
+  joy: '😂',
+  hugging_face: '🤗',
+  sun_with_face: '🌞',
+  clap: '👏',
+  sparkles: '✨',
+  star2: '🌟',
+  mortar_board: '🎓',
+  tada: '🎉',
+  crown: '👑',
+  trophy: '🏆',
+  sports_medal: '🏅',
+  fire: '🔥',
+  dart: '🎯',
+  exploding_head: '🤯',
+} as const;
+
+export type RoundBadge = keyof typeof BADGE_EMOJI;
+export const ROUND_BADGES = Object.keys(BADGE_EMOJI) as RoundBadge[];
+
+/**
+ * Jiná jména pro tytéž smajlíky.
+ *
+ * Každá chatovací aplikace si zkratky pojmenovala po svém – 🏅 je
+ * `sports_medal`, `medal` i `medal_sports` podle toho, odkud se text
+ * kopíruje. Bez tohohle by se takové kolo ukázalo jen jako číslo.
+ */
+const BADGE_ALIASES: Record<string, RoundBadge> = {
+  medal: 'sports_medal',
+  medal_sports: 'sports_medal',
+  hugs: 'hugging_face',
+  hugging: 'hugging_face',
+  vomiting_face: 'face_vomiting',
+  face_with_symbols_over_mouth: 'face_with_symbols_on_mouth',
+  raised_eyebrow: 'face_with_raised_eyebrow',
+  slight_smile: 'slightly_smiling_face',
+  upside_down: 'upside_down_face',
 };
 
 export function isRoundBadge(value: string | undefined): value is RoundBadge {
-  return value !== undefined && (ROUND_BADGES as readonly string[]).includes(value);
+  return value !== undefined && value in BADGE_EMOJI;
 }
 
-/* Z některých aplikací se kopírují rovnou smajlíky místo zkratek `:crown:`. */
+/* Hra sdílí smajlíky; zkratky jsou až druhá cesta, kterou text může přijít. */
 const EMOJI_BADGES = new Map<string, RoundBadge>(
   (Object.entries(BADGE_EMOJI) as [RoundBadge, string][]).map(([badge, emoji]) => [emoji, badge]),
 );
+
+/** Zkratku srovná na jedno jméno, ať přišla odkudkoli. */
+function normalizeBadge(shortcode: string): string {
+  return BADGE_ALIASES[shortcode] ?? shortcode;
+}
 
 /* --- Rozebrání vloženého textu --- */
 
@@ -113,14 +169,25 @@ const DATE_RE = new RegExp(`\\b(${MONTHS.join('|')})[a-z]*\\s+(\\d{1,2})(?:,?\\s
 /** `Final score: 660`; dvojtečka je nepovinná, hra si ji může odpustit. */
 const FINAL_RE = /\bfinal\s+score\s*:?\s*(\d{1,6})\b/iu;
 
+/** Smajlík: běžný piktogram i se spojovníky, nebo vlajka ze dvou regionálních znaků. */
+const EMOJI =
+  '(?:\\p{Regional_Indicator}{2}|\\p{Extended_Pictographic}(?:\\uFE0F|\\u200D\\p{Extended_Pictographic})*)';
+
 /**
- * Kolo je číslo a hned za ním odznak – buď zkratka `:crown:`, nebo smajlík.
+ * Kolo je číslo a vedle něj odznak – zkratka `:crown:`, nebo smajlík.
  *
  * Odznak je součástí vzoru schválně: bez něj by se za kolo počítalo každé
  * číslo v textu, tedy i datum nebo celkový výsledek.
+ *
+ * Pořadí je obojí, protože hra umí sdílet dvěma způsoby: `94🏅` (smajlík za
+ * číslem) a se zapnutým nastavením „Show country flags in share" `🇺🇸94`
+ * (vlajka před číslem, místo smajlíka). Vlajka není stupeň hodnocení, takže
+ * se u takového kola žádný odznak neuloží – jen body.
  */
-const ROUND_RE =
-  /(\d{1,4})\s*(?::([a-z0-9_+-]{1,40}):|(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*))/giu;
+const ROUND_RE = new RegExp(
+  `(?:(\\d{1,4})\\s*(?::([a-z0-9_+-]{1,40}):|(${EMOJI}))|(${EMOJI})\\s*(\\d{1,4}))`,
+  'giu',
+);
 
 export interface ParsedRound {
   score: number;
@@ -191,11 +258,18 @@ export function parseScoreText(text: string): ScoreParseResult {
   const rest = withoutDate.replace(final[0], ' ');
   const rounds: ParsedRound[] = [];
   for (const match of rest.matchAll(ROUND_RE)) {
+    /* Body i odznak můžou přijít v obou pořadích – viz `ROUND_RE`. */
+    const points = match[1] ?? match[5];
     const shortcode = match[2]?.toLowerCase();
-    const emoji = match[3];
-    const badge = shortcode ?? (emoji ? EMOJI_BADGES.get(emoji) : undefined);
+    const emoji = match[3] ?? match[4];
 
-    rounds.push({ score: Number(match[1]), ...(badge ? { badge } : {}) });
+    const badge = shortcode
+      ? normalizeBadge(shortcode)
+      : emoji
+        ? EMOJI_BADGES.get(emoji)
+        : undefined;
+
+    rounds.push({ score: Number(points), ...(badge ? { badge } : {}) });
   }
 
   if (rounds.length === 0 || rounds.length > ROUNDS_MAX) return { ok: false, reason: 'rounds' };

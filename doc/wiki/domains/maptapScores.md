@@ -31,10 +31,15 @@ day number and the final score cannot be mistaken for round scores:
 |---|---|---|
 | 1. day | an English month name (full or three letters), a day, optionally a year | `date` |
 | 2. final score | `Final score: 660`, the colon optional | `final` |
-| 3. rounds | a number **immediately followed by a badge** – `:crown:` or the emoji itself | `rounds` |
+| 3. rounds | a number **next to a badge** – `94🏅`, `94:crown:`, or `🇺🇸94` | `rounds` |
 
 - **A round must carry a badge.** Without that rule any number left in the text
   would count as a round.
+- **The badge can come before the number.** The game has a setting, *Show
+  country flags in share* (off by default), that replaces the grade with the
+  country's flag and puts it first: `🇺🇸83`. A flag is not a grade, so such a
+  round is stored with its points and no badge – but the points have to be
+  read, or a player with that setting on could not paste at all.
 - `Final score` is **not the sum of the rounds** (660 ≠ 94+91+80+88+17), so it
   is read, never computed.
 - Each failure has its own message, all forwarded onto the `text` field – the
@@ -42,22 +47,37 @@ day number and the final score cannot be mistaken for round scores:
 - The share text has **no year**, so the day resolves to the most recent such
   date that is not in the future (`resolvePlayedOn`, four years back, which
   also covers 29 February). A year written in the text wins.
+- `Final score: 660 Antipode!` is read as 660 – the game appends that word on
+  antipode days.
+- Results of a **player map or a Best Of map carry no date** (their first line
+  is the map's title), so they are refused. That is right: the board is a
+  board of days, and such a result belongs to no day.
 
 ### Badges
 
-| Shortcode | Shown as |
-|---|---|
-| `sports_medal` | 🏅 |
-| `crown` | 👑 |
-| `clap` | 👏 |
-| `tada` | 🎉 |
-| `dizzy_face` | 😵 |
+`BADGE_EMOJI` holds the game's **whole ladder**, worst to best, copied from
+`emojiScoring` in `js/jjbasics.js` on maptap.gg:
 
-The emoji is **drawn by us from the badge name**, never echoed from the pasted
-text. A shortcode we do not know (the game adds one) is stored as the
-sanitised name and shown as the number alone – a new emoji upstream must not
-make pasting fail. Pasting from a client that renders emoji works too: the
-known emoji map back to their names.
+> 💀 🤮 👽 👻 😭 😱 🤢 😝 😵 🤬 🥺 🧊 😒 ❄ 😥 🙈 😪 😴 🥶 😶 😕 😞 😨 😟 🫣 😔
+> 🤫 🤨 😑 😐 🫢 🙃 🙂 😁 😂 🤗 🌞 👏 ✨ 🌟 🎓 🎉 👑 🏆 🏅 🔥 🎯
+
+plus 🤯, which the game gives for a 0 km hit and for rounds whose tier it
+cannot compute. The game's own list has 48 slots because 😁 appears twice, so
+there are 47 distinct icons; the order is kept because it *is* the grading.
+
+- The emoji is **drawn by us from the badge name**, never echoed from the
+  pasted text.
+- The game shares **real emoji**; shortcodes (`:crown:`) only appear when the
+  text has been through Slack or Discord. Those two name the same icons
+  differently, so `BADGE_ALIASES` folds the variants onto one name
+  (`medal`, `medal_sports` → `sports_medal`).
+- A name we do not know – the game adds a rung, or a country flag arrives from
+  the flag mode below – is kept as the sanitised string and shown as the
+  number alone. A new icon upstream must not make pasting fail.
+- The emoji is **decoration**: it says exactly what the number next to it
+  says. It is therefore `aria-hidden` and has no translated label – inventing
+  Czech and English names for 48 rungs would be text that tells nobody
+  anything. Hovering shows the game's own name for it.
 
 ## Fields
 
