@@ -1006,3 +1006,27 @@ ordinary one.
   every player, ties) – 201 API tests pass.
 - Touched pages: `domains/maptapScores.md` (the year strip),
   `architecture/frontend.md` (the touch-target exception), index.
+
+## [2026-10-20] change | MapTap: the standings card stacks on narrow screens
+
+- The owner rearranged the card by hand – the figures and the year strip now
+  sit in one flex row – and asked for it to turn into a column on phones.
+- Written mobile-first as the rules require (CLAUDE.md 24): the column is the
+  base state, the row is added at `--notebook`. Tablet stays stacked on
+  purpose – the strip needs over 600 px and would not fit beside the figures
+  at 768.
+- **Two traps caught by measuring, not by looking:**
+  - `.rows` had no explicit column, so the grid track grew to the strip's
+    width and dragged the whole page into a horizontal scrollbar on a phone
+    (685 px of content in a 390 px viewport). Fixed with
+    `grid-template-columns: minmax(0, 1fr)`.
+  - `flex: 1 1 18rem` on the left block set its **height** in column
+    direction, leaving a 300 px hole in every card at 768 px. The basis now
+    lives inside the `--notebook` query, where the axis is horizontal.
+- Also: the name broke mid-word ("Procházko/vá") because of
+  `overflow-wrap: anywhere`; it is `break-word` now, and the left block has a
+  `18rem` basis so it does not get squeezed that far in the first place.
+- Checked at 360, 768, 1024 and 1200 px: no page overflow at any of them.
+- No wiki page changed – the behaviour described in
+  `domains/maptapScores.md#the-year-strip` is the same, only its placement in
+  the card moved.

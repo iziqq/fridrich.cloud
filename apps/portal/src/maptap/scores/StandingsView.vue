@@ -105,39 +105,38 @@ const occasionalNote = computed(() =>
             class="row card"
             :class="{ mine: row.player.id === auth.user?.id }"
           >
-            <div class="who">
-              <p class="rank" :class="row.rank ? `rank-${row.rank}` : ''" aria-hidden="true">
-                {{ row.rank ?? '–' }}
-              </p>
-              <p class="name">
-                {{ row.player.name }}
-                <span class="visually-hidden">
-                  {{
-                    row.rank
-                      ? t('maptap.day.rank', { rank: row.rank })
-                      : t('maptap.standings.unranked')
-                  }}
-                </span>
-              </p>
-              <p class="headline">
-                <span class="score">{{ number(row.score) }}</span>
-                <!--
-                  Co to velké číslo je: podle něj se řadí, takže nesmí být hádanka.
-                  Pod čarou je to z podstaty součet všech her, ne nejlepších –
-                  tolik jich hráč ještě nemá, a popisek by tvrdil něco jiného.
-                -->
-                <span class="unit">
-                  {{
-                    row.rank
-                      ? t('maptap.standings.scoreLabel', store.table.counted)
-                      : t('maptap.standings.allLabel')
-                  }}
-                </span>
-              </p>
-            </div>
+            <div class="scores">
+              <div class="who">
+                <p class="rank" :class="row.rank ? `rank-${row.rank}` : ''" aria-hidden="true">
+                  {{ row.rank ?? '–' }}
+                </p>
+                <p class="name">
+                  {{ row.player.name }}
+                  <span class="visually-hidden">
+                    {{
+                      row.rank
+                        ? t('maptap.day.rank', { rank: row.rank })
+                        : t('maptap.standings.unranked')
+                    }}
+                  </span>
+                </p>
+                <p class="headline">
+                  <span class="score">{{ number(row.score) }}</span>
+                  <!--
+                    Co to velké číslo je: podle něj se řadí, takže nesmí být hádanka.
+                    Pod čarou je to z podstaty součet všech her, ne nejlepších –
+                    tolik jich hráč ještě nemá, a popisek by tvrdil něco jiného.
+                  -->
+                  <span class="unit">
+                    {{
+                      row.rank
+                        ? t('maptap.standings.scoreLabel', store.table.counted)
+                        : t('maptap.standings.allLabel')
+                    }}
+                  </span>
+                </p>
+              </div>
 
-            <!-- Čísla pohromadě vlevo, rok vedle nich; na úzké obrazovce pod nimi. -->
-            <div class="detail">
               <dl class="stats">
                 <div>
                   <dt>{{ t('maptap.standings.games') }}</dt>
@@ -156,13 +155,13 @@ const occasionalNote = computed(() =>
                   <dd class="score">{{ number(row.average) }}</dd>
                 </div>
               </dl>
+            </div>
 
-              <YearGraph
+             <YearGraph
                 :days="years.get(row.player.id) ?? []"
                 :label="t('maptap.year.label', { name: row.player.name })"
                 @select="openDay"
               />
-            </div>
           </li>
         </ol>
       </template>
@@ -218,6 +217,12 @@ const occasionalNote = computed(() =>
  */
 .rows {
   display: grid;
+  /*
+   * Sloupec musí umět být užší než obsah. Bez `minmax(0, …)` se karta
+   * roztáhne podle pásu roku (přes 600 px) a odtáhne s sebou celou stránku
+   * do vodorovného posuvníku – na telefonu je to vidět hned.
+   */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
 }
 
@@ -243,9 +248,38 @@ const occasionalNote = computed(() =>
 
 /* --- Řádek hráče --- */
 
+/*
+ * Čísla a vedle nich rok. Vedle sebe se vejdou až na notebooku – pás
+ * potřebuje přes 600 px, takže na užší obrazovce jdou pod sebe. Základ je
+ * ten užší stav, širší se přidává breakpointem (CLAUDE.md, pravidlo 24).
+ */
 .row {
-  display: grid;
-  gap: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/*
+ * Flexová položka se sama od sebe nezúží pod svůj obsah. Bez tohohle by
+ * široký pás roztáhl kartu a s ní celou stránku do vodorovného posuvníku.
+ */
+.row > * {
+  min-width: 0;
+}
+
+@media (--notebook) {
+  .row {
+    flex-direction: row;
+    gap: var(--space-6);
+  }
+
+  /*
+   * Rozdělení šířky patří jen do řádkového režimu: `flex-basis` míří na
+   * hlavní osu, takže ve sloupci by z něj byla výška a v kartě by zela díra.
+   */
+  .scores {
+    flex: 1 1 18rem;
+  }
 }
 
 .row.mine {
@@ -269,6 +303,11 @@ const occasionalNote = computed(() =>
   text-align: center;
 }
 
+/* Pás se smí zúžit a posouvat; levý blok si šířku hlídá až v řádku níž. */
+.scores {
+  min-width: 0;
+}
+
 .rank-1 {
   color: var(--color-rank-1);
 }
@@ -284,7 +323,8 @@ const occasionalNote = computed(() =>
 .name {
   margin: 0;
   font-weight: 600;
-  overflow-wrap: anywhere;
+  /* Zalomí jen slovo, které se opravdu nevejde – ne „Procházko-vá". */
+  overflow-wrap: break-word;
 }
 
 .headline {
@@ -301,30 +341,6 @@ const occasionalNote = computed(() =>
   color: var(--color-muted);
   font-size: var(--text-xs);
   font-weight: 400;
-}
-
-/*
- * Spodek karty: čísla a vedle nich rok. Na úzké obrazovce jsou pod sebou,
- * od notebooku vedle sebe – pás je široký a vedle čtyř čísel se jinam nevejde.
- */
-.detail {
-  display: grid;
-  /*
-   * `minmax(0, …)` je tu povinné, ne kosmetické: sloupec mřížky se sám od
-   * sebe nezúží pod obsah, takže by široký pás roztáhl kartu a s ní celou
-   * stránku do vodorovného posuvníku.
-   */
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-2);
-  padding-top: var(--space-1);
-  border-top: 1px solid var(--color-border);
-}
-
-@media (--notebook) {
-  .detail {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: start;
-  }
 }
 
 /* Čtyři čísla u sebe, ne roztažená přes celou kartu. */
